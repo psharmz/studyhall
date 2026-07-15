@@ -451,6 +451,31 @@
     animation-delay: 0.53s;
   }
 
+  .mini-hamster-big {
+    width: 70px;
+    height: 64px;
+    animation: hamsterBob 0.8s ease-in-out infinite;
+    filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.4));
+  }
+
+  .mini-hamster-big--2 {
+    animation-delay: 0.27s;
+  }
+
+  .mini-hamster-big--3 {
+    animation-delay: 0.53s;
+  }
+
+  .hamster-showcase-box {
+    width: 210px;
+    height: 210px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
   @keyframes hamsterBob {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
@@ -555,37 +580,6 @@
 
   .gauge-wrap--results .gauge-header {
     display: none;
-  }
-
-  .gauge-chip {
-    display: none;
-    margin: 10px auto 0;
-    padding: 5px 12px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    width: fit-content;
-  }
-
-  .gauge-wrap--results .gauge-chip {
-    display: block;
-  }
-
-  .gauge-chip[data-align="full"] {
-    background: #3F9142;
-    color: #FFF;
-  }
-
-  .gauge-chip[data-align="partial"] {
-    background: #F2C94C;
-    color: #1A1A1A;
-  }
-
-  .gauge-chip[data-align="non"] {
-    background: #E0453F;
-    color: #FFF;
   }
 
   .card--options.results-layout {
@@ -727,6 +721,35 @@
     background: var(--green);
     border-color: var(--green);
     color: var(--black);
+  }
+
+  .setup-lang-choices,
+  .setup-mode-choices {
+    align-items: flex-start;
+  }
+
+  .setup-lang-choices > .setup-btn,
+  .setup-lang-choices > .setup-lang-col,
+  .setup-mode-choices > .setup-lang-col {
+    flex: 1 1 0;
+  }
+
+  .setup-lang-col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .setup-lang-col .setup-btn {
+    width: 100%;
+  }
+
+  .setup-lang-caption {
+    margin-top: 6px;
+    font-size: 9px;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    color: #9A9A9A;
+    text-align: center;
   }
 
   .setup-start-btn {
@@ -1270,17 +1293,26 @@
 
         <div class="setup-question">
           <div class="setup-label">CHOOSE YOUR LANGUAGE</div>
-          <div class="setup-choices">
+          <div class="setup-choices setup-lang-choices">
             <button class="setup-btn" data-group="language" data-value="english">English</button>
-            <button class="setup-btn" data-group="language" data-value="spanish">Spanish translated by Mariana</button>
+            <div class="setup-lang-col">
+              <button class="setup-btn" data-group="language" data-value="spanish">Spanish</button>
+              <div class="setup-lang-caption">Translated by Mariana Gonzales and Jose Alberto Nevarez (UABC - Mexico)</div>
+            </div>
           </div>
         </div>
 
         <div class="setup-question">
           <div class="setup-label">MODE</div>
-          <div class="setup-choices">
-            <button class="setup-btn" data-group="mode" data-value="simulation">Simulation Mode</button>
-            <button class="setup-btn" data-group="mode" data-value="study">Study Mode</button>
+          <div class="setup-choices setup-mode-choices">
+            <div class="setup-lang-col">
+              <button class="setup-btn" data-group="mode" data-value="simulation">Simulation Mode</button>
+              <div class="setup-lang-caption">Timed game setting</div>
+            </div>
+            <div class="setup-lang-col">
+              <button class="setup-btn" data-group="mode" data-value="study">Study Mode</button>
+              <div class="setup-lang-caption">See answers as you go. No rush go at your own pace</div>
+            </div>
           </div>
         </div>
 
@@ -1561,7 +1593,6 @@
           <span>FULLY ALIGNED</span>
           <span>NON-ALIGNED</span>
         </div>
-        <div class="gauge-chip" id="gaugeChip"></div>
       </div>
     </div>
     <div class="footer">
@@ -2276,7 +2307,6 @@
               <use href="#wheelHamsterSymbol"></use>
             </svg>
             </div>
-            <div class="gauge-chip" id="gaugeChip2"></div>
           </div>
         </div>
         <div class="footer">
@@ -2290,6 +2320,90 @@
       <div class="card card--options">
         <div class="body">
           <h1 class="pixel" id="optionsTitle2">OPTIONS</h1>
+
+          <div class="results-visuals" id="resultsVisuals2">
+          <div class="rat-race" id="hamsterShowcase2">
+            <div class="hamster-showcase-box">
+              <svg class="mini-hamster-big" viewBox="21 29 18 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+                <rect x="24" y="32" width="2" height="2" fill="#EF8B2C"/>
+                <rect x="32" y="32" width="2" height="2" fill="#EF8B2C"/>
+                <rect x="26" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="24" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="26" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="34" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="24" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="26" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="34" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="26" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="36" width="2" height="2" fill="#1A1A2E"/>
+              </svg>
+              <svg class="mini-hamster-big mini-hamster-big--2" viewBox="21 29 18 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+                <rect x="24" y="32" width="2" height="2" fill="#EF8B2C"/>
+                <rect x="32" y="32" width="2" height="2" fill="#EF8B2C"/>
+                <rect x="26" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="24" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="26" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="34" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="24" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="26" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="34" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="26" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="36" width="2" height="2" fill="#1A1A2E"/>
+              </svg>
+              <svg class="mini-hamster-big mini-hamster-big--3" viewBox="21 29 18 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+                <rect x="24" y="32" width="2" height="2" fill="#EF8B2C"/>
+                <rect x="32" y="32" width="2" height="2" fill="#EF8B2C"/>
+                <rect x="26" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="34" width="2" height="2" fill="#F2C94C"/>
+                <rect x="24" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="26" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="34" y="36" width="2" height="2" fill="#F2C94C"/>
+                <rect x="24" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="26" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="34" y="38" width="2" height="2" fill="#F2C94C"/>
+                <rect x="26" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="28" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="30" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="40" width="2" height="2" fill="#F2C94C"/>
+                <rect x="32" y="36" width="2" height="2" fill="#1A1A2E"/>
+              </svg>
+            </div>
+            <div class="rat-caption">Congrats! You and your friends are free from the perils of big tech. Life is more than providing stakeholder value.</div>
+          </div>
+          </div>
+
           <div class="terminal" id="terminal2">
             <div class="terminal-bar">-bash &mdash; 534 x 532</div>
             <div id="optionsList2"></div>
@@ -2391,7 +2505,6 @@
 <script>
   (function () {
     var colors = { full: 'var(--green)', partial: 'var(--blue)', non: 'var(--red)' };
-    var labels = ALIGN_LABELS;
 
     // Gauge is cumulative across every scenario: -2..+3 per question, times
     // the number of scenarios, gives the full range of the running total.
@@ -2413,7 +2526,6 @@
     var duoEl = panelEl.querySelector('.duo');
     var duoHeaderEl = panelEl.querySelector('.duo-header');
     var gaugeSection = document.getElementById('gaugeSection');
-    var gaugeChip = document.getElementById('gaugeChip');
     var resultsVisuals = document.getElementById('resultsVisuals');
     var restartBtn = document.getElementById('restartBtn');
     var resultsActions = document.getElementById('resultsActions');
@@ -2609,22 +2721,11 @@
       dialNeedle.style.setProperty('--needle-color', scoreToZoneColor(totalScore));
       dialNeedle.style.transform = 'translateX(-50%) rotate(' + scoreToAngle(totalScore) + 'deg)';
 
-      var overallAlign = overallAlignCategory(totalScore);
-      gaugeChip.textContent = labels[overallAlign];
-      gaugeChip.dataset.align = overallAlign;
-
       document.getElementById('gaugeScale').style.display = 'flex';
       document.getElementById('ratRace').style.display = 'block';
       actionBtn.style.display = 'none';
 
       resultsActions.hidden = false;
-    }
-
-    function overallAlignCategory(score) {
-      var fraction = pct(score) / 100;
-      if (fraction >= 0.66) return 'full';
-      if (fraction >= 0.33) return 'partial';
-      return 'non';
     }
 
     actionBtn.addEventListener('click', function () {
@@ -2649,6 +2750,8 @@
       totalScore = 0;
       initGauge();
       renderQuestion(currentIndex);
+      document.getElementById('mainPage').hidden = true;
+      document.getElementById('setupScreen').hidden = false;
     });
 
     initGauge();
@@ -2668,7 +2771,6 @@
     var optionsTitle2 = document.getElementById('optionsTitle2');
     var dialNeedle2 = document.getElementById('dialNeedle2');
     var gaugeSection2 = document.getElementById('gaugeSection2');
-    var gaugeChip2 = document.getElementById('gaugeChip2');
     var restartBtn2 = document.getElementById('restartBtn2');
     var resultsActions2 = document.getElementById('resultsActions2');
     var introCard2 = storyTitle2.closest('.card--intro');
@@ -2758,6 +2860,7 @@
       gaugeSection2.classList.add('gauge-wrap--intro');
       gaugeSection2.classList.remove('gauge-wrap--results');
       contentRow2.insertAdjacentElement('afterend', gaugeSection2);
+      document.getElementById('hamsterShowcase2').style.display = 'none';
 
       pips2.querySelectorAll('span').forEach(function (span, i) {
         span.classList.toggle('filled', i <= idx);
@@ -2784,7 +2887,8 @@
       optionsTitle2.innerHTML = 'STUDY HALL COMPLETE';
       gaugeSection2.classList.remove('gauge-wrap--intro');
       gaugeSection2.classList.add('gauge-wrap--results');
-      optionsTitle2.insertAdjacentElement('afterend', gaugeSection2);
+      document.getElementById('resultsVisuals2').prepend(gaugeSection2);
+      document.getElementById('hamsterShowcase2').style.display = 'block';
 
       terminal2.classList.remove('locked', 'revealed');
       terminal2.style.display = 'none';
@@ -2794,18 +2898,7 @@
       dialNeedle2.style.setProperty('--needle-color', scoreToZoneColor2(totalScore2));
       dialNeedle2.style.transform = 'translateX(-50%) rotate(' + scoreToAngle2(totalScore2) + 'deg)';
 
-      var overallAlign2 = overallAlignCategory2(totalScore2);
-      gaugeChip2.textContent = ALIGN_LABELS[overallAlign2];
-      gaugeChip2.dataset.align = overallAlign2;
-
       resultsActions2.hidden = false;
-    }
-
-    function overallAlignCategory2(score) {
-      var fraction = pct2(score) / 100;
-      if (fraction >= 0.66) return 'full';
-      if (fraction >= 0.33) return 'partial';
-      return 'non';
     }
 
     actionBtn2.addEventListener('click', function () {
@@ -2835,6 +2928,8 @@
       totalScore2 = 0;
       initGauge2();
       renderQuestion2(currentIndex2);
+      document.getElementById('mainPage').hidden = true;
+      document.getElementById('setupScreen').hidden = false;
     });
 
     initGauge2();

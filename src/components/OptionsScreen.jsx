@@ -31,6 +31,7 @@ export function OptionsScreen({
   isLast = false,
   gaugeAngle,
   needleColor,
+  sound = true,
   usedCalls,
   onUseCall,
   onSubmit,
@@ -41,14 +42,27 @@ export function OptionsScreen({
   const [revealed, setRevealed] = useState(false);
   const [timeLeft, setTimeLeft] = useState(CARD_TIME);
   const [outOfTime, setOutOfTime] = useState(false);
+  // Simulation Mode reveal, in steps: 0 = answering, 1 = panels fading and
+  // gauge sliding to center, 2 = needle swinging + "next" button.
+  const [revealStep, setRevealStep] = useState(0);
+  const revealing = revealStep > 0;
   const selectedRef = useRef(null);
   selectedRef.current = selected;
+  const revealingRef = useRef(false);
+  revealingRef.current = revealing;
+  const revealTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(revealTimer.current), []);
 
   // Countdown: on zero, count whatever is selected (or nothing) and move on,
   // mirroring the legacy prototype's out-of-time behavior.
   useEffect(() => {
     if (!timed) return undefined;
     const interval = setInterval(() => {
+      if (revealingRef.current) {
+        clearInterval(interval);
+        return;
+      }
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(interval);
@@ -70,10 +84,35 @@ export function OptionsScreen({
     'timer' +
     (outOfTime || timeLeft <= 20 ? ' timer-critical' : timeLeft <= 60 ? ' timer-warn' : '');
 
-  const alarm = timed && !outOfTime && timeLeft <= 10;
+  const alarm = timed && !outOfTime && !revealing && timeLeft <= 10;
+
+  function handleAction() {
+    if (study) {
+      if (!revealed) {
+        setRevealed(true);
+        onReveal(scenario.options[selected]);
+      } else {
+        onNext();
+      }
+      return;
+    }
+    // Simulation Mode: fade to black and glide the gauge to center first;
+    // only once it has settled does the needle swing to the new score.
+    if (revealing) return;
+    const option = scenario.options[selected];
+    setRevealStep(1);
+    revealTimer.current = setTimeout(() => {
+      onReveal(option);
+      setRevealStep(2);
+    }, 800);
+  }
 
   return (
-    <div className={'screen-options' + (alarm ? ' time-critical' : '')}>
+    <div
+      className={
+        'screen-options' + (alarm ? ' time-critical' : '') + (revealing ? ' revealing' : '')
+      }
+    >
       {outOfTime && <TimesUpOverlay />}
       <div className="layout-row top-row">
         <div className="card card--intro card--standalone">
@@ -93,15 +132,25 @@ export function OptionsScreen({
                 ))}
               </div>
             </div>
-            <AdvisorCall text={scenario.advisorText} usedCalls={usedCalls} onUseCall={onUseCall} />
+            <AdvisorCall
+              text={scenario.advisorText}
+              sound={sound}
+              usedCalls={usedCalls}
+              onUseCall={onUseCall}
+            />
           </div>
         </div>
         <div className="card card--options card--standalone">
           <div className="body">
-            {timed && (
+            {timed && !revealing && (
               <div className={timerClass}>{outOfTime ? '00:00' : formatTime(timeLeft)}</div>
             )}
             <Gauge angle={gaugeAngle} needleColor={needleColor} />
+            {revealStep === 2 && (
+              <button type="button" className="reveal-next-btn" onClick={onNext}>
+                {isLast ? 'Finish' : 'Next Question'}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -125,7 +174,7 @@ export function OptionsScreen({
                     style={{ animationDelay: `${0.45 + i * 0.12}s` }}
                     data-align={opt.align}
                     onClick={() => {
-                      if (!outOfTime && !revealed) setSelected(i);
+                      if (!outOfTime && !revealed && !revealing) setSelected(i);
                     }}
                   >
                     <div className="option-face option-face--rest">
@@ -145,17 +194,8 @@ export function OptionsScreen({
             <button
               type="button"
               className="action-btn"
-              disabled={selected === null || outOfTime}
-              onClick={() => {
-                if (!study) {
-                  onSubmit(scenario.options[selected]);
-                } else if (!revealed) {
-                  setRevealed(true);
-                  onReveal(scenario.options[selected]);
-                } else {
-                  onNext();
-                }
-              }}
+              disabled={selected === null || outOfTime || revealing}
+              onClick={handleAction}
             >
               {study && revealed ? (isLast ? 'Finish' : 'Next Question') : 'Submit'}
             </button>

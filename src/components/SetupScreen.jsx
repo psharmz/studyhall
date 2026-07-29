@@ -17,6 +17,8 @@ export function SetupScreen({ onStart }) {
   const [language, setLanguage] = useState(null);
   const [mode, setMode] = useState(null);
   const [cards, setCards] = useState(null);
+  // Sound defaults to on, so it never blocks Start Game
+  const [sound, setSound] = useState(true);
   const ready = language !== null && mode !== null && cards !== null;
 
   return (
@@ -55,10 +57,22 @@ export function SetupScreen({ onStart }) {
                 </div>
                 <div className="setup-lang-col">
                   <SetupBtn selected={mode === 'study'} onClick={() => setMode('study')}>
-                    Study Mode
+                    <span className="setup-btn-icon">🔒</span>Study Mode
                   </SetupBtn>
                   <div className="setup-lang-caption">See answers as you go. No rush go at your own pace</div>
                 </div>
+              </div>
+            </div>
+
+            <div className="setup-question">
+              <div className="setup-label">SOUND</div>
+              <div className="setup-choices">
+                <SetupBtn selected={sound} onClick={() => setSound(true)}>
+                  On
+                </SetupBtn>
+                <SetupBtn selected={!sound} onClick={() => setSound(false)}>
+                  Off
+                </SetupBtn>
               </div>
             </div>
 
@@ -77,7 +91,7 @@ export function SetupScreen({ onStart }) {
               type="button"
               className="restart-btn restart-btn--big setup-start-btn"
               disabled={!ready}
-              onClick={() => onStart({ language, mode, cards })}
+              onClick={() => onStart({ language, mode, cards, sound })}
             >
               Start Game
             </button>

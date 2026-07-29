@@ -5,8 +5,9 @@ import { PromptScreen } from './components/PromptScreen.jsx';
 import { OptionsScreen } from './components/OptionsScreen.jsx';
 import { CompleteScreen } from './components/CompleteScreen.jsx';
 
-const ALIGN_COLORS = { full: 'var(--green)', partial: 'var(--blue)', non: 'var(--red)' };
-const DEFAULT_NEEDLE = '#1A1A2E';
+// The needle reads blue on every gauge, whatever the answer's alignment --
+// the arc's own bands carry the good/bad signal.
+const NEEDLE_COLOR = 'var(--blue)';
 
 // Needle sweeps +75deg (pointing right, into the red zone) at SCORE_MIN
 // down to -75deg (pointing left, into the green zone) at SCORE_MAX.
@@ -17,22 +18,11 @@ function scoreToAngle(score) {
   return NEEDLE_SWEEP - fraction * (NEEDLE_SWEEP * 2);
 }
 
-// Matches the arc's own band colors, used on the results screen where no
-// single answer's alignment applies.
-function scoreToZoneColor(score) {
-  const arcAngle = 90 - scoreToAngle(score);
-  if (arcAngle >= 132) return '#3f9142';
-  if (arcAngle >= 96) return '#f2c94c';
-  if (arcAngle >= 46) return '#ef8b2c';
-  return '#e0453f';
-}
-
 export default function App() {
   const [phase, setPhase] = useState('setup'); // setup | prompt | options | complete
   const [settings, setSettings] = useState(null); // { language, mode, cards }
   const [index, setIndex] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
-  const [needleColor, setNeedleColor] = useState(DEFAULT_NEEDLE);
   // Three advisor calls per game, spendable on any card
   const [usedCalls, setUsedCalls] = useState([false, false, false]);
 
@@ -44,40 +34,33 @@ export default function App() {
     setSettings(chosen);
     setIndex(0);
     setTotalScore(0);
-    setNeedleColor(DEFAULT_NEEDLE);
     setUsedCalls([false, false, false]);
     setPhase('prompt');
   }
 
-  function advance(score) {
+  function advance() {
     if (index < deck.length - 1) {
       setIndex(index + 1);
       setPhase('prompt');
     } else {
-      setNeedleColor(scoreToZoneColor(score));
       setPhase('complete');
     }
   }
 
-  // Simulation Mode: score and advance in one step
+  // Out of time: score whatever was selected (if anything) and move on
   function handleSubmit(option) {
-    let score = totalScore;
-    if (option) {
-      score += option.score;
-      setTotalScore(score);
-      setNeedleColor(ALIGN_COLORS[option.align]);
-    }
-    advance(score);
+    if (option) setTotalScore(totalScore + option.score);
+    advance();
   }
 
-  // Study Mode: scoring happens at reveal, advancing on "Next Question"
+  // Scoring happens at reveal so the needle can swing while the answer is
+  // still on screen; advancing is a separate, later step.
   function handleReveal(option) {
     setTotalScore(totalScore + option.score);
-    setNeedleColor(ALIGN_COLORS[option.align]);
   }
 
   function handleNext() {
-    advance(totalScore);
+    advance();
   }
 
   let screen;
@@ -87,7 +70,7 @@ export default function App() {
     screen = (
       <CompleteScreen
         gaugeAngle={scoreToAngle(totalScore)}
-        needleColor={needleColor}
+        needleColor={NEEDLE_COLOR}
         onRestart={() => setPhase('setup')}
       />
     );
@@ -100,7 +83,8 @@ export default function App() {
         study={settings?.mode === 'study'}
         isLast={index === deck.length - 1}
         gaugeAngle={scoreToAngle(totalScore)}
-        needleColor={needleColor}
+        needleColor={NEEDLE_COLOR}
+        sound={settings?.sound !== false}
         usedCalls={usedCalls}
         onUseCall={(i) => setUsedCalls((prev) => prev.map((u, j) => (j === i ? true : u)))}
         onSubmit={handleSubmit}

@@ -1636,3 +1636,69 @@
     background: var(--black);
     color: var(--green);
   }
+
+  /* Emoji prefix inside a setup button (e.g. the Study Mode lock) */
+  .setup-btn-icon {
+    margin-right: 7px;
+  }
+
+  /* ---- Simulation Mode reveal ----
+     On Submit the green panel fades to black and collapses, the A-E options
+     fade out, and the black pane grows to full width so the gauge glides to
+     center while the needle swings to the new score. */
+  .screen-options .top-row .card--intro,
+  .screen-options .top-row .card--options {
+    transition: flex-basis 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .screen-options.revealing .top-row .card--intro {
+    flex-basis: 0;
+    overflow: hidden;
+    animation: panelFadeOut 0.5s ease both;
+  }
+
+  /* Keep the body at its natural width while the card clips it, so the text
+     can't reflow and stretch the row's height during the collapse. */
+  .screen-options.revealing .top-row .card--intro .body {
+    width: 620px;
+    flex: none;
+    background: var(--black);
+    transition: background-color 0.5s ease;
+  }
+
+  .screen-options.revealing .top-row .card--options {
+    flex-basis: 100%;
+  }
+
+  .screen-options.revealing .card--choices .terminal,
+  .screen-options.revealing .card--choices .action-btn {
+    animation: panelFadeOut 0.45s ease both;
+    pointer-events: none;
+  }
+
+  @keyframes panelFadeOut {
+    to { opacity: 0; }
+  }
+
+  /* Next-question button under the centered gauge, once the needle has swung */
+  .reveal-next-btn {
+    align-self: center;
+    margin-top: 30px;
+    background: transparent;
+    border: 1.5px solid var(--green);
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 12px 26px;
+    cursor: pointer;
+    animation: fadeInSoft 0.4s ease 0.45s both;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .reveal-next-btn:hover {
+    background: var(--green);
+    color: var(--black);
+  }

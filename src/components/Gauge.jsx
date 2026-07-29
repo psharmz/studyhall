@@ -3,9 +3,6 @@ import { MiniHamster, DialArc, WheelHamster } from '../pixels.jsx';
 export function Gauge({ angle, needleColor, intro = false, showScale = false }) {
   return (
     <div className={'gauge-wrap' + (intro ? ' gauge-wrap--intro' : '')}>
-      <div className="gauge-header">
-        <div className="gauge-title">GAUGE</div>
-      </div>
       <div className="gauge-row">
         <div className="gauge-hamsters">
           <MiniHamster className="mini-hamster" />

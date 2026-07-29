@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { playRingTone } from '../ringtone.js';
+import { playRingTone, RING_TOTAL_MS } from '../ringtone.js';
 import { useTypewriter } from '../useTypewriter.js';
 
 function PhoneIcon() {
@@ -14,7 +14,7 @@ function PhoneIcon() {
 // phone rings it (only that icon animates); after the two rings the bubble
 // opens and types the advisor response. Dismissing the bubble consumes the
 // call: that icon gets a persistent slash for the rest of the game.
-export function AdvisorCall({ text, usedCalls, onUseCall }) {
+export function AdvisorCall({ text, sound = true, usedCalls, onUseCall }) {
   const [phase, setPhase] = useState('idle'); // idle | ringing | talking
   const [active, setActive] = useState(null);
   const timerRef = useRef(null);
@@ -26,7 +26,8 @@ export function AdvisorCall({ text, usedCalls, onUseCall }) {
     if (phase !== 'idle' || usedCalls[i]) return;
     setActive(i);
     setPhase('ringing');
-    const ms = playRingTone();
+    // Sound off still rings visually -- same timing, no audio
+    const ms = sound ? playRingTone() : RING_TOTAL_MS;
     timerRef.current = setTimeout(() => setPhase('talking'), ms + 150);
   }
 

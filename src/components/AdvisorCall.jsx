@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { playRingTone, RING_TOTAL_MS } from '../ringtone.js';
-import { useTypewriter } from '../useTypewriter.js';
+import { SHOW_ADVISOR_ROLE } from '../scenarios.js';
 
 function PhoneIcon() {
   return (
@@ -14,11 +14,12 @@ function PhoneIcon() {
 // phone rings it (only that icon animates); after the two rings the bubble
 // opens and types the advisor response. Dismissing the bubble consumes the
 // call: that icon gets a persistent slash for the rest of the game.
-export function AdvisorCall({ text, sound = true, usedCalls, onUseCall }) {
+export function AdvisorCall({ advisors, sound = true, usedCalls, onUseCall }) {
   const [phase, setPhase] = useState('idle'); // idle | ringing | talking
   const [active, setActive] = useState(null);
   const timerRef = useRef(null);
-  const { visible, done } = useTypewriter(text, { active: phase === 'talking', speed: 18 });
+  // Each phone reaches its own advisor; the quote appears in full.
+  const advisor = active === null ? null : advisors[active];
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
@@ -56,17 +57,15 @@ export function AdvisorCall({ text, sound = true, usedCalls, onUseCall }) {
           </button>
         </div>
       ))}
-      {phase === 'talking' && (
+      {phase === 'talking' && advisor && (
         <div className="advisor-bubble">
-          <p>
-            {visible}
-            {!done && <span className="type-caret type-caret--bubble" />}
-          </p>
-          {done && (
-            <button type="button" className="dismiss-btn" onClick={dismiss}>
-              Dismiss
-            </button>
+          {SHOW_ADVISOR_ROLE && advisor.role && (
+            <div className="advisor-role">{advisor.role}</div>
           )}
+          <p>{advisor.quote}</p>
+          <button type="button" className="dismiss-btn" onClick={dismiss}>
+            Dismiss
+          </button>
         </div>
       )}
     </div>

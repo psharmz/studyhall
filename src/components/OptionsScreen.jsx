@@ -133,7 +133,7 @@ export function OptionsScreen({
               </div>
             </div>
             <AdvisorCall
-              text={scenario.advisorText}
+              advisors={scenario.advisors}
               sound={sound}
               usedCalls={usedCalls}
               onUseCall={onUseCall}

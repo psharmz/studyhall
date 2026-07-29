@@ -1715,3 +1715,31 @@
     margin-bottom: 8px;
     border-bottom: 1px solid rgba(124, 250, 107, 0.3);
   }
+
+  /* Skip the story typewriter -- bottom right of the green panel, only
+     while text is still revealing. */
+  .card--prompt .body {
+    position: relative;
+  }
+
+  .skip-type-btn {
+    position: absolute;
+    right: 22px;
+    bottom: 18px;
+    background: transparent;
+    border: 1.5px solid var(--black);
+    color: var(--black);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .skip-type-btn:hover {
+    background: var(--black);
+    color: var(--green);
+  }

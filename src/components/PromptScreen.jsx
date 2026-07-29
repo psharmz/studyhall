@@ -6,7 +6,7 @@ const PARA_BREAK = '\n\n';
 
 export function PromptScreen({ scenario, index, total, onSelectAnswer }) {
   const fullText = scenario.paragraphs.join(PARA_BREAK);
-  const { visible, done } = useTypewriter(fullText);
+  const { visible, done, skip } = useTypewriter(fullText);
   const paragraphs = visible.split(PARA_BREAK);
 
   return (
@@ -40,6 +40,11 @@ export function PromptScreen({ scenario, index, total, onSelectAnswer }) {
               )}
             </div>
           </div>
+          {!done && (
+            <button type="button" className="skip-type-btn" onClick={skip}>
+              Skip Typewriter Effect
+            </button>
+          )}
         </div>
         <div className="footer">
           <div className="pips">

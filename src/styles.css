@@ -214,24 +214,105 @@
     flex: 0 0 auto;
   }
 
-  .halftone {
-    width: 130px;
-    height: 300px;
-    flex-shrink: 0;
+  /* ---- Halftone bloom played before each prompt screen ---- */
+  .transition-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
     background: var(--black);
-    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
   }
 
-  .halftone::before {
+  /* Dot grid stays a constant size; the mask that reveals it is what grows,
+     so the cloud blooms outward instead of the dots zooming. */
+  .halo {
+    position: relative;
+    width: min(78vmin, 560px);
+    aspect-ratio: 1;
+    background-image: radial-gradient(circle at center, #FFFFFF 1px, transparent 1.5px);
+    background-size: 7px 7px;
+    -webkit-mask-image: radial-gradient(circle at 50% 50%,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.55) 34%,
+      rgba(255, 255, 255, 0.12) 55%,
+      transparent 72%);
+    mask-image: radial-gradient(circle at 50% 50%,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.55) 34%,
+      rgba(255, 255, 255, 0.12) 55%,
+      transparent 72%);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    animation: haloBloom 1.5s cubic-bezier(0.22, 0.75, 0.3, 1) forwards;
+  }
+
+  /* Brighter core, half a beat behind the cloud -- the hot centre in the
+     reference frames. */
+  .halo::after {
     content: "";
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(circle, #fff 1px, transparent 1.3px);
-    background-size: 6px 6px;
-    -webkit-mask-image: radial-gradient(circle at 50% 50%, #fff 0%, #fff 35%, transparent 68%);
-    mask-image: radial-gradient(circle at 50% 50%, #fff 0%, #fff 35%, transparent 68%);
-    opacity: 0.9;
+    background-image: radial-gradient(circle at center, #FFFFFF 1.3px, transparent 1.7px);
+    background-size: 7px 7px;
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, #FFFFFF 0%, transparent 48%);
+    mask-image: radial-gradient(circle at 50% 50%, #FFFFFF 0%, transparent 48%);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    animation: haloCore 1.5s cubic-bezier(0.22, 0.75, 0.3, 1) forwards;
+  }
+
+  @keyframes haloBloom {
+    0% {
+      opacity: 0;
+      -webkit-mask-size: 10% 10%;
+      mask-size: 10% 10%;
+    }
+    18% { opacity: 0.9; }
+    60% {
+      opacity: 0.9;
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+    }
+    /* Stays under ~138%: past that the mask's transparent edge falls outside
+       the box and the dot grid's square boundary shows. */
+    100% {
+      opacity: 0;
+      -webkit-mask-size: 132% 132%;
+      mask-size: 132% 132%;
+    }
+  }
+
+  @keyframes haloCore {
+    0% {
+      opacity: 0;
+      -webkit-mask-size: 4% 4%;
+      mask-size: 4% 4%;
+    }
+    30% { opacity: 1; }
+    65% {
+      opacity: 0.75;
+      -webkit-mask-size: 62% 62%;
+      mask-size: 62% 62%;
+    }
+    100% {
+      opacity: 0;
+      -webkit-mask-size: 120% 120%;
+      mask-size: 120% 120%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .halo,
+    .halo::after {
+      animation-duration: 0.4s;
+    }
   }
 
   .story-text-wrap {
@@ -747,6 +828,176 @@
     display: block;
     width: 100%;
     margin: 12px 0 0;
+  }
+
+  /* ---- Back / Next footer strip ---- */
+  .nav-footer {
+    background: var(--black);
+    border-top: 1.5px solid var(--terminal-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    flex: 0 0 auto;
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: none;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+
+  .nav-btn:hover:not(:disabled) {
+    background: var(--green);
+    color: var(--black);
+  }
+
+  .nav-btn:disabled {
+    color: #4A4A4A;
+    cursor: not-allowed;
+  }
+
+  .nav-chevron {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  /* ---- Reflection screen: terminal-style prompt + answer lines ---- */
+  .reflect {
+    color: var(--green);
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+
+  .reflect-line {
+    margin: 0 0 22px;
+  }
+
+  .reflect-saved[hidden] {
+    display: none;
+  }
+
+  .reflect-caret {
+    flex: 0 0 auto;
+    margin-right: 8px;
+  }
+
+  .reflect-field {
+    display: flex;
+    align-items: baseline;
+    margin: 0 0 22px;
+    padding-left: 18px;
+  }
+
+  /* Establishes the `ch` unit the block cursor is positioned in, so it must
+     carry the same font metrics as the input it sits over. */
+  .reflect-input-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+
+  .reflect-input {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--green);
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    padding: 2px 0;
+    /* Hidden in favour of the chunky block cursor drawn below */
+    caret-color: transparent;
+  }
+
+  .reflect-input::placeholder {
+    color: var(--green);
+    opacity: 0.75;
+  }
+
+  /* Empty field: hold the hint one column right so the block cursor sits in
+     front of it rather than inverting its first letter. */
+  .reflect-input:placeholder-shown {
+    padding-left: 1ch;
+  }
+
+  .reflect-input:focus {
+    outline: none;
+  }
+
+  /* Solid block cursor. `difference` inverts whatever character sits under
+     it -- green block on black, black glyph on the block -- like a TTY. */
+  .reflect-cursor {
+    position: absolute;
+    top: 50%;
+    width: 1ch;
+    height: 1.15em;
+    transform: translateY(-50%);
+    background: var(--green);
+    mix-blend-mode: difference;
+    pointer-events: none;
+    animation: blockBlink 1s steps(1) infinite;
+  }
+
+  @keyframes blockBlink {
+    50% { opacity: 0; }
+  }
+
+  .reflect-choices {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .reflect-choice {
+    display: flex;
+    align-items: baseline;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    padding: 2px 6px 2px 0;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+
+  .reflect-choice:hover {
+    background: rgba(124, 250, 107, 0.14);
+  }
+
+  /* ---- Rules screen (shares the setup card footprint) ---- */
+  .rules-text {
+    margin-bottom: 28px;
+    color: #C9C9C9;
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+
+  .rules-text p {
+    margin: 0 0 14px;
+  }
+
+  .rules-text p:last-child {
+    margin-bottom: 0;
   }
 
   /* ---- Tabs ---- */
@@ -1670,9 +1921,7 @@
     flex-basis: 100%;
   }
 
-  .screen-options.revealing .card--choices .terminal,
-  .screen-options.revealing .card--choices .action-btn {
-    animation: panelFadeOut 0.45s ease both;
+  .screen-options.revealing .card--choices .terminal {
     pointer-events: none;
   }
 
@@ -1680,27 +1929,80 @@
     to { opacity: 0; }
   }
 
-  /* Next-question button under the centered gauge, once the needle has swung */
-  .reveal-next-btn {
-    align-self: center;
-    margin-top: 30px;
-    background: transparent;
-    border: 1.5px solid var(--green);
-    color: var(--green);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    padding: 12px 26px;
-    cursor: pointer;
-    animation: fadeInSoft 0.4s ease 0.45s both;
-    transition: background 0.2s ease, color 0.2s ease;
+  /* The terminal's chrome gets out of the way, leaving the chosen answer
+     alone on the black pane. */
+  .screen-options.revealing .card--choices .terminal {
+    border-color: transparent;
   }
 
-  .reveal-next-btn:hover {
-    background: var(--green);
-    color: var(--black);
+  .terminal-bar {
+    transition: opacity 0.3s ease, height 0.45s ease, padding 0.45s ease,
+      border-width 0.45s ease;
+  }
+
+  .screen-options.revealing .terminal-bar {
+    opacity: 0;
+    height: 0;
+    padding: 0;
+    border-bottom-width: 0;
+    overflow: hidden;
+  }
+
+  /* Reveal: unpicked options collapse to nothing while the chosen one grows
+     across the row. Its text is centre-aligned, so it glides to the middle
+     under the gauge. flex-grow is a number, so the whole move interpolates. */
+  .options-row .option {
+    transition: flex-grow 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+      padding 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* max-height stops the squeezed-to-zero columns from wrapping one letter
+     per line and dragging the row's height with them. */
+  .screen-options.revealing .options-row .option:not(.selected) {
+    flex-grow: 0;
+    max-height: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-right-color: transparent;
+    overflow: hidden;
+    animation: panelFadeOut 0.4s ease both;
+  }
+
+  /* Drops the selection tint: it is the only answer left on screen, and a
+     full-bleed green band would cut the panel in two. */
+  .screen-options.revealing .options-row .option.selected {
+    flex-grow: 40;
+    background: transparent;
+    border-right-color: transparent;
+    animation: none;
+    cursor: default;
+  }
+
+  /* Stands in for the answer when the clock ran out on an empty pick. */
+  .timeout-note {
+    margin: 0;
+    padding: 26px 20px 0;
+    color: var(--red);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    text-align: center;
+    animation: fadeInSoft 0.5s ease both;
+  }
+
+  /* Submit steps aside during the swing, then returns as "Next Question"
+     directly under the answer -- same slot, so nothing shifts. */
+  .screen-options.revealing .card--choices .action-btn {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .screen-options.reveal-settled .card--choices .action-btn {
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 0.4s ease 0.15s;
   }
 
   /* Advisor role header above the quote (toggle via SHOW_ADVISOR_ROLE) */
@@ -1722,10 +2024,11 @@
     position: relative;
   }
 
+  /* Sits in the flow below the story: with the halftone panel gone the text
+     spans the full card, so an absolutely placed button would overlap it. */
   .skip-type-btn {
-    position: absolute;
-    right: 22px;
-    bottom: 18px;
+    display: block;
+    margin: 18px 0 0 auto;
     background: transparent;
     border: 1.5px solid var(--black);
     color: var(--black);

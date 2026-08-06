@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { SCENARIOS, SCORE_MIN, SCORE_MAX } from './scenarios.js';
 import { SetupScreen } from './components/SetupScreen.jsx';
+import { RulesScreen } from './components/RulesScreen.jsx';
+import { GoalsScreen } from './components/GoalsScreen.jsx';
+import { ReflectionScreen } from './components/ReflectionScreen.jsx';
+import { PromptTransition } from './components/PromptTransition.jsx';
 import { PromptScreen } from './components/PromptScreen.jsx';
 import { OptionsScreen } from './components/OptionsScreen.jsx';
 import { CompleteScreen } from './components/CompleteScreen.jsx';
@@ -13,13 +17,23 @@ const NEEDLE_COLOR = 'var(--blue)';
 // down to -75deg (pointing left, into the green zone) at SCORE_MAX.
 const NEEDLE_SWEEP = 75;
 
+// Letting the clock run out with no answer picked swings the needle an
+// eighth of the dial's full travel towards non-aligned.
+const TIMEOUT_PENALTY = (SCORE_MAX - SCORE_MIN) / 8;
+
 function scoreToAngle(score) {
-  const fraction = (score - SCORE_MIN) / (SCORE_MAX - SCORE_MIN);
+  // Clamped: repeated timeouts can push the total past SCORE_MIN, and the
+  // needle should stop at the end of the dial rather than swing off it.
+  const raw = (score - SCORE_MIN) / (SCORE_MAX - SCORE_MIN);
+  const fraction = Math.min(1, Math.max(0, raw));
   return NEEDLE_SWEEP - fraction * (NEEDLE_SWEEP * 2);
 }
 
 export default function App() {
-  const [phase, setPhase] = useState('setup'); // setup | prompt | options | complete
+  // setup | rules | goals | reflect | transition | prompt | options | complete
+  const [phase, setPhase] = useState('setup');
+  // The player's own definition of Environmental Justice in Technology
+  const [reflection, setReflection] = useState('');
   const [settings, setSettings] = useState(null); // { language, mode, cards }
   const [index, setIndex] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
@@ -35,28 +49,27 @@ export default function App() {
     setIndex(0);
     setTotalScore(0);
     setUsedCalls([false, false, false]);
-    setPhase('prompt');
+    setPhase('rules');
   }
 
   function advance() {
     if (index < deck.length - 1) {
       setIndex(index + 1);
-      setPhase('prompt');
+      setPhase('transition');
     } else {
       setPhase('complete');
     }
   }
 
-  // Out of time: score whatever was selected (if anything) and move on
-  function handleSubmit(option) {
-    if (option) setTotalScore(totalScore + option.score);
-    advance();
-  }
-
   // Scoring happens at reveal so the needle can swing while the answer is
   // still on screen; advancing is a separate, later step.
   function handleReveal(option) {
-    setTotalScore(totalScore + option.score);
+    setTotalScore((t) => t + option.score);
+  }
+
+  // Out of time with nothing picked -- no answer to score, just the penalty.
+  function handleTimeoutPenalty() {
+    setTotalScore((t) => t - TIMEOUT_PENALTY);
   }
 
   function handleNext() {
@@ -65,7 +78,22 @@ export default function App() {
 
   let screen;
   if (phase === 'setup') {
-    screen = <SetupScreen onStart={handleStart} />;
+    screen = <SetupScreen onStart={handleStart} initial={settings} />;
+  } else if (phase === 'rules') {
+    screen = <RulesScreen onBack={() => setPhase('setup')} onNext={() => setPhase('goals')} />;
+  } else if (phase === 'goals') {
+    screen = <GoalsScreen onBack={() => setPhase('rules')} onNext={() => setPhase('reflect')} />;
+  } else if (phase === 'reflect') {
+    screen = (
+      <ReflectionScreen
+        answer={reflection}
+        onSaveAnswer={setReflection}
+        onStart={() => setPhase('transition')}
+        onReview={() => setPhase('rules')}
+      />
+    );
+  } else if (phase === 'transition') {
+    screen = <PromptTransition key={index} onDone={() => setPhase('prompt')} />;
   } else if (phase === 'complete') {
     screen = (
       <CompleteScreen
@@ -87,8 +115,8 @@ export default function App() {
         sound={settings?.sound !== false}
         usedCalls={usedCalls}
         onUseCall={(i) => setUsedCalls((prev) => prev.map((u, j) => (j === i ? true : u)))}
-        onSubmit={handleSubmit}
         onReveal={handleReveal}
+        onTimeoutPenalty={handleTimeoutPenalty}
         onNext={handleNext}
       />
     );

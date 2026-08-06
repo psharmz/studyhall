@@ -13,73 +13,116 @@ function SetupBtn({ selected, onClick, children }) {
   );
 }
 
-export function SetupScreen({ onStart }) {
-  const [language, setLanguage] = useState(null);
-  const [mode, setMode] = useState(null);
-  const [cards, setCards] = useState(null);
+// Setup-screen copy per language. Falls back to english until a language is picked.
+const STRINGS = {
+  english: {
+    titleBar: 'S.00. STUDY HALL SETUP',
+    welcome: ['WELCOME TO', 'STUDY HALL'],
+    languageLabel: 'CHOOSE YOUR LANGUAGE',
+    english: 'English',
+    spanish: 'Español',
+    translators: 'Translated by Mariana González-Cepeda and Jose Alberto Nevarez (UABC - Mexico)',
+    modeLabel: 'MODE',
+    simulation: 'Simulation Mode',
+    simulationCaption: 'Timed game setting',
+    study: 'Study Mode',
+    studyCaption: 'See answers as you go. No rush go at your own pace',
+    soundLabel: 'SOUND',
+    on: 'On',
+    off: 'Off',
+    cardsLabel: 'NUMBER OF CARDS',
+    start: 'Start Game',
+  },
+  spanish: {
+    titleBar: 'S.00. CONFIGURACIÓN DE STUDY HALL',
+    welcome: ['BIENVENIDO A', 'STUDY HALL'],
+    languageLabel: 'ELIGE TU IDIOMA',
+    english: 'Inglés',
+    spanish: 'Español',
+    translators: 'Traducido por Mariana González-Cepeda y Jose Alberto Nevarez (UABC - México)',
+    modeLabel: 'MODO',
+    simulation: 'Modo Simulación',
+    simulationCaption: 'Juego con tiempo límite',
+    study: 'Modo Estudio',
+    studyCaption: 'Ve las respuestas mientras avanzas. Sin prisa, a tu propio ritmo',
+    soundLabel: 'SONIDO',
+    on: 'Encendido',
+    off: 'Apagado',
+    cardsLabel: 'NÚMERO DE TARJETAS',
+    start: 'Comenzar Juego',
+  },
+};
+
+// `initial` restores the previous picks when the player comes back from the
+// rules screen, so Back never wipes what they already chose.
+export function SetupScreen({ onStart, initial }) {
+  const [language, setLanguage] = useState(initial?.language ?? null);
+  const [mode, setMode] = useState(initial?.mode ?? null);
+  const [cards, setCards] = useState(initial?.cards ?? null);
   // Sound defaults to on, so it never blocks Start Game
-  const [sound, setSound] = useState(true);
+  const [sound, setSound] = useState(initial?.sound ?? true);
   const ready = language !== null && mode !== null && cards !== null;
+  const t = STRINGS[language] ?? STRINGS.english;
 
   return (
     <div className="setup-screen">
       <div className="setup-card">
-        <TitleBar label="S.00. STUDY HALL SETUP" />
+        <TitleBar label={t.titleBar} />
         <div className="setup-body">
           <div className="setup-inner">
-            <h1 className="pixel">WELCOME TO<br />STUDY HALL</h1>
+            <h1 className="pixel">{t.welcome[0]}<br />{t.welcome[1]}</h1>
 
             <div className="setup-question">
-              <div className="setup-label">CHOOSE YOUR LANGUAGE</div>
+              <div className="setup-label">{t.languageLabel}</div>
               <div className="setup-choices setup-lang-choices">
                 <SetupBtn selected={language === 'english'} onClick={() => setLanguage('english')}>
-                  English
+                  {t.english}
                 </SetupBtn>
                 <div className="setup-lang-col">
                   <SetupBtn selected={language === 'spanish'} onClick={() => setLanguage('spanish')}>
-                    Spanish
+                    {t.spanish}
                   </SetupBtn>
                   <div className="setup-lang-caption">
-                    Translated by Mariana Gonzales and Jose Alberto Nevarez (UABC - Mexico)
+                    {t.translators}
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="setup-question">
-              <div className="setup-label">MODE</div>
+              <div className="setup-label">{t.modeLabel}</div>
               <div className="setup-choices setup-mode-choices">
                 <div className="setup-lang-col">
                   <SetupBtn selected={mode === 'simulation'} onClick={() => setMode('simulation')}>
-                    Simulation Mode
+                    {t.simulation}
                   </SetupBtn>
-                  <div className="setup-lang-caption">Timed game setting</div>
+                  <div className="setup-lang-caption">{t.simulationCaption}</div>
                 </div>
                 <div className="setup-lang-col">
                   <SetupBtn selected={mode === 'study'} onClick={() => setMode('study')}>
-                    <span className="setup-btn-icon">🔒</span>Study Mode
+                    <span className="setup-btn-icon">🔒</span>{t.study}
                   </SetupBtn>
-                  <div className="setup-lang-caption">See answers as you go. No rush go at your own pace</div>
+                  <div className="setup-lang-caption">{t.studyCaption}</div>
                 </div>
               </div>
             </div>
 
             <div className="setup-question">
-              <div className="setup-label">SOUND</div>
+              <div className="setup-label">{t.soundLabel}</div>
               <div className="setup-choices">
                 <SetupBtn selected={sound} onClick={() => setSound(true)}>
-                  On
+                  {t.on}
                 </SetupBtn>
                 <SetupBtn selected={!sound} onClick={() => setSound(false)}>
-                  Off
+                  {t.off}
                 </SetupBtn>
               </div>
             </div>
 
             <div className="setup-question">
-              <div className="setup-label">NUMBER OF CARDS</div>
+              <div className="setup-label">{t.cardsLabel}</div>
               <div className="setup-choices">
-                {[5, 10, 20].map((n) => (
+                {[10, 20].map((n) => (
                   <SetupBtn key={n} selected={cards === n} onClick={() => setCards(n)}>
                     {n}
                   </SetupBtn>
@@ -93,7 +136,7 @@ export function SetupScreen({ onStart }) {
               disabled={!ready}
               onClick={() => onStart({ language, mode, cards, sound })}
             >
-              Start Game
+              {t.start}
             </button>
           </div>
         </div>

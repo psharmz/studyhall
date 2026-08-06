@@ -16,7 +16,7 @@ function TimesUpOverlay() {
   );
 }
 
-const CARD_TIME = 180;
+const CARD_TIME = 90;
 
 function formatTime(s) {
   const m = Math.floor(s / 60);
@@ -34,8 +34,8 @@ export function OptionsScreen({
   sound = true,
   usedCalls,
   onUseCall,
-  onSubmit,
   onReveal,
+  onTimeoutPenalty,
   onNext,
 }) {
   const [selected, setSelected] = useState(null);
@@ -51,11 +51,13 @@ export function OptionsScreen({
   const revealingRef = useRef(false);
   revealingRef.current = revealing;
   const revealTimer = useRef(null);
+  // Guards the one-shot timeout handoff against StrictMode's double effects
+  const timedOutRef = useRef(false);
 
   useEffect(() => () => clearTimeout(revealTimer.current), []);
 
-  // Countdown: on zero, count whatever is selected (or nothing) and move on,
-  // mirroring the legacy prototype's out-of-time behavior.
+  // Countdown. The updater stays pure -- side effects here would run twice
+  // under StrictMode and double-charge the timeout penalty.
   useEffect(() => {
     if (!timed) return undefined;
     const interval = setInterval(() => {
@@ -63,28 +65,43 @@ export function OptionsScreen({
         clearInterval(interval);
         return;
       }
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(interval);
-          setOutOfTime(true);
-          // Long enough for the "TIMES UP!" overlay to type out and flash
-          setTimeout(() => {
-            const sel = selectedRef.current;
-            onSubmit(sel === null ? null : scenario.options[sel]);
-          }, 2600);
-          return 0;
-        }
-        return t - 1;
-      });
+      setTimeLeft((t) => (t <= 1 ? 0 : t - 1));
     }, 1000);
     return () => clearInterval(interval);
   }, [scenario]);
 
+  // Hitting zero: hold on "TIMES UP!" long enough for it to type out and
+  // flash, then run the same reveal as a normal submit.
+  useEffect(() => {
+    if (!timed || timeLeft > 0 || timedOutRef.current) return;
+    timedOutRef.current = true;
+    setOutOfTime(true);
+    revealTimer.current = setTimeout(() => beginReveal(selectedRef.current), 2600);
+  }, [timed, timeLeft]);
+
+  // Thresholds track CARD_TIME: amber for the last third, red for the last
+  // ten seconds, glow for the final five.
   const timerClass =
     'timer' +
-    (outOfTime || timeLeft <= 20 ? ' timer-critical' : timeLeft <= 60 ? ' timer-warn' : '');
+    (outOfTime || timeLeft <= 10 ? ' timer-critical' : timeLeft <= 30 ? ' timer-warn' : '');
 
-  const alarm = timed && !outOfTime && !revealing && timeLeft <= 10;
+  const alarm = timed && !outOfTime && !revealing && timeLeft <= 5;
+
+  // Revealing with nothing picked: the clock ran out on an empty answer.
+  const noAnswer = revealing && selected === null;
+
+  // Simulation Mode: fade to black and glide the gauge to center first; only
+  // once it has settled does the needle swing. A null index means the clock
+  // ran out with nothing picked -- that costs the timeout penalty instead.
+  function beginReveal(index) {
+    const option = index === null ? null : scenario.options[index];
+    setRevealStep(1);
+    revealTimer.current = setTimeout(() => {
+      if (option) onReveal(option);
+      else onTimeoutPenalty();
+      setRevealStep(2);
+    }, 800);
+  }
 
   function handleAction() {
     if (study) {
@@ -96,24 +113,25 @@ export function OptionsScreen({
       }
       return;
     }
-    // Simulation Mode: fade to black and glide the gauge to center first;
-    // only once it has settled does the needle swing to the new score.
+    // Once the reveal has settled the same button carries on to the next card.
+    if (revealStep === 2) {
+      onNext();
+      return;
+    }
     if (revealing) return;
-    const option = scenario.options[selected];
-    setRevealStep(1);
-    revealTimer.current = setTimeout(() => {
-      onReveal(option);
-      setRevealStep(2);
-    }, 800);
+    beginReveal(selected);
   }
 
   return (
     <div
       className={
-        'screen-options' + (alarm ? ' time-critical' : '') + (revealing ? ' revealing' : '')
+        'screen-options' +
+        (alarm ? ' time-critical' : '') +
+        (revealing ? ' revealing' : '') +
+        (revealStep === 2 ? ' reveal-settled' : '')
       }
     >
-      {outOfTime && <TimesUpOverlay />}
+      {outOfTime && !revealing && <TimesUpOverlay />}
       <div className="layout-row top-row">
         <div className="card card--intro card--standalone">
           <div className="body">
@@ -137,6 +155,8 @@ export function OptionsScreen({
               sound={sound}
               usedCalls={usedCalls}
               onUseCall={onUseCall}
+              unlimited={study}
+              showRole={study}
             />
           </div>
         </div>
@@ -146,11 +166,6 @@ export function OptionsScreen({
               <div className={timerClass}>{outOfTime ? '00:00' : formatTime(timeLeft)}</div>
             )}
             <Gauge angle={gaugeAngle} needleColor={needleColor} />
-            {revealStep === 2 && (
-              <button type="button" className="reveal-next-btn" onClick={onNext}>
-                {isLast ? 'Finish' : 'Next Question'}
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -191,13 +206,22 @@ export function OptionsScreen({
                 ))}
               </div>
             </div>
+            {noAnswer && (
+              <p className="timeout-note">
+                When you don&rsquo;t decide, someone will decide for you.
+              </p>
+            )}
             <button
               type="button"
               className="action-btn"
-              disabled={selected === null || outOfTime || revealing}
+              disabled={revealStep === 2 ? false : selected === null || outOfTime || revealing}
               onClick={handleAction}
             >
-              {study && revealed ? (isLast ? 'Finish' : 'Next Question') : 'Submit'}
+              {(study ? revealed : revealStep === 2)
+                ? isLast
+                  ? 'Finish'
+                  : 'Next Question'
+                : 'Submit'}
             </button>
           </div>
         </div>

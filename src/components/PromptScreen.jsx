@@ -23,7 +23,6 @@ export function PromptScreen({ scenario, index, total, onSelectAnswer }) {
             ))}
           </h1>
           <div className="content-row">
-            <div className="halftone" />
             <div className="story-col">
               <div className="story-text-wrap">
                 {paragraphs.map((p, i) => (

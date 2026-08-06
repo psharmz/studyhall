@@ -14,17 +14,28 @@ function PhoneIcon() {
 // phone rings it (only that icon animates); after the two rings the bubble
 // opens and types the advisor response. Dismissing the bubble consumes the
 // call: that icon gets a persistent slash for the rest of the game.
-export function AdvisorCall({ advisors, sound = true, usedCalls, onUseCall }) {
+// Study mode has no such budget -- `unlimited` leaves every phone open --
+// and is the only mode that names the advisor's role above the quote.
+export function AdvisorCall({
+  advisors,
+  sound = true,
+  usedCalls,
+  onUseCall,
+  unlimited = false,
+  showRole = true,
+}) {
   const [phase, setPhase] = useState('idle'); // idle | ringing | talking
   const [active, setActive] = useState(null);
   const timerRef = useRef(null);
   // Each phone reaches its own advisor; the quote appears in full.
   const advisor = active === null ? null : advisors[active];
+  // In study mode no phone ever reads as spent, so none get the slash.
+  const spentCalls = unlimited ? usedCalls.map(() => false) : usedCalls;
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
   function ring(i) {
-    if (phase !== 'idle' || usedCalls[i]) return;
+    if (phase !== 'idle' || (!unlimited && usedCalls[i])) return;
     setActive(i);
     setPhase('ringing');
     // Sound off still rings visually -- same timing, no audio
@@ -33,14 +44,14 @@ export function AdvisorCall({ advisors, sound = true, usedCalls, onUseCall }) {
   }
 
   function dismiss() {
-    onUseCall(active);
+    if (!unlimited) onUseCall(active);
     setPhase('idle');
     setActive(null);
   }
 
   return (
     <div className="call-advisor-group">
-      {usedCalls.map((used, i) => (
+      {spentCalls.map((used, i) => (
         <div className="call-advisor-wrap" key={i}>
           <span className="call-advisor-tooltip">{used ? 'Call Used' : 'Call Advisor'}</span>
           <button
@@ -59,7 +70,7 @@ export function AdvisorCall({ advisors, sound = true, usedCalls, onUseCall }) {
       ))}
       {phase === 'talking' && advisor && (
         <div className="advisor-bubble">
-          {SHOW_ADVISOR_ROLE && advisor.role && (
+          {SHOW_ADVISOR_ROLE && showRole && advisor.role && (
             <div className="advisor-role">{advisor.role}</div>
           )}
           <p>{advisor.quote}</p>

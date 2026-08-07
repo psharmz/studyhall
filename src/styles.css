@@ -2006,16 +2006,53 @@
   }
 
   /* Advisor role header above the quote (toggle via SHOW_ADVISOR_ROLE) */
+  /* Fallback for advisors with no profile entry: the old plain green label */
   .advisor-role {
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    color: var(--green);
+    opacity: 0.75;
+    border-bottom: 1px solid rgba(124, 250, 107, 0.3);
+  }
+
+  .advisor-role-name {
+    display: block;
     font-size: 8.5px;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--green);
-    opacity: 0.75;
-    padding-bottom: 6px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid rgba(124, 250, 107, 0.3);
+  }
+
+  .advisor-motto {
+    display: block;
+    margin-top: 5px;
+    font-size: 9.5px;
+    line-height: 1.45;
+    font-style: italic;
+  }
+
+  /* Profiled advisors get a full-bleed chip in the gauge's band colours.
+     Bleeds to the bubble's padding edge; the top corners follow the bubble's
+     own radius, which can't use overflow:hidden without clipping its tail. */
+  .advisor-role[data-tone] {
+    margin: -12px -14px 10px;
+    padding: 9px 14px 10px;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    color: var(--black);
+    opacity: 1;
+  }
+
+  .advisor-role[data-tone='non'] {
+    background: #E0453F;
+  }
+
+  .advisor-role[data-tone='partial'] {
+    background: #F2C94C;
+  }
+
+  .advisor-role[data-tone='full'] {
+    background: #3F9142;
   }
 
   /* Skip the story typewriter -- bottom right of the green panel, only

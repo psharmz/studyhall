@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { playRingTone, RING_TOTAL_MS } from '../ringtone.js';
-import { SHOW_ADVISOR_ROLE } from '../scenarios.js';
+import { SHOW_ADVISOR_ROLE, ADVISOR_PROFILES } from '../scenarios.js';
 
 function PhoneIcon() {
   return (
@@ -71,7 +71,12 @@ export function AdvisorCall({
       {phase === 'talking' && advisor && (
         <div className="advisor-bubble">
           {SHOW_ADVISOR_ROLE && showRole && advisor.role && (
-            <div className="advisor-role">{advisor.role}</div>
+            <div className="advisor-role" data-tone={ADVISOR_PROFILES[advisor.role]?.tone}>
+              <span className="advisor-role-name">{advisor.role}</span>
+              {ADVISOR_PROFILES[advisor.role] && (
+                <span className="advisor-motto">{ADVISOR_PROFILES[advisor.role].motto}</span>
+              )}
+            </div>
           )}
           <p>{advisor.quote}</p>
           <button type="button" className="dismiss-btn" onClick={dismiss}>

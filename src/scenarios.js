@@ -7,6 +7,25 @@ export const ALIGN_LABELS = { full: 'Fully aligned', partial: 'Partially aligned
 // Flip to false to hide every advisor's role line without touching the copy.
 export const SHOW_ADVISOR_ROLE = true;
 
+// Each advisor's standing position, shown under their role in the call
+// bubble. `tone` keys into the gauge's own band colours -- non = red,
+// partial = yellow, full = green -- so the bias reads before the quote does.
+export const ADVISOR_PROFILES = {
+  'Tech Entrepreneur': {
+    motto: '“if companies do well, the world also does well.”',
+    tone: 'non',
+  },
+  'Public Policy Expert': {
+    motto: '“change is needed but revolutions rarely ended well.”',
+    tone: 'partial',
+  },
+  'Community Leader': {
+    motto:
+      '“revolution already happened but for the minority. It is time to do again for the majority.”',
+    tone: 'full',
+  },
+};
+
 // Each scenario has three advisors, one per phone icon. Roles are optional
 // (see SHOW_ADVISOR_ROLE); quotes are what the bubble types out.
 const PLACEHOLDER_ADVISORS = [

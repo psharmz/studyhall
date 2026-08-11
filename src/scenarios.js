@@ -2,6 +2,12 @@
 // scenario: full = +3, partial = +1, non = -2.
 export const LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
+// Where the secondary actions point. The nulls have no destination yet --
+// until they get one, those buttons render inert.
+export const FEEDBACK_FORM_URL = 'https://docs.google.com/forms/u/0/';
+export const LEARN_BEYOND_URL = null;
+export const SUPPORT_URL = null;
+
 export const ALIGN_LABELS = { full: 'Fully aligned', partial: 'Partially aligned', non: 'Non-aligned' };
 
 // Flip to false to hide every advisor's role line without touching the copy.
@@ -38,6 +44,7 @@ export const SCENARIOS = [
   {
     code: 'S.01',
     titleLines: ['DAY 1 AT', 'TECH FLOW'],
+    principle: 'Environmentally just technology is explicitly anti-racist.',
     paragraphs: [
       'It\'s your first day at TechFlow, a promising startup developing AI solutions. During orientation, you learn the company is working on an AI hiring system for major corporations. Your new manager, Sarah, pulls you aside in an attempt to test some of your critical thinking: "We need fresh perspectives on this project. The hiring AI has been flagging certain resumes less favorably, and we\'re not sure why." How do you think we should approach this?'
     ],
@@ -66,6 +73,7 @@ export const SCENARIOS = [
   {
     code: 'S.02',
     titleLines: ['INNOVATION', 'CHALLENGE'],
+    principle: 'Environmental justice in technology calls for responsible innovation in every aspect of technological creation. Responsible innovation occurs when: all people are provided the resources to innovate; all potential uses of the innovation are accounted for to prepare for contingencies; empathy is central to innovation and its creative intent.',
     paragraphs: [
       'It has been a few months now and your manager invites you to join a special \'Innovation Sprint\' team. \'We\'re under pressure from the CEO and investors to improve our brand image. We need to launch at least one breakthrough product this quarter that can help marginalized, communities,\' she explains. \'Speed is everything in this market since there is little investment.\' As the team gathers for the first meeting, the room buzzes with excitement about rapid prototyping and fast launches.',
       'How do you guide the team\'s approach to innovation?'
@@ -95,6 +103,7 @@ export const SCENARIOS = [
   {
     code: 'S.03',
     titleLines: ['COMMUNITY', 'VISIT'],
+    principle: 'Environmental justice in technology empowers those who wish to live without certain technologies. It demands preserving traditional Indigenous ways of living without interference from capitalist and corporate technologies.',
     paragraphs: [
       'Your innovation approach has gained respect within TechFlow. The company decides it is time for you to jump into a real project from the start and the \'Digital Villages\' platform for rural and indigenous communities seems to be the right fit. You\'re chosen to lead the community engagement for a potential pilot site - a small Indigenous community in Montana. During your visit, you meet with community elders who listen politely to your presentation but then Elder Mary speaks up: \'We appreciate you coming here, but our people have lived well for generations without these digital tools. We\'d prefer to keep our traditional ways.\' How do you respond?'
     ],
@@ -123,6 +132,7 @@ export const SCENARIOS = [
   {
     code: 'S.04',
     titleLines: ['WORKING WITH', 'THE GOV.'],
+    principle: 'Environmental justice in tech means refusing to cooperate with or arm the military-industrial complex, prisons, or police. Environmentally just tech is used to elevate all ordinary people, not to oppress any of them with violence or the threat of it.',
     paragraphs: [
       'Your experience with the Montana situation earns you an opportunity to work with a small but high impact team of Ethical Technology. Six months into your new role, TechFlow receives a lucrative government contract offer and that might be the chance you were looking for to show the importance of your work at national scale. You are surprised by a Department of Defense representative that explains: \'We need surveillance technology that can monitor both civilian areas for safety and military zones for security. Your company\'s AI capabilities are exactly what we need. This contract could fund your social impact projects for the next five years.\' The board is excited about the funding potential and even offered you the role of Director if you get this right. What\'s your recommendation?'
     ],
@@ -151,6 +161,7 @@ export const SCENARIOS = [
   {
     code: 'S.05',
     titleLines: ['CITY', 'PARTNERSHIP'],
+    principle: 'Environmental justice in technology demands that democracy be the foundation of all of its endeavors. A democratic and community-centric environment is necessary to have a just world.',
     paragraphs: [
       'Your military contract showed to be too risky, and you ultimately gained the support of the board by presenting alternative revenue streams. Now, TechFlow partners with the city of Portland to deploy smart city infrastructure. The mayor\'s office wants to move quickly, but community activists contact you directly: \'We\'re concerned about decisions being made about our neighborhoods without real community input.\' You\'re tasked with designing the community engagement process. What do you propose?'
     ],

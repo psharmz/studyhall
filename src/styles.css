@@ -585,12 +585,15 @@
   }
 
   /* ---- Submit / Next button ---- */
+  /* ---- Buttons ----
+     One base for every button-shaped control, whether it renders as
+     <button> or <a>; variants change colour and weight only. The
+     full-width submit (.action-btn) shares the base, so the primary look
+     is defined in exactly one place. */
+  .btn,
   .action-btn {
-    display: block;
-    width: 100%;
-    margin-top: 18px;
+    display: inline-block;
     padding: 12px 14px;
-    flex: 0 0 auto;
     background: transparent;
     border: 1.5px solid var(--green);
     color: var(--green);
@@ -599,13 +602,48 @@
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    text-align: center;
+    text-decoration: none;
     cursor: pointer;
     transition: background .2s ease, color .2s ease, border-color .2s ease, opacity .2s ease;
   }
 
+  .btn:hover,
   .action-btn:hover:not(:disabled) {
     background: var(--green);
     color: var(--black);
+  }
+
+  /* Secondary: dimmed and un-bolded so it reads as an aside next to the
+     primary action. Warms to green on hover rather than filling. */
+  .btn--secondary {
+    padding: 9px 13px;
+    border-color: #5A5A5A;
+    color: #9A9A9A;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+  }
+
+  .btn--secondary:hover {
+    background: transparent;
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  /* Horizontal group of buttons; wraps rather than overflowing. */
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* The submit button's own layout; its chrome comes from the base above. */
+  .action-btn {
+    display: block;
+    width: 100%;
+    margin-top: 18px;
+    flex: 0 0 auto;
   }
 
   .action-btn:disabled {
@@ -683,6 +721,61 @@
     height: 100%;
     shape-rendering: crispEdges;
     overflow: visible;
+  }
+
+  .rat-caption {
+    margin-top: 16px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--green);
+    line-height: 1.4;
+  }
+
+  /* ---- Results screen: secondary actions + facilitator box ---- */
+  .results-links {
+    justify-content: center;
+    margin-top: 18px;
+  }
+
+  /* Opens in place of its own trigger button, so the close control is the
+     only way back to it. */
+  .facilitator-box {
+    position: relative;
+    max-width: 460px;
+    margin: 18px auto 0;
+    padding: 20px 44px 20px 24px;
+    border: 1.5px solid var(--terminal-border);
+    text-align: center;
+  }
+
+  .facilitator-step {
+    margin: 0 0 16px;
+    color: #DDD;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .facilitator-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: #9A9A9A;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color .2s ease;
+  }
+
+  .facilitator-close:hover {
+    color: var(--green);
   }
 
   @keyframes wheelSpin {
@@ -1744,6 +1837,44 @@
     vertical-align: -4px;
   }
 
+  /* ---- Study Mode answer sheet: the card's EJIT principle ----
+     Sits in the gap between the green/black panels and the terminal's
+     -bash bar, so it reads as a header for the answers below it. */
+  .card--choices .principle {
+    background: var(--black);
+    border-top: 1.5px solid var(--terminal-border);
+    padding: 20px 22px 22px;
+  }
+
+  /* Capped column: full-bleed centred text at desktop widths gives lines
+     too long to track back to the next one. */
+  .card--choices .principle-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .card--choices .principle-label {
+    display: block;
+    color: var(--green);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 9px;
+  }
+
+  .card--choices .principle-text {
+    margin: 0;
+    color: #DDD;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .card--choices .principle-actions {
+    justify-content: center;
+    margin-top: 16px;
+  }
+
   /* ---- Study Mode answer sheet (ported from legacy tab 2 / #terminal2) ----
      After reveal: chips show each option's alignment; hovering any option
      swaps its text for the debrief explanation. */
@@ -2051,8 +2182,11 @@
     background: #F2C94C;
   }
 
+  /* White rather than the chip default: black on this green is the one
+     combination in the set that's hard to read. */
   .advisor-role[data-tone='full'] {
     background: #3F9142;
+    color: #FFF;
   }
 
   /* Skip the story typewriter -- bottom right of the green panel, only

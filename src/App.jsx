@@ -76,6 +76,17 @@ export default function App() {
     advance();
   }
 
+  // "Start Study Mode" off the results screen: same game, study settings,
+  // keeping whatever language/cards/sound the player already chose.
+  function handleStartStudy() {
+    handleStart({
+      language: settings?.language ?? 'english',
+      mode: 'study',
+      cards: settings?.cards ?? SCENARIOS.length,
+      sound: settings?.sound !== false,
+    });
+  }
+
   let screen;
   if (phase === 'setup') {
     screen = <SetupScreen onStart={handleStart} initial={settings} />;
@@ -100,6 +111,7 @@ export default function App() {
         gaugeAngle={scoreToAngle(totalScore)}
         needleColor={NEEDLE_COLOR}
         onRestart={() => setPhase('setup')}
+        onStartStudy={handleStartStudy}
       />
     );
   } else if (phase === 'options') {

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { LETTERS, ALIGN_LABELS } from '../scenarios.js';
+import { LETTERS, ALIGN_LABELS, FEEDBACK_FORM_URL, LEARN_BEYOND_URL } from '../scenarios.js';
 import { AdvisorCall } from './AdvisorCall.jsx';
 import { Gauge } from './Gauge.jsx';
 import { useTypewriter } from '../useTypewriter.js';
@@ -172,6 +172,42 @@ export function OptionsScreen({
       <div className="layout-row">
         <div className="card card--options card--standalone card--choices">
           <div className="body">
+            {/* Study Mode, after the answer is revealed: the card's EJIT
+                principle, sitting between the panels above and the terminal
+                chrome below. Hidden while the question is still open, so it
+                never shows on the Submit page. */}
+            {study && revealed && scenario.principle && (
+              <div className="principle">
+                <div className="principle-inner">
+                  <span className="principle-label">EJIT Principle</span>
+                  <p className="principle-text">{scenario.principle}</p>
+                  <div className="btn-row principle-actions">
+                    <a
+                      className="btn btn--secondary"
+                      href={FEEDBACK_FORM_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Disagree? Tell us more
+                    </a>
+                    {LEARN_BEYOND_URL ? (
+                      <a
+                        className="btn btn--secondary"
+                        href={LEARN_BEYOND_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Learn Beyond
+                      </a>
+                    ) : (
+                      <button type="button" className="btn btn--secondary">
+                        Learn Beyond
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             <div
               className={
                 'terminal' +

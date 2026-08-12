@@ -778,6 +778,123 @@
     color: var(--green);
   }
 
+  /* ---- Results screen: d3 charts (simulation mode only) ---- */
+  .results-charts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 24px 32px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1.5px solid var(--chrome-gray);
+  }
+
+  .results-chart {
+    flex: 1 1 300px;
+    max-width: 420px;
+    text-align: center;
+  }
+
+  .results-chart--wide {
+    flex: 1 0 100%;
+    max-width: none;
+  }
+
+  .results-chart-title {
+    margin: 0 0 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #9A9A9A;
+  }
+
+  .results-chart-title--big {
+    margin-bottom: 2px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--green);
+  }
+
+  .results-chart-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* The hoverable "your score" vertices breathe, so they read as live
+     targets rather than plot marks. */
+  .radar-dot--you {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: radar-dot-breathe 2.8s ease-in-out infinite;
+  }
+
+  /* Under the cursor the breathing stops: a bigger, solid red mark. */
+  .radar-dot--hovered {
+    animation: none;
+  }
+
+  .radar-dot-aura {
+    transform-box: fill-box;
+    transform-origin: center;
+    pointer-events: none;
+    animation: radar-aura-breathe 2.8s ease-in-out infinite;
+  }
+
+  @keyframes radar-dot-breathe {
+    0%, 100% { transform: scale(1); opacity: 0.85; }
+    50% { transform: scale(1.4); opacity: 1; }
+  }
+
+  @keyframes radar-aura-breathe {
+    0%, 100% { transform: scale(0.55); opacity: 0.16; }
+    50% { transform: scale(1.15); opacity: 0.34; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .radar-dot--you,
+    .radar-dot-aura {
+      animation: none;
+    }
+  }
+
+  .results-chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 10px;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: #9A9A9A;
+  }
+
+  .results-chart-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .results-chart-legend i {
+    width: 9px;
+    height: 9px;
+    display: inline-block;
+  }
+
+  .results-chart-note {
+    flex: 1 0 100%;
+    margin: 0;
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: #6E6E6E;
+  }
+
   @keyframes wheelSpin {
     to { transform: rotate(360deg); }
   }
@@ -986,69 +1103,52 @@
     margin-right: 8px;
   }
 
-  .reflect-field {
+  .reflect-hint {
+    opacity: 0.7;
+    margin-bottom: 14px;
+  }
+
+  /* Word picker: multi-select, no submit -- the picks are the answer. */
+  .reflect-words {
     display: flex;
-    align-items: baseline;
-    margin: 0 0 22px;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 20px;
     padding-left: 18px;
   }
 
-  /* Establishes the `ch` unit the block cursor is positioned in, so it must
-     carry the same font metrics as the input it sits over. */
-  .reflect-input-wrap {
-    position: relative;
-    flex: 1 1 auto;
-    min-width: 0;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12.5px;
-    line-height: 1.6;
-  }
-
-  .reflect-input {
-    display: block;
-    width: 100%;
+  .reflect-word {
     background: transparent;
-    border: none;
+    border: 1.5px solid rgba(124, 250, 107, 0.45);
+    border-radius: 2px;
     color: var(--green);
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    padding: 2px 0;
-    /* Hidden in favour of the chunky block cursor drawn below */
-    caret-color: transparent;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    line-height: 1.2;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
   }
 
-  .reflect-input::placeholder {
-    color: var(--green);
-    opacity: 0.75;
+  .reflect-word:hover {
+    border-color: var(--green);
+    background: rgba(124, 250, 107, 0.14);
   }
 
-  /* Empty field: hold the hint one column right so the block cursor sits in
-     front of it rather than inverting its first letter. */
-  .reflect-input:placeholder-shown {
-    padding-left: 1ch;
+  .reflect-word:focus-visible {
+    outline: 2px solid var(--green);
+    outline-offset: 2px;
   }
 
-  .reflect-input:focus {
-    outline: none;
-  }
-
-  /* Solid block cursor. `difference` inverts whatever character sits under
-     it -- green block on black, black glyph on the block -- like a TTY. */
-  .reflect-cursor {
-    position: absolute;
-    top: 50%;
-    width: 1ch;
-    height: 1.15em;
-    transform: translateY(-50%);
+  .reflect-word--on {
     background: var(--green);
-    mix-blend-mode: difference;
-    pointer-events: none;
-    animation: blockBlink 1s steps(1) infinite;
+    border-color: var(--green);
+    color: var(--black);
+    font-weight: 700;
   }
 
-  @keyframes blockBlink {
-    50% { opacity: 0; }
+  .reflect-word--on:hover {
+    background: var(--green);
   }
 
   .reflect-choices {
@@ -1573,7 +1673,9 @@
 
   .card--prompt .body {
     background: var(--green);
-    padding: 26px 22px 24px;
+    /* Extra top padding keeps the pinned skip button clear of the title,
+       and stays reserved once the button goes so nothing jumps. */
+    padding: 52px 22px 24px;
     display: flex;
     flex-direction: column;
   }
@@ -2189,17 +2291,19 @@
     color: #FFF;
   }
 
-  /* Skip the story typewriter -- bottom right of the green panel, only
-     while text is still revealing. */
+  /* Skip the story typewriter -- top right of the green panel, only while
+     text is still revealing. */
   .card--prompt .body {
     position: relative;
   }
 
-  /* Sits in the flow below the story: with the halftone panel gone the text
-     spans the full card, so an absolutely placed button would overlap it. */
+  /* Pinned to the top-right corner of the green panel; the title reserves
+     room for it so the two never collide. */
   .skip-type-btn {
-    display: block;
-    margin: 18px 0 0 auto;
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
     background: transparent;
     border: 1.5px solid var(--black);
     color: var(--black);

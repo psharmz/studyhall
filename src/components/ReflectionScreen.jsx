@@ -1,30 +1,50 @@
-import { useEffect, useRef, useState } from 'react';
 import { TitleBar } from './TitleBar.jsx';
 
-// Open-ended question before the first scenario. The answer is kept in App
-// state so it survives Back; "saved" only shows once something was entered.
+// The vocabulary offered for the opening question. Order is deliberate --
+// it is the order they are shown in.
+const REFLECT_WORDS = [
+  'Equity',
+  'Access',
+  'Sustainability',
+  'Impact',
+  'Justice',
+  'Waste',
+  'Communities',
+  'Pollution',
+  'E-waste',
+  'Digital divide',
+  'Inclusion',
+  'Accountability',
+  'Extraction',
+  'Power',
+  'Resources',
+  'Representation',
+  'Transparency',
+  'Harm',
+  'Solutions',
+  'Marginalized',
+  'Responsibility',
+  'Climate',
+  'Labor',
+  'Data',
+  'Participation',
+  'Rights',
+  'Supply chain',
+  'Toxicity',
+  'Health',
+  'Sovereignty',
+];
+
+// Opening question before the first scenario: pick as many words as you like.
+// The picks live in App state so they survive a trip back to the rules; one
+// day they will be posted to a data store, but nothing is sent anywhere yet.
 export function ReflectionScreen({ answer, onSaveAnswer, onStart, onReview }) {
-  const [draft, setDraft] = useState(answer ?? '');
-  const [saved, setSaved] = useState(Boolean(answer));
-  // Native caret is hidden; this tracks where to draw the block cursor.
-  // The field is monospace, so the column index maps straight to `ch` units.
-  const [caretCol, setCaretCol] = useState(0);
-  const inputRef = useRef(null);
+  const selected = answer ?? [];
 
-  // Land on the field the way a terminal does -- cursor already waiting.
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  function syncCaret(e) {
-    setCaretCol(e.target.selectionStart ?? e.target.value.length);
-  }
-
-  function save() {
-    const trimmed = draft.trim();
-    if (!trimmed) return;
-    onSaveAnswer(trimmed);
-    setSaved(true);
+  function toggle(word) {
+    onSaveAnswer(
+      selected.includes(word) ? selected.filter((w) => w !== word) : [...selected, word]
+    );
   }
 
   return (
@@ -36,39 +56,27 @@ export function ReflectionScreen({ answer, onSaveAnswer, onStart, onReview }) {
             <p className="reflect-line">
               But before we start...what is Environmental Justice in Technology for you?
             </p>
+            <p className="reflect-line reflect-hint">Pick as many words as you like.</p>
 
-            <form
-              className="reflect-field"
-              onSubmit={(e) => {
-                e.preventDefault();
-                save();
-              }}
-            >
-              <span className="reflect-caret">&rsaquo;</span>
-              <span className="reflect-input-wrap">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  className="reflect-input"
-                  placeholder="Add your answer here."
-                  value={draft}
-                  onChange={(e) => {
-                    setDraft(e.target.value);
-                    setSaved(false);
-                    syncCaret(e);
-                  }}
-                  onSelect={syncCaret}
-                  onKeyUp={syncCaret}
-                  onClick={syncCaret}
-                  onFocus={syncCaret}
-                  onBlur={save}
-                />
-                <span className="reflect-cursor" style={{ left: `${caretCol}ch` }} aria-hidden="true" />
-              </span>
-            </form>
+            <div className="reflect-words" role="group" aria-label="Words you would choose">
+              {REFLECT_WORDS.map((word) => {
+                const on = selected.includes(word);
+                return (
+                  <button
+                    key={word}
+                    type="button"
+                    className={on ? 'reflect-word reflect-word--on' : 'reflect-word'}
+                    aria-pressed={on}
+                    onClick={() => toggle(word)}
+                  >
+                    {word}
+                  </button>
+                );
+              })}
+            </div>
 
-            <p className="reflect-line reflect-saved" hidden={!saved}>
-              Thank you! Your answer was saved.
+            <p className="reflect-line reflect-saved" hidden={selected.length === 0}>
+              {selected.length} word{selected.length === 1 ? '' : 's'} selected.
             </p>
 
             <p className="reflect-line">Let&rsquo;s start?</p>

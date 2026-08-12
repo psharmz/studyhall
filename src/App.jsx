@@ -32,8 +32,9 @@ function scoreToAngle(score) {
 export default function App() {
   // setup | rules | goals | reflect | transition | prompt | options | complete
   const [phase, setPhase] = useState('setup');
-  // The player's own definition of Environmental Justice in Technology
-  const [reflection, setReflection] = useState('');
+  // The words the player picks for their own definition of Environmental
+  // Justice in Technology. Kept here so they survive a trip back to the rules.
+  const [reflectionWords, setReflectionWords] = useState([]);
   const [settings, setSettings] = useState(null); // { language, mode, cards }
   const [index, setIndex] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
@@ -97,8 +98,8 @@ export default function App() {
   } else if (phase === 'reflect') {
     screen = (
       <ReflectionScreen
-        answer={reflection}
-        onSaveAnswer={setReflection}
+        answer={reflectionWords}
+        onSaveAnswer={setReflectionWords}
         onStart={() => setPhase('transition')}
         onReview={() => setPhase('rules')}
       />
@@ -110,6 +111,7 @@ export default function App() {
       <CompleteScreen
         gaugeAngle={scoreToAngle(totalScore)}
         needleColor={NEEDLE_COLOR}
+        simulation={settings?.mode !== 'study'}
         onRestart={() => setPhase('setup')}
         onStartStudy={handleStartStudy}
       />

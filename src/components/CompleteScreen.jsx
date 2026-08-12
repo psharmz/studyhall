@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Gauge } from './Gauge.jsx';
 import { WheelHamster } from '../pixels.jsx';
+import { ResultsCharts } from './ResultsCharts.jsx';
 import { SUPPORT_URL } from '../scenarios.js';
 
-export function CompleteScreen({ gaugeAngle, needleColor, onRestart, onStartStudy }) {
+export function CompleteScreen({ gaugeAngle, needleColor, simulation, onRestart, onStartStudy }) {
   // The facilitator box replaces its own trigger button while it is open.
   const [facilitatorOpen, setFacilitatorOpen] = useState(false);
   const [shareLabel, setShareLabel] = useState('Share');
@@ -94,6 +95,7 @@ export function CompleteScreen({ gaugeAngle, needleColor, onRestart, onStartStud
               </button>
             </div>
           )}
+          {simulation && <ResultsCharts />}
         </div>
       </div>
     </div>

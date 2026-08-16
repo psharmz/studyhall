@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import cloud from 'd3-cloud';
+import { SCENARIOS, LETTERS } from '../scenarios.js';
 
 // PLACEHOLDER DATA -- both charts are wired to stand-in values until the real
 // per-player aggregates exist. Swap these two consts out, nothing else.
@@ -66,8 +67,8 @@ const RADAR_SERIES = [
   {
     key: 'avg',
     name: 'Avg. score of all participants',
-    stroke: '#8C8377',
-    fill: 'rgba(140, 131, 119, 0.34)',
+    stroke: '#A97BF0',
+    fill: 'rgba(139, 90, 214, 0.32)',
   },
 ];
 
@@ -97,7 +98,17 @@ const CALLOUT_OFFSET = [
   [-455, 118],
   [-400, 62],
 ];
+const CARD_W = 340;
+// Clearance between a chip and its hover card, so the card never sits on top
+// of the chip that opened it.
+const CARD_GAP = 12;
 const MONO = "'JetBrains Mono', monospace";
+
+// Chips run to scenario 16 while only a handful of scenarios are written, so
+// they wrap around the deck for now. Drop the modulo once the deck is full.
+function scenarioFor(n) {
+  return SCENARIOS[(n - 1) % SCENARIOS.length];
+}
 
 function WordCloud() {
   const ref = useRef(null);
@@ -151,16 +162,38 @@ function WordCloud() {
   );
 }
 
-function RadarChart() {
+function RadarChart({ answers }) {
   const ref = useRef(null);
+  const wrapRef = useRef(null);
   // Which vertex the score callout points at; hovering an axis moves it.
   const [active, setActive] = useState(0);
   // The vertex actually under the cursor, if any -- it goes solid red.
   const [hovered, setHovered] = useState(null);
+  // Scenario chip under the cursor: { n, left, top, above }, in wrapper
+  // coordinates. `above` flips the card to sit on top of the chip instead.
+  const [chipCard, setChipCard] = useState(null);
 
   useEffect(() => {
     const svg = d3.select(ref.current);
     const g = svg.append('g').attr('transform', `translate(${RADAR_CX},${RADAR_CY})`);
+
+    // Park the card clear of the chip: below it in the top half of the chart,
+    // above it in the bottom half, clamped to the wrapper on the x axis.
+    function openChipCard(node, n) {
+      const wrap = wrapRef.current.getBoundingClientRect();
+      const chip = node.getBoundingClientRect();
+      const above = chip.top - wrap.top > wrap.height / 2;
+      const left = Math.min(
+        Math.max(chip.left + chip.width / 2 - wrap.left - CARD_W / 2, 8),
+        Math.max(wrap.width - CARD_W - 8, 8)
+      );
+      setChipCard({
+        n,
+        left,
+        top: above ? chip.top - wrap.top - CARD_GAP : chip.bottom - wrap.top + CARD_GAP,
+        above,
+      });
+    }
 
     const r = d3.scaleLinear().domain([0, RADAR_MAX]).range([0, RADAR_R]);
     const angle = (i) => (i * 2 * Math.PI) / RADAR_AXES.length;
@@ -256,7 +289,12 @@ function RadarChart() {
         .data(placed)
         .join('g')
         .attr('class', 'radar-chip')
-        .attr('transform', (c) => `translate(${c.x},${c.y})`);
+        .attr('transform', (c) => `translate(${c.x},${c.y})`)
+        .style('cursor', 'pointer')
+        .on('mouseenter', function (_, c) {
+          openChipCard(this, c.n);
+        })
+        .on('mouseleave', () => setChipCard(null));
 
       chips
         .append('rect')
@@ -407,31 +445,59 @@ function RadarChart() {
 
     return () => {
       svg.selectAll('*').remove();
+      setChipCard(null);
     };
   }, [active, hovered]);
 
+  const card = chipCard && scenarioFor(chipCard.n);
+  // No answer on record (or the chart was opened without playing) falls back
+  // to option A.
+  const picked = card && (answers?.[card.code] ?? card.options[0]);
+
   return (
-    <svg
-      ref={ref}
-      className="results-chart-svg"
-      viewBox={`0 0 ${RADAR_W} ${RADAR_H}`}
-      role="img"
-      aria-label="Spider chart of scores by theme (placeholder data)"
-    />
+    <div className="radar-wrap" ref={wrapRef}>
+      {/* Only the chart itself scrolls sideways on narrow screens; the
+          title, legend and note stay put. */}
+      <div className="radar-scroll">
+        <svg
+          ref={ref}
+          className="results-chart-svg"
+          viewBox={`0 0 ${RADAR_W} ${RADAR_H}`}
+          role="img"
+          aria-label="Spider chart of scores by theme (placeholder data)"
+        />
+      </div>
+      {card && (
+        <div
+          className={chipCard.above ? 'chip-card chip-card--above' : 'chip-card'}
+          style={{ left: `${chipCard.left}px`, top: `${chipCard.top}px` }}
+        >
+          <div className="chip-card-head">
+            Scenario {chipCard.n} &middot; {card.titleLines.join(' ')}
+          </div>
+          <div className="chip-card-label">Your answer</div>
+          <p className="chip-card-answer">
+            <b>{LETTERS[card.options.indexOf(picked)]}.</b> {picked.text}
+          </p>
+          <div className="chip-card-label">Why</div>
+          <p className="chip-card-why">{picked.explanation}</p>
+        </div>
+      )}
+    </div>
   );
 }
 
 // Simulation-mode-only charts, below the share/support/facilitator row.
-export function ResultsCharts() {
+export function ResultsCharts({ answers }) {
   return (
     <div className="results-charts">
-      <div className="results-chart">
-        <h2 className="results-chart-title">What Everyone Is Saying</h2>
+      <div className="results-chart results-chart--cloud">
+        <h2 className="results-chart-title">What others think about environmental justice</h2>
         <WordCloud />
       </div>
-      <div className="results-chart results-chart--wide">
+      <div className="results-chart results-chart--wide" id="score-breakdown">
         <h2 className="results-chart-title results-chart-title--big">Score breakdown</h2>
-        <RadarChart />
+        <RadarChart answers={answers} />
         <div className="results-chart-legend">
           {RADAR_SERIES.map((s) => (
             <span key={s.name}>

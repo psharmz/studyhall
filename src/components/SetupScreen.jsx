@@ -37,7 +37,9 @@ const STRINGS = {
     titleBar: 'S.00. CONFIGURACIÓN DE STUDY HALL',
     welcome: ['BIENVENIDO A', 'STUDY HALL'],
     languageLabel: 'ELIGE TU IDIOMA',
-    english: 'Inglés',
+    // Each language button names itself in its own language, so "English"
+    // stays "English" here rather than becoming "Inglés".
+    english: 'English',
     spanish: 'Español',
     translators: 'Traducido por Mariana González-Cepeda y Jose Alberto Nevarez (UABC - México)',
     modeLabel: 'MODO',

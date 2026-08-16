@@ -430,11 +430,12 @@ export function WheelHamster({ className }) {
   );
 }
 
-export function MiniHamster({ className }) {
+export function MiniHamster({ className, shades = false }) {
   return (
     <svg className={className} viewBox="21 29 18 16" xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges">
-                <rect x="24" y="32" width="2" height="2" fill="#EF8B2C"/>
-                <rect x="32" y="32" width="2" height="2" fill="#EF8B2C"/>
+                {/* The two ears carry their own class so a scene can twitch
+                    them; the eye pixel sits on the right, so the art faces
+                    right unless it is mirrored. */}
                 <rect x="26" y="34" width="2" height="2" fill="#F2C94C"/>
                 <rect x="28" y="34" width="2" height="2" fill="#F2C94C"/>
                 <rect x="30" y="34" width="2" height="2" fill="#F2C94C"/>
@@ -455,7 +456,194 @@ export function MiniHamster({ className }) {
                 <rect x="28" y="40" width="2" height="2" fill="#F2C94C"/>
                 <rect x="30" y="40" width="2" height="2" fill="#F2C94C"/>
                 <rect x="32" y="40" width="2" height="2" fill="#F2C94C"/>
-                <rect x="32" y="36" width="2" height="2" fill="#1A1A2E"/>
+                <rect className="hamster-nose" x="32" y="36" width="2" height="2" fill="#1A1A2E"/>
+                {/* Ears last so a twitched ear paints over the body
+                    instead of disappearing behind it. */}
+                <rect className="hamster-ear hamster-ear--1" x="24" y="32" width="2" height="2" fill="#EF8B2C"/>
+                <rect className="hamster-ear hamster-ear--2" x="32" y="32" width="2" height="2" fill="#EF8B2C"/>
+                {shades && (
+                  <g className="hamster-shades">
+                    <rect x="28" y="36" width="8" height="2" fill="#0A0A0A"/>
+                    <rect x="26" y="36" width="2" height="2" fill="#0A0A0A"/>
+                    <rect x="34" y="36" width="2" height="2" fill="#E8E8E8"/>
+                  </g>
+                )}
+    </svg>
+  );
+}
+
+// Thought bubble in the same 2px-block idiom as the rest of the art: stepped
+// corners, no curves, chunky stroke. The dots and puffs are animated in CSS.
+export function ThoughtBubble({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 48 40"
+      xmlns="http://www.w3.org/2000/svg"
+      shapeRendering="crispEdges"
+    >
+      <path
+        className="thought-balloon"
+        d="M12 6 H36 V8 H40 V18 H36 V20 H12 V18 H8 V8 H12 Z"
+        fill="#0A0A0A"
+        stroke="#7CFA6B"
+        strokeWidth="2"
+      />
+      <rect
+        className="thought-puff"
+        x="11"
+        y="25"
+        width="6"
+        height="6"
+        fill="#0A0A0A"
+        stroke="#7CFA6B"
+        strokeWidth="2"
+      />
+      <rect
+        className="thought-puff thought-puff--2"
+        x="6"
+        y="33"
+        width="4"
+        height="4"
+        fill="#0A0A0A"
+        stroke="#7CFA6B"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+// A sitting hamster with a head, a body and a muzzle pressed to the straw.
+// Drawn on the same 2px grid; the straw meets it at x=44, y=26 in this
+// viewBox, which is what the sip scene lines up on.
+export function SippingHamster({ className }) {
+  const FUR = '#F2C94C';
+  const FUR_DARK = '#EF8B2C';
+  const BELLY = '#FBE3A2';
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 48 56"
+      xmlns="http://www.w3.org/2000/svg"
+      shapeRendering="crispEdges"
+    >
+      {/* ears */}
+      <rect x="12" y="6" width="4" height="4" fill={FUR_DARK} />
+      <rect x="28" y="6" width="4" height="4" fill={FUR_DARK} />
+      <rect x="14" y="8" width="2" height="2" fill={FUR} />
+      <rect x="28" y="8" width="2" height="2" fill={FUR} />
+
+      {/* head */}
+      <rect x="12" y="10" width="20" height="2" fill={FUR} />
+      <rect x="10" y="12" width="24" height="14" fill={FUR} />
+      <rect x="12" y="26" width="22" height="2" fill={FUR} />
+
+      {/* sunglasses across the eye line, glint on the outer lens */}
+      <rect x="12" y="16" width="20" height="4" fill="#0A0A0A" />
+      <rect x="28" y="16" width="2" height="2" fill="#E8E8E8" />
+
+      {/* muzzle, pushed out to the right so it can meet the straw */}
+      <rect x="30" y="20" width="8" height="6" fill={BELLY} />
+      <rect x="38" y="22" width="4" height="2" fill={BELLY} />
+      {/* the kiss: lips pursed around the straw */}
+      <rect x="42" y="22" width="2" height="2" fill={FUR_DARK} />
+
+      {/* body */}
+      <rect x="8" y="28" width="26" height="18" fill={FUR} />
+      <rect x="14" y="32" width="16" height="14" fill={BELLY} />
+      <rect x="6" y="32" width="2" height="12" fill={FUR} />
+      <rect x="34" y="32" width="2" height="12" fill={FUR} />
+
+      {/* front paw up on the glass */}
+      <rect x="34" y="30" width="6" height="4" fill={FUR_DARK} />
+
+      {/* feet */}
+      <rect x="10" y="46" width="8" height="4" fill={FUR_DARK} />
+      <rect x="24" y="46" width="8" height="4" fill={FUR_DARK} />
+    </svg>
+  );
+}
+
+// Tall glass with a straw, drawn on the same 2px grid as everything else.
+// The liquid sits behind a clip rectangle that steps downward, so the level
+// drops one pixel row at a time -- see .drink-mask in styles.css.
+export function SodaCup({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 48 60"
+      xmlns="http://www.w3.org/2000/svg"
+      shapeRendering="crispEdges"
+    >
+      <defs>
+        <clipPath id="drink-level" clipPathUnits="userSpaceOnUse">
+          <rect className="drink-mask" x="8" y="18" width="28" height="36" />
+        </clipPath>
+      </defs>
+
+      {/* straw: up out of the drink, over the rim, then bent left so its tip
+          is where the hamster's mouth is */}
+      <rect x="24" y="20" width="2" height="16" fill="#B4B4B4" />
+      <rect x="24" y="14" width="2" height="6" fill="#E8E8E8" />
+      <rect x="24" y="12" width="2" height="2" fill="#E8E8E8" />
+      <rect x="4" y="12" width="20" height="2" fill="#E8E8E8" />
+
+      {/* the drink itself, draining from the top */}
+      <g clipPath="url(#drink-level)">
+        <rect x="10" y="20" width="24" height="32" fill="#E0453F" />
+        <rect x="12" y="22" width="2" height="28" fill="#FFFFFF" fillOpacity="0.18" />
+      </g>
+
+      {/* glass -- light outline so it reads on the black card */}
+      <rect x="8" y="16" width="14" height="2" fill="#E8E8E8" />
+      <rect x="26" y="16" width="10" height="2" fill="#E8E8E8" />
+      <rect x="8" y="18" width="2" height="34" fill="#E8E8E8" />
+      <rect x="34" y="18" width="2" height="34" fill="#E8E8E8" />
+      <rect x="8" y="52" width="28" height="2" fill="#E8E8E8" />
+      <rect x="10" y="54" width="24" height="2" fill="#8A8A8A" />
+
+      {/* orange slice wedged on the rim */}
+      <rect x="36" y="6" width="6" height="2" fill="#EF8B2C" />
+      <rect x="34" y="8" width="10" height="2" fill="#EF8B2C" />
+      <rect x="32" y="10" width="14" height="2" fill="#EF8B2C" />
+      <rect x="32" y="12" width="14" height="2" fill="#EF8B2C" />
+      <rect x="34" y="14" width="10" height="2" fill="#EF8B2C" />
+      <rect x="36" y="16" width="6" height="2" fill="#EF8B2C" />
+      <rect x="36" y="10" width="6" height="4" fill="#F2C94C" />
+      <rect x="38" y="8" width="2" height="8" fill="#EF8B2C" fillOpacity="0.55" />
+    </svg>
+  );
+}
+
+// 8-bit reload arrow: a broken ring with an arrowhead, all on the 2px grid.
+export function PixelReload({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+    >
+      <g fill="currentColor">
+        {/* top of the ring, broken on the right for the arrowhead */}
+        <rect x="8" y="2" width="8" height="2" />
+        <rect x="6" y="4" width="2" height="2" />
+        <rect x="16" y="4" width="2" height="2" />
+        {/* sides */}
+        <rect x="4" y="6" width="2" height="8" />
+        <rect x="18" y="8" width="2" height="6" />
+        {/* bottom */}
+        <rect x="6" y="14" width="2" height="2" />
+        <rect x="16" y="14" width="2" height="2" />
+        <rect x="8" y="16" width="8" height="2" />
+        {/* arrowhead sitting on the break */}
+        <rect x="14" y="2" width="2" height="2" />
+        <rect x="16" y="0" width="2" height="2" />
+        <rect x="18" y="2" width="2" height="2" />
+        <rect x="20" y="4" width="2" height="2" />
+        <rect x="18" y="6" width="2" height="2" />
+      </g>
     </svg>
   );
 }

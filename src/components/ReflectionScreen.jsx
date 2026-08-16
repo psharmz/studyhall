@@ -75,7 +75,16 @@ export function ReflectionScreen({ answer, onSaveAnswer, onStart, onReview }) {
               })}
             </div>
 
-            <p className="reflect-line reflect-saved" hidden={selected.length === 0}>
+            {/* Always in the layout -- invisible at zero, so the lines below
+                do not jump when the first chip is picked. */}
+            <p
+              className={
+                selected.length
+                  ? 'reflect-line reflect-saved'
+                  : 'reflect-line reflect-saved reflect-saved--empty'
+              }
+              aria-live="polite"
+            >
               {selected.length} word{selected.length === 1 ? '' : 's'} selected.
             </p>
 

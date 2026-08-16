@@ -1,13 +1,20 @@
 import { Fragment } from 'react';
 import { TitleBar } from './TitleBar.jsx';
-import { useTypewriter } from '../useTypewriter.js';
+// Typewriter reveal is parked -- see below.
+// import { useTypewriter } from '../useTypewriter.js';
 
 const PARA_BREAK = '\n\n';
 
 export function PromptScreen({ scenario, index, total, onSelectAnswer }) {
   const fullText = scenario.paragraphs.join(PARA_BREAK);
-  const { visible, done, skip } = useTypewriter(fullText);
-  const paragraphs = visible.split(PARA_BREAK);
+  // The story used to type itself out one character at a time. Parked for
+  // now: restore the two commented lines (and the import above) to bring it
+  // back -- `done` false is what draws the caret and the skip button.
+  // const { visible, done, skip } = useTypewriter(fullText);
+  // const paragraphs = visible.split(PARA_BREAK);
+  const paragraphs = fullText.split(PARA_BREAK);
+  const done = true;
+  const skip = () => {};
 
   return (
     <div className="screen-prompt">

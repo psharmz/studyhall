@@ -4,6 +4,22 @@
     --chrome-gray: #4B4B4B;
     --terminal-border: #8A8A8A;
     --page-bg: #F2F2F0;
+    /* Backdrop: the CRT desktop the cards sit on. Tune these four to dial
+       the whole thing up or down. */
+    --backdrop-base: #060A08;
+    --backdrop-glow: rgba(124, 250, 107, 0.10);
+    --grid-line: rgba(124, 250, 107, 0.20);
+    --scan-opacity: 0.5;
+    /* Word cloud panel: a deep CRT purple, dark enough to keep the green
+       type legible on it. */
+    --cloud-bg: #1B1130;
+    --cloud-edge: #6B48B8;
+    /* Panel behind the ending illustration + its dial. */
+    --scene-bg: #0C1720;
+    --scene-edge: #2E5A6B;
+    /* Decode-in on the how-to-play / goals screens. */
+    --glitch-shift: 3px;
+    --decode-dim: #6F8F6A;
     --blue: #4DA8DA;
     --red: #E5484D;
   }
@@ -13,7 +29,7 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--page-bg);
+    background: var(--backdrop-base);
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -523,10 +539,12 @@
     animation-delay: 0.53s;
   }
 
+  /* Fully-aligned ending: three of them, filling the wheel's footprint, and
+     hopping higher than the pair beside the gauge -- they got out. */
   .mini-hamster-big {
-    width: 70px;
-    height: 64px;
-    animation: hamsterBob 0.8s ease-in-out infinite;
+    width: 80px;
+    height: 73px;
+    animation: hamsterHop 0.8s ease-in-out infinite;
     filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.4));
   }
 
@@ -539,13 +557,153 @@
   }
 
   .hamster-showcase-box {
-    width: 210px;
+    width: 264px;
     height: 210px;
     margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
+  }
+
+  /* Third band: hamster in shades working through a drink. The clip
+     rectangle steps down one pixel row at a time, so the level drops in
+     discrete jumps rather than sliding. */
+  .hamster-showcase-box--sip {
+    gap: 0;
+    align-items: flex-end;
+    padding-bottom: 18px;
+  }
+
+  /* Sits still with its mouth on the straw -- no bob here. */
+  .sip-hamster {
+    width: 104px;
+    height: 121px;
+    /* Nudged over so the pursed lips land on the straw's tip. */
+    margin-right: -15px;
+    filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.45));
+  }
+
+  .drink-cup {
+    width: 72px;
+    height: 90px;
+    filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.45));
+  }
+
+  .drink-mask {
+    animation: drinkDrain 11s steps(18, end) infinite;
+  }
+
+  @keyframes drinkDrain {
+    0%, 6% { transform: translateY(0); }
+    94%, 100% { transform: translateY(36px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .drink-mask {
+      animation: none;
+    }
+  }
+
+  /* Partially-aligned ending: stopped wheel plus a hamster beside it. */
+  .hamster-showcase-box--pause {
+    gap: 14px;
+    /* Both stand on the same ground line, wheel and hamster alike. */
+    align-items: flex-end;
+    padding-bottom: 24px;
+  }
+
+  .hamster-showcase-box--pause .rat-wheel {
+    width: 150px;
+    height: 150px;
+    margin: 0;
+  }
+
+  .rat-wheel--still .wheel-spin {
+    animation: none;
+  }
+
+  /* Nobody is running in it any more. */
+  .rat-wheel--still .hamster-run {
+    display: none;
+  }
+
+  .thought-hamster {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Standing still, turned toward the wheel on its left (the art faces
+     right by default), with an ear twitch instead of a bounce. */
+  .thought-hamster .mini-hamster-big {
+    animation: none;
+    transform: scaleX(-1);
+  }
+
+  /* Ear twitch: the ear on the right drops one pixel down and one to the
+     left, then goes back. One art pixel is 2 user units, and +x reads as
+     left on screen because the hamster is mirrored. */
+  .thought-hamster .hamster-ear--1 {
+    animation: earTwitch 3.2s steps(1, end) infinite;
+  }
+
+  /* The nose hops up a pixel on the same beat. */
+  .thought-hamster .hamster-nose {
+    animation: noseTwitch 3.2s steps(1, end) infinite;
+  }
+
+  @keyframes earTwitch {
+    0%, 60%, 100% { transform: translate(0, 0); }
+    70%, 82% { transform: translate(2px, 2px); }
+  }
+
+  @keyframes noseTwitch {
+    0%, 60%, 100% { transform: translate(0, 0); }
+    70%, 82% { transform: translate(0, -2px); }
+  }
+
+  .thought-bubble {
+    width: 100px;
+    height: 84px;
+    margin-bottom: -6px;
+  }
+
+  /* Four beats, hard cuts, no fading: the puff nearest the ear, then two,
+     then the whole balloon, then an empty beat before it starts over. */
+  .thought-bubble .thought-puff--2 {
+    animation: thinkBeat1 3.6s steps(1, end) infinite;
+  }
+
+  .thought-bubble .thought-puff:not(.thought-puff--2) {
+    animation: thinkBeat2 3.6s steps(1, end) infinite;
+  }
+
+  .thought-balloon {
+    animation: thinkBeat3 3.6s steps(1, end) infinite;
+  }
+
+  @keyframes thinkBeat1 {
+    0%, 74.99% { opacity: 1; }
+    75%, 100% { opacity: 0; }
+  }
+
+  @keyframes thinkBeat2 {
+    0%, 24.99% { opacity: 0; }
+    25%, 74.99% { opacity: 1; }
+    75%, 100% { opacity: 0; }
+  }
+
+  @keyframes thinkBeat3 {
+    0%, 49.99% { opacity: 0; }
+    50%, 74.99% { opacity: 1; }
+    75%, 100% { opacity: 0; }
+  }
+
+  @keyframes hamsterHop {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-16px); }
   }
 
   @keyframes hamsterBob {
@@ -618,8 +776,8 @@
      primary action. Warms to green on hover rather than filling. */
   .btn--secondary {
     padding: 9px 13px;
-    border-color: #5A5A5A;
-    color: #9A9A9A;
+    border-color: #3E7F39;
+    color: #8FD98A;
     font-size: 10px;
     font-weight: 400;
     letter-spacing: 0.1em;
@@ -675,9 +833,79 @@
 
   .results-visuals {
     display: flex;
-    align-items: flex-end;
     justify-content: center;
-    gap: 32px;
+  }
+
+  /* The ending art carries the screen; the dial is a small readout pinned in
+     its top-right corner. */
+  .results-scene {
+    position: relative;
+    min-width: 420px;
+    padding: 18px 24px 20px;
+    background:
+      radial-gradient(ellipse 80% 70% at 45% 35%, rgba(124, 250, 107, 0.07), transparent 70%),
+      linear-gradient(180deg, #14242F 0%, var(--scene-bg) 100%);
+    border: 1.5px solid var(--scene-edge);
+    box-shadow: inset 0 0 36px rgba(0, 0, 0, 0.5);
+  }
+
+  .gauge-pin {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 82px;
+    margin-top: 0;
+  }
+
+  .gauge-pin .dial {
+    width: 78px;
+    filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.5));
+  }
+
+  /* Nothing bookends it at footnote size. */
+  .gauge-pin .gauge-hamsters,
+  .gauge-pin .mini-wheel {
+    display: none;
+  }
+
+  /* Share + scoring live inside the panel, under the caption. */
+  .scene-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .scene-actions .btn {
+    flex: 1 1 0;
+    padding: 10px 12px;
+    font-size: 10px;
+  }
+
+  /* Two columns of next steps under the scene. */
+  .results-columns {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 30px;
+  }
+
+  .results-col {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    flex: 0 1 340px;
+    text-align: left;
+  }
+
+  .facilitator-lead {
+    margin: 8px 0 0;
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
   }
 
   .results-visuals .gauge-wrap {
@@ -686,6 +914,12 @@
 
   .results-visuals .rat-race {
     margin-top: 0;
+  }
+
+  /* Jump link to the breakdown, sitting under the dial. */
+  .view-results-btn {
+    display: block;
+    margin: 18px auto 0;
   }
 
   .gauge-wrap--results .gauge-header {
@@ -751,10 +985,15 @@
   }
 
   .facilitator-step {
-    margin: 0 0 16px;
-    color: #DDD;
-    font-size: 13px;
+    margin: 0;
+    color: #B4B4B4;
+    font-size: 12px;
     line-height: 1.6;
+  }
+
+  .facilitator-step span {
+    color: #E8E8E8;
+    font-weight: 700;
   }
 
   .facilitator-close {
@@ -799,6 +1038,23 @@
   .results-chart--wide {
     flex: 1 0 100%;
     max-width: none;
+  }
+
+  /* The cloud gets its own panel so it reads as a separate exhibit from the
+     score breakdown below it. */
+  .results-chart--cloud {
+    flex: 1 0 100%;
+    max-width: none;
+    padding: 18px 16px 22px;
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 40%, rgba(124, 250, 107, 0.06), transparent 70%),
+      linear-gradient(180deg, #241640 0%, var(--cloud-bg) 100%);
+    border: 1.5px solid var(--cloud-edge);
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.55);
+  }
+
+  .results-chart--cloud .results-chart-title {
+    color: #C9AEF5;
   }
 
   .results-chart-title {
@@ -862,6 +1118,64 @@
     .radar-dot-aura {
       animation: none;
     }
+  }
+
+  /* ---- Scenario chip hover card ---- */
+  .radar-wrap {
+    position: relative;
+  }
+
+  /* Placed by JS relative to its chip -- below it in the top half of the
+     chart, above it in the bottom half -- so the chip stays readable. */
+  .chip-card {
+    position: absolute;
+    z-index: 3;
+    width: 340px;
+    max-width: 100%;
+    padding: 14px 16px;
+    background: var(--black);
+    border: 1.5px solid var(--green);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    text-align: left;
+    pointer-events: none;
+  }
+
+  .chip-card--above {
+    transform: translateY(-100%);
+  }
+
+  .chip-card-head {
+    margin-bottom: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green);
+  }
+
+  .chip-card-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #9A9A9A;
+  }
+
+  .chip-card-answer,
+  .chip-card-why {
+    margin: 5px 0 12px;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: #E8E8E8;
+  }
+
+  .chip-card-answer b {
+    color: var(--green);
+  }
+
+  .chip-card-why {
+    margin-bottom: 0;
+    color: #B4B4B4;
   }
 
   .results-chart-legend {
@@ -1094,8 +1408,9 @@
     margin: 0 0 22px;
   }
 
-  .reflect-saved[hidden] {
-    display: none;
+  /* Reserves its line while empty so the picker does not shift anything. */
+  .reflect-saved--empty {
+    visibility: hidden;
   }
 
   .reflect-caret {
@@ -1766,6 +2081,45 @@
     border-radius: 6px;
   }
 
+  /* Play Again sits in the card's top-right corner: pixel reload glyph with
+     its label underneath. */
+  .play-again-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    background: transparent;
+    border: 1.5px solid #3E7F39;
+    color: #8FD98A;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+  }
+
+  .play-again-btn:hover {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(124, 250, 107, 0.1);
+  }
+
+  .play-again-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .results-card {
+    position: relative;
+  }
+
   .results-card h1 {
     margin: 0 0 32px;
     font-size: 22px;
@@ -2098,11 +2452,17 @@
   }
 
   /* ---- Floating restart: back to setup from anywhere in the game ---- */
-  .restart-float {
+  /* Pinned to the top right of the page, above every screen. */
+  .float-actions {
     position: fixed;
     top: 20px;
     right: 20px;
     z-index: 20;
+    display: flex;
+    gap: 8px;
+  }
+
+  .restart-float {
     background: transparent;
     border: 1.5px solid var(--black);
     color: var(--black);
@@ -2114,6 +2474,56 @@
     padding: 8px 14px;
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  /* Band picker hanging off the results shortcut. */
+  .results-jump {
+    position: relative;
+  }
+
+  .results-jump-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--page-bg);
+    border: 1.5px solid var(--black);
+  }
+
+  .results-jump-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: none;
+    color: var(--black);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .results-jump-item + .results-jump-item {
+    border-top: 1px solid rgba(10, 10, 10, 0.15);
+  }
+
+  .results-jump-item:hover {
+    background: var(--black);
+    color: var(--green);
+  }
+
+  .results-jump-item i {
+    width: 10px;
+    height: 10px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(10, 10, 10, 0.5);
   }
 
   .restart-float:hover {
@@ -2211,10 +2621,23 @@
     cursor: default;
   }
 
+  /* Ran out of time with nothing picked: the story card has nothing left to
+     say, so it stops holding the row open and the note rides up to the
+     gauge instead of sitting a screen away from it. */
+  .screen-options.no-answer .top-row .card--intro {
+    height: 0;
+  }
+
+  /* Nothing was picked, so the emptied options terminal is just debris
+     between the gauge and the note. */
+  .screen-options.no-answer .terminal {
+    display: none;
+  }
+
   /* Stands in for the answer when the clock ran out on an empty pick. */
   .timeout-note {
     margin: 0;
-    padding: 26px 20px 0;
+    padding: 12px 20px 0;
     color: var(--red);
     font-family: 'JetBrains Mono', monospace;
     font-size: 12.5px;
@@ -2320,4 +2743,785 @@
   .skip-type-btn:hover {
     background: var(--black);
     color: var(--green);
+  }
+
+  /* ================================================================
+     Responsive
+     The layout was authored at fixed widths (801px shells, a 1333px
+     options screen, 620px green panel). Below those widths the shells
+     go fluid, side-by-side panes stack, and the entrance animations
+     that translate by hard-coded pixel amounts are swapped for fades.
+     ================================================================ */
+
+  /* ---- Tablet and below (iPad portrait/landscape) ---- */
+  @media (max-width: 1100px) {
+    /* Extra headroom so the fixed Restart / results shortcuts never sit on
+       top of the card. */
+    body {
+      padding: 68px 16px 40px;
+    }
+
+    .card,
+    .card--intro,
+    .card--prompt,
+    .duo-header,
+    .setup-card,
+    .results-card,
+    .card--options.results-layout,
+    .tabs,
+    .layout-tabs,
+    .layout-tab-panel,
+    .screen-prompt,
+    .screen-options,
+    .screen-complete {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .setup-body {
+      height: auto;
+      min-height: 0;
+      padding: 28px 20px;
+    }
+
+    /* Story and gauge stack instead of sitting side by side. */
+    .screen-options .top-row {
+      flex-direction: column;
+    }
+
+    .screen-options .top-row .card--intro,
+    .screen-options .top-row .card--options {
+      flex: 1 1 auto;
+      width: 100%;
+      border-left: none;
+    }
+
+    /* greenSettle/blackSlideOut translate by fixed pixel amounts that only
+       make sense in the two-pane layout. */
+    .screen-options .top-row .card--intro,
+    .screen-options .top-row .card--options {
+      animation: fadeInSoft 0.4s ease both;
+    }
+
+    /* Nothing is holding the row open once the panes stack. */
+    .screen-options.no-answer .top-row .card--intro {
+      height: auto;
+    }
+
+    /* The collapse trick pins the body at the desktop panel width; stacked,
+       it just needs to fill the card. */
+    .screen-options.revealing .top-row .card--intro .body {
+      width: 100%;
+    }
+
+    .results-visuals {
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+    }
+
+    /* The chart is drawn on a 960-unit canvas; let it scroll rather than
+       shrink its labels into illegibility. */
+    .radar-scroll {
+      overflow-x: auto;
+    }
+
+    .radar-scroll .results-chart-svg {
+      min-width: 620px;
+    }
+  }
+
+  /* ---- Phone ---- */
+  @media (max-width: 700px) {
+    body {
+      padding: 62px 10px 40px;
+    }
+
+    /* The floating shortcuts wrap and shrink so they never cover the card. */
+    .float-actions {
+      top: 10px;
+      right: 10px;
+      left: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .restart-float {
+      font-size: 8px;
+      padding: 6px 9px;
+    }
+
+    .setup-body h1,
+    .card--prompt h1,
+    .card--intro h1,
+    .results-card h1 {
+      font-size: 17px;
+      line-height: 1.4;
+    }
+
+    .card--prompt .body {
+      padding: 48px 14px 20px;
+    }
+
+    .setup-body {
+      padding: 22px 14px;
+    }
+
+    .skip-type-btn {
+      font-size: 8px;
+      padding: 6px 9px;
+    }
+
+    /* Stacked, an unpicked option still shows a line of text inside its own
+       padding while it collapses -- zero that out too. */
+    .screen-options.revealing .options-row .option:not(.selected) {
+      padding-top: 0;
+      padding-bottom: 0;
+      border-bottom-color: transparent;
+    }
+
+    /* A-E become a hand of cards: stacked, tilted, top one swipeable. */
+    .options-deck {
+      display: block !important;
+      position: relative;
+      height: 268px;
+      margin: 14px 14px 22px;
+      padding: 0;
+      overflow: visible;
+      perspective: 800px;
+    }
+
+    .options-deck .option {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 90%;
+      min-height: 0;
+      padding: 16px 16px 14px;
+      background: var(--black);
+      border: 1.5px solid var(--terminal-border);
+      border-left-width: 3px;
+      border-left-color: transparent;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.65);
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 10px;
+      touch-action: pan-y;
+      user-select: none;
+    }
+
+    .options-deck .option.is-top {
+      cursor: grab;
+    }
+
+    .options-deck .option.selected {
+      border-color: var(--green);
+    }
+
+    /* The gauge rides in the story panel, under the prompt. */
+    .phone-gauge {
+      margin-top: 18px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .phone-gauge .dial {
+      width: 152px;
+      filter: drop-shadow(3px 4px 0 rgba(0, 0, 0, 0.55))
+        drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35));
+    }
+
+    /* Just the dial here -- the wheel and the hamster trio stay on the
+       results screen. */
+    .phone-gauge .mini-wheel,
+    .phone-gauge .gauge-hamsters {
+      display: none;
+    }
+
+    /* Revealing keeps the panel (and its gauge) in place; only the story
+       copy steps aside. */
+    .screen-options.revealing .top-row .card--intro {
+      flex-basis: auto;
+      animation: none;
+      opacity: 1;
+    }
+
+    .screen-options.revealing .card--intro .body {
+      width: 100%;
+      background: var(--black);
+    }
+
+    .screen-options.revealing .card--intro h1,
+    .screen-options.revealing .card--intro .content-row {
+      display: none;
+    }
+
+    /* Timeout: no footer, the next step sits under the red line. */
+    .timeout-next {
+      width: auto;
+      display: block;
+      margin: 18px auto 24px;
+      padding: 13px 26px;
+    }
+
+    /* The only control on a card. */
+    .option-select {
+      margin-top: auto;
+      align-self: stretch;
+      background: transparent;
+      border: 1.5px solid var(--green);
+      color: var(--green);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    .options-row .option.selected .option-select {
+      background: var(--green);
+      color: var(--black);
+    }
+
+    /* Sticky footer: the advisor phones (labelled, since a touch screen has
+       no hover to explain them) and Submit. */
+    .mobile-footer {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      background: var(--black);
+      border-top: 1.5px solid rgba(124, 250, 107, 0.35);
+      box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.65);
+    }
+
+    .mobile-footer-calls {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 0 0 auto;
+    }
+
+    .mobile-footer-label {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #9A9A9A;
+    }
+
+    .mobile-footer .call-advisor-group {
+      margin-top: 0;
+      gap: 8px;
+    }
+
+    /* The label does the tooltip's job here. */
+    .mobile-footer .call-advisor-tooltip {
+      display: none;
+    }
+
+    /* The phones were drawn black-on-green for the story panel; on the black
+       footer they need the phosphor treatment instead. */
+    .mobile-footer .call-advisor-btn {
+      width: 32px;
+      height: 32px;
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .mobile-footer .call-advisor-btn.used {
+      border-color: #4A4A4A;
+      color: #4A4A4A;
+    }
+
+    .mobile-footer .action-btn {
+      flex: 1;
+      width: auto;
+      margin-top: 0;
+      padding: 13px 12px;
+    }
+
+    /* Room for the footer at the end of the screen. */
+    .screen-options {
+      padding-bottom: 92px;
+    }
+
+    /* Revealing: only the chosen card stays, and it flattens into the page. */
+    .screen-options.revealing .options-deck {
+      height: auto;
+      min-height: 120px;
+      margin-bottom: 0;
+    }
+
+    .screen-options.revealing .options-deck .option:not(.selected) {
+      display: none;
+    }
+
+    .screen-options.revealing .options-deck .option.selected {
+      position: static;
+      transform: none !important;
+      border-color: transparent;
+      box-shadow: none;
+    }
+
+    /* "TIMES UP!" needs room to breathe and should land in the upper part of
+       the screen, not dead centre behind the deck. */
+    .times-up-overlay {
+      align-items: flex-start;
+      padding: 22vh 20px 0;
+    }
+
+    .times-up {
+      font-size: 34px;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    .type-caret--timesup {
+      width: 18px;
+      height: 30px;
+    }
+
+    /* Timer moves onto the green panel, out of the gauge pane. */
+    .screen-options .card--intro .body {
+      position: relative;
+    }
+
+    /* Green on the green panel would be invisible -- the timer becomes a
+       black chip with the phosphor text inside it. */
+    .screen-options .card--intro .timer {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: var(--black);
+      border-color: var(--black);
+      color: var(--green);
+    }
+
+    .screen-options .card--intro .timer.timer-warn {
+      color: #F2C94C;
+      border-color: var(--black);
+    }
+
+    .screen-options .card--intro .timer.timer-critical {
+      color: var(--red);
+      border-color: var(--black);
+    }
+
+    .screen-options .card--intro h1 {
+      padding-right: 76px;
+    }
+
+    .screen-options .timer {
+      font-size: 15px;
+      padding: 5px 10px;
+    }
+
+    .rat-wheel {
+      width: 150px;
+      height: 150px;
+    }
+
+    .hamster-showcase-box {
+      width: 100%;
+      max-width: 260px;
+      height: auto;
+      flex-wrap: wrap;
+    }
+
+    .hamster-showcase-box--pause .rat-wheel {
+      width: 120px;
+      height: 120px;
+    }
+
+    .drink-cup {
+      width: 58px;
+      height: 73px;
+    }
+
+    .sip-hamster {
+      width: 82px;
+      height: 96px;
+      margin-right: -12px;
+    }
+
+    .mini-hamster-big {
+      width: 58px;
+      height: 53px;
+    }
+
+    .thought-bubble {
+      width: 74px;
+      height: 62px;
+    }
+
+    /* The corner button and the pixel heading need to stop fighting. */
+    .play-again-btn {
+      top: 12px;
+      right: 12px;
+      padding: 7px 9px;
+      gap: 4px;
+      font-size: 8px;
+    }
+
+    .play-again-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    .results-card h1 {
+      padding-right: 84px;
+    }
+
+    .results-columns {
+      flex-direction: column;
+      gap: 26px;
+      margin-top: 24px;
+    }
+
+    .results-col {
+      flex: 1 1 auto;
+    }
+
+    .results-scene {
+      padding: 14px 14px 16px;
+    }
+
+    .gauge-pin {
+      top: 10px;
+      right: 10px;
+      width: 68px;
+    }
+
+    .gauge-pin .dial {
+      width: 66px;
+    }
+
+    .btn,
+    .action-btn {
+      width: 100%;
+    }
+
+    .radar-scroll .results-chart-svg {
+      min-width: 560px;
+    }
+
+    .results-chart-legend {
+      flex-wrap: wrap;
+      gap: 6px 14px;
+      font-size: 9px;
+    }
+
+    /* The hover card would overflow a phone screen at its desk width. */
+    .chip-card {
+      width: 240px;
+      padding: 10px 12px;
+    }
+
+    .reflect-words {
+      padding-left: 0;
+      gap: 6px;
+    }
+
+    .reflect-word {
+      font-size: 10.5px;
+      padding: 6px 9px;
+    }
+
+    /* Keep the paired choices two-up rather than one long column. */
+    .setup-btn {
+      flex: 1 1 45%;
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+
+    .facilitator-box {
+      padding: 20px 16px;
+    }
+  }
+
+  /* ---- Touch devices ----
+     Study Mode reveals an option's explanation on hover, which never fires
+     on a touchscreen; stack it under the answer instead. */
+  @media (hover: none) {
+    .terminal--study.revealed .option .option-face {
+      grid-area: auto;
+    }
+
+    .terminal--study.revealed .option-face--flip {
+      visibility: visible;
+    }
+  }
+
+  /* ================================================================
+     CRT backdrop
+     The surface the terminal windows are open on. Four stacked layers,
+     all pointer-transparent and sitting at z-index -1 so in-flow content
+     paints over them:
+       .crt-backdrop  phosphor bloom + corner vignette   (--backdrop-glow)
+       .crt-grid      perspective wireframe floor        (--grid-line)
+       .crt-scan      scanlines + slow flicker           (--scan-opacity)
+       .crt-roll      the refresh band drifting upward
+     ================================================================ */
+  .crt-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 90% 60% at 50% 38%, var(--backdrop-glow), transparent 70%),
+      radial-gradient(ellipse 120% 90% at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.75) 100%),
+      linear-gradient(180deg, #08110C 0%, var(--backdrop-base) 55%, #040706 100%);
+  }
+
+  /* Wireframe floor receding to a horizon just under the middle of the
+     screen. Masked so the lines dissolve before they reach it. */
+  .crt-grid {
+    position: absolute;
+    left: -60%;
+    right: -60%;
+    bottom: -10%;
+    height: 78vh;
+    background-image:
+      repeating-linear-gradient(to right, var(--grid-line) 0 1px, transparent 1px 72px),
+      repeating-linear-gradient(to bottom, var(--grid-line) 0 1px, transparent 1px 72px);
+    transform: perspective(300px) rotateX(72deg);
+    transform-origin: bottom center;
+    -webkit-mask-image: linear-gradient(to top, #000 6%, rgba(0, 0, 0, 0.5) 34%, transparent 78%);
+    mask-image: linear-gradient(to top, #000 6%, rgba(0, 0, 0, 0.5) 34%, transparent 78%);
+  }
+
+  /* Every other pixel row, the way a shadow mask eats one. */
+  .crt-scan {
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, var(--scan-opacity)) 0 1px,
+      transparent 1px 3px
+    );
+    animation: crtFlicker 5.5s steps(1, end) infinite;
+  }
+
+  /* One soft band sweeping up the screen, like a camera out of sync with
+     the refresh. Transform only, so it stays on the compositor. */
+  .crt-roll {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 34vh;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(124, 250, 107, 0.05) 45%,
+      rgba(124, 250, 107, 0.08) 55%,
+      transparent
+    );
+    animation: crtRoll 9s linear infinite;
+  }
+
+  @keyframes crtRoll {
+    from { transform: translate3d(0, 100vh, 0); }
+    to { transform: translate3d(0, -40vh, 0); }
+  }
+
+  @keyframes crtFlicker {
+    0%, 100% { opacity: 1; }
+    72% { opacity: 0.88; }
+    74% { opacity: 1; }
+    88% { opacity: 0.93; }
+    90% { opacity: 1; }
+  }
+
+  /* ---- Backdrop-aware overrides ----
+     These were drawn for the old off-white page and vanish on the dark
+     surface: the floating shortcuts were black-on-light, and the cards'
+     drop shadows had nothing left to darken. */
+  .restart-float {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(6, 10, 8, 0.72);
+  }
+
+  .restart-float:hover {
+    background: var(--green);
+    color: var(--black);
+  }
+
+  .results-jump-menu {
+    background: rgba(6, 10, 8, 0.96);
+    border-color: var(--green);
+  }
+
+  .results-jump-item {
+    color: var(--green);
+  }
+
+  .results-jump-item + .results-jump-item {
+    border-top-color: rgba(124, 250, 107, 0.22);
+  }
+
+  .results-jump-item:hover {
+    background: var(--green);
+    color: var(--black);
+  }
+
+  .results-jump-item i {
+    border-color: rgba(124, 250, 107, 0.6);
+  }
+
+  /* A hairline of phosphor plus a deeper shadow, so the cards read as lit
+     panes floating above the desktop rather than holes cut out of it. */
+  .card,
+  .setup-card,
+  .duo-header,
+  .tabs {
+    box-shadow: 0 0 0 1px rgba(124, 250, 107, 0.14), 0 18px 44px rgba(0, 0, 0, 0.6);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crt-scan,
+    .crt-roll {
+      animation: none;
+    }
+
+    .crt-roll {
+      opacity: 0.5;
+      transform: translate3d(0, 40vh, 0);
+    }
+  }
+
+  /* Phones pay for the base and the scanlines only. */
+  @media (max-width: 700px) {
+    .crt-grid,
+    .crt-roll {
+      display: none;
+    }
+  }
+
+  /* ================================================================
+     Decode-in: how to play + goals
+       .info-heading--boot  chromatic split + letterspacing collapse
+       .decode-line         per-line arrival; hidden lines hold their height
+       .rules-text.decoding scanline wipe passing down the block once
+     Timing lives in src/useDecodeLines.js (CHAR_MS / LINE_STAGGER).
+     ================================================================ */
+  .info-heading {
+    position: relative;
+  }
+
+  /* Magenta/cyan fringe that snaps back into register, plus letterspacing
+     that collapses -- the whole thing is over in under half a second. */
+  .info-heading--boot {
+    animation: headingBoot 0.46s steps(6, end) both;
+  }
+
+  @keyframes headingBoot {
+    0% {
+      opacity: 0;
+      letter-spacing: 0.35em;
+      transform: translateX(calc(var(--glitch-shift) * -1));
+      text-shadow: var(--glitch-shift) 0 0 #FF3EA5, calc(var(--glitch-shift) * -1) 0 0 #3EF0FF;
+    }
+    45% {
+      opacity: 1;
+      letter-spacing: 0.12em;
+      transform: translateX(var(--glitch-shift));
+      text-shadow: calc(var(--glitch-shift) * -1) 0 0 #FF3EA5, var(--glitch-shift) 0 0 #3EF0FF;
+    }
+    75% {
+      letter-spacing: 0.02em;
+      transform: translateX(-1px);
+      text-shadow: 1px 0 0 #FF3EA5, -1px 0 0 #3EF0FF;
+    }
+    100% {
+      opacity: 1;
+      letter-spacing: normal;
+      transform: translateX(0);
+      text-shadow: none;
+    }
+  }
+
+  /* Unstarted lines keep their box (and their wrapping) but stay invisible. */
+  .decode-line {
+    visibility: hidden;
+  }
+
+  .decode-line.is-live {
+    visibility: visible;
+    animation: lineArrive 0.22s ease-out both;
+  }
+
+  @keyframes lineArrive {
+    from { opacity: 0; transform: translateY(2px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Unresolved glyphs read a shade colder than the settled copy, so the text
+     visibly "cools" into place. */
+  .rules-text.decoding {
+    color: var(--decode-dim);
+    text-shadow: 0 0 6px rgba(124, 250, 107, 0.25);
+  }
+
+  /* One pass of a bright scanline down the block while it decodes. */
+  .rules-text.decoding::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 44px;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(124, 250, 107, 0.16) 45%,
+      rgba(62, 240, 255, 0.14) 55%,
+      transparent
+    );
+    animation: decodeWipe 0.9s linear both;
+  }
+
+  .rules-text {
+    position: relative;
+  }
+
+  @keyframes decodeWipe {
+    from { transform: translateY(-44px); }
+    to { transform: translateY(calc(100% + 44px)); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .info-heading--boot,
+    .decode-line.is-live,
+    .rules-text.decoding::after {
+      animation: none;
+    }
+
+    .rules-text.decoding {
+      color: inherit;
+      text-shadow: none;
+    }
+  }
+
+  /* Phones keep the decode but drop the chromatic split and the wipe. */
+  @media (max-width: 700px) {
+    .info-heading--boot {
+      animation: lineArrive 0.24s ease-out both;
+    }
+
+    .rules-text.decoding::after {
+      display: none;
+    }
   }

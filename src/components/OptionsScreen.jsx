@@ -39,6 +39,24 @@ export function OptionsScreen({
   onNext,
 }) {
   const [selected, setSelected] = useState(null);
+  // The phone layout is a different interaction, not just different CSS:
+  // the options become a swipeable deck with their own Select buttons.
+  const [isPhone, setIsPhone] = useState(
+    () => window.matchMedia?.('(max-width: 700px)').matches ?? false
+  );
+  useEffect(() => {
+    const mq = window.matchMedia?.('(max-width: 700px)');
+    if (!mq) return undefined;
+    const onChange = (e) => setIsPhone(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  // Phone deck: cards stacked like a hand of cards, top one swipeable.
+  const [order, setOrder] = useState(() => scenario.options.map((_, i) => i));
+  const [drag, setDrag] = useState({ x: 0, active: false });
+  const dragStart = useRef(0);
+
   const [revealed, setRevealed] = useState(false);
   const [timeLeft, setTimeLeft] = useState(CARD_TIME);
   const [outOfTime, setOutOfTime] = useState(false);
@@ -103,6 +121,26 @@ export function OptionsScreen({
     }, 800);
   }
 
+  // Drag the top card sideways; past the threshold it goes to the back of
+  // the stack and the next one comes up.
+  function onCardDown(e) {
+    if (revealing || revealed || outOfTime) return;
+    dragStart.current = e.clientX;
+    setDrag({ x: 0, active: true });
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  }
+
+  function onCardMove(e) {
+    if (!drag.active) return;
+    setDrag({ x: e.clientX - dragStart.current, active: true });
+  }
+
+  function onCardUp() {
+    if (!drag.active) return;
+    if (Math.abs(drag.x) > 70) setOrder((o) => [...o.slice(1), o[0]]);
+    setDrag({ x: 0, active: false });
+  }
+
   function handleAction() {
     if (study) {
       if (!revealed) {
@@ -126,6 +164,7 @@ export function OptionsScreen({
     <div
       className={
         'screen-options' +
+        (noAnswer ? ' no-answer' : '') +
         (alarm ? ' time-critical' : '') +
         (revealing ? ' revealing' : '') +
         (revealStep === 2 ? ' reveal-settled' : '')
@@ -143,6 +182,9 @@ export function OptionsScreen({
                 </Fragment>
               ))}
             </h1>
+            {isPhone && timed && !revealing && (
+              <div className={timerClass}>{outOfTime ? '00:00' : formatTime(timeLeft)}</div>
+            )}
             <div className="content-row">
               <div className="story-text-wrap">
                 {scenario.paragraphs.map((p, i) => (
@@ -150,24 +192,35 @@ export function OptionsScreen({
                 ))}
               </div>
             </div>
-            <AdvisorCall
-              advisors={scenario.advisors}
-              sound={sound}
-              usedCalls={usedCalls}
-              onUseCall={onUseCall}
-              unlimited={study}
-              showRole={study}
-            />
-          </div>
-        </div>
-        <div className="card card--options card--standalone">
-          <div className="body">
-            {timed && !revealing && (
-              <div className={timerClass}>{outOfTime ? '00:00' : formatTime(timeLeft)}</div>
+            {/* On the green panel the dial stands alone -- no wheel, no
+                hamsters -- and the needle goes black to read against it. */}
+            {isPhone && (
+              <div className="phone-gauge">
+                <Gauge angle={gaugeAngle} needleColor="var(--black)" />
+              </div>
             )}
-            <Gauge angle={gaugeAngle} needleColor={needleColor} />
+            {!isPhone && (
+              <AdvisorCall
+                advisors={scenario.advisors}
+                sound={sound}
+                usedCalls={usedCalls}
+                onUseCall={onUseCall}
+                unlimited={study}
+                showRole={study}
+              />
+            )}
           </div>
         </div>
+        {!isPhone && (
+          <div className="card card--options card--standalone">
+            <div className="body">
+              {timed && !revealing && (
+                <div className={timerClass}>{outOfTime ? '00:00' : formatTime(timeLeft)}</div>
+              )}
+              <Gauge angle={gaugeAngle} needleColor={needleColor} />
+            </div>
+          </div>
+        )}
       </div>
       <div className="layout-row">
         <div className="card card--options card--standalone card--choices">
@@ -217,16 +270,42 @@ export function OptionsScreen({
               }
             >
               <div className="terminal-bar">-bash &mdash; 534 x 532</div>
-              <div className="options-row">
-                {scenario.options.map((opt, i) => (
+              <div className={isPhone ? 'options-row options-deck' : 'options-row'}>
+                {scenario.options.map((opt, i) => {
+                  const depth = isPhone ? order.indexOf(i) : 0;
+                  const top = depth === 0;
+                  const tilt = [0, -3.5, 3, -2.5, 2][depth] ?? 0;
+                  const deckStyle = isPhone
+                    ? {
+                        zIndex: scenario.options.length - depth,
+                        transform: `translate3d(${top ? drag.x : 0}px, ${depth * 7}px, 0) rotate(${
+                          top ? drag.x / 16 : tilt
+                        }deg) scale(${1 - depth * 0.035})`,
+                        transition: drag.active && top ? 'none' : 'transform .22s ease',
+                        pointerEvents: top ? 'auto' : 'none',
+                      }
+                    : { animationDelay: `${0.45 + i * 0.12}s` };
+                  return (
                   <div
                     key={i}
-                    className={'option' + (selected === i ? ' selected' : '')}
-                    style={{ animationDelay: `${0.45 + i * 0.12}s` }}
+                    className={
+                      'option' +
+                      (selected === i ? ' selected' : '') +
+                      (isPhone && top ? ' is-top' : '')
+                    }
+                    style={deckStyle}
+                    onPointerDown={isPhone && top ? onCardDown : undefined}
+                    onPointerMove={isPhone && top ? onCardMove : undefined}
+                    onPointerUp={isPhone && top ? onCardUp : undefined}
+                    onPointerCancel={isPhone && top ? onCardUp : undefined}
                     data-align={opt.align}
-                    onClick={() => {
-                      if (!outOfTime && !revealed && !revealing) setSelected(i);
-                    }}
+                    onClick={
+                      isPhone
+                        ? undefined
+                        : () => {
+                            if (!outOfTime && !revealed && !revealing) setSelected(i);
+                          }
+                    }
                   >
                     <div className="option-face option-face--rest">
                       <span className="prompt">C:/ user_{LETTERS[i]}$</span>
@@ -238,30 +317,75 @@ export function OptionsScreen({
                       )}
                     </div>
                     {study && <div className="option-face option-face--flip">{opt.explanation}</div>}
+                    {isPhone && !revealed && !revealing && !outOfTime && (
+                      <button
+                        type="button"
+                        className="option-select"
+                        aria-pressed={selected === i}
+                        onClick={() => setSelected(i)}
+                      >
+                        {selected === i ? `Selected ${LETTERS[i]}` : 'Select'}
+                      </button>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
             {noAnswer && (
-              <p className="timeout-note">
-                When you don&rsquo;t decide, someone will decide for you.
-              </p>
+              <>
+                <p className="timeout-note">
+                  When you don&rsquo;t decide, someone will decide for you.
+                </p>
+                {isPhone && (
+                  <button type="button" className="action-btn timeout-next" onClick={handleAction}>
+                    {isLast ? 'Finish' : 'Next Question'}
+                  </button>
+                )}
+              </>
             )}
-            <button
-              type="button"
-              className="action-btn"
-              disabled={revealStep === 2 ? false : selected === null || outOfTime || revealing}
-              onClick={handleAction}
-            >
-              {(study ? revealed : revealStep === 2)
-                ? isLast
-                  ? 'Finish'
-                  : 'Next Question'
-                : 'Submit'}
-            </button>
+            {!isPhone && (
+              <button
+                type="button"
+                className="action-btn"
+                disabled={revealStep === 2 ? false : selected === null || outOfTime || revealing}
+                onClick={handleAction}
+              >
+                {(study ? revealed : revealStep === 2) ? (isLast ? 'Finish' : 'Next Question') : 'Submit'}
+              </button>
+            )}
           </div>
         </div>
       </div>
+      {isPhone && !noAnswer && (
+        <div className="mobile-footer">
+          <div className="mobile-footer-calls">
+            <span className="mobile-footer-label">Call Adviser</span>
+            <AdvisorCall
+              advisors={scenario.advisors}
+              sound={sound}
+              usedCalls={usedCalls}
+              onUseCall={onUseCall}
+              unlimited={study}
+              showRole={study}
+            />
+          </div>
+          <button
+            type="button"
+            className="action-btn"
+            disabled={revealStep === 2 ? false : selected === null || outOfTime || revealing}
+            onClick={handleAction}
+          >
+            {(study ? revealed : revealStep === 2)
+              ? isLast
+                ? 'Finish'
+                : 'Next Question'
+              : selected !== null
+              ? `Submit ${LETTERS[selected]}`
+              : 'Submit'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

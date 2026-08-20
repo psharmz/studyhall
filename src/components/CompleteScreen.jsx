@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Gauge } from './Gauge.jsx';
 import {
   MiniHamster,
+  PixelMoney,
+  PixelPdf,
   PixelReload,
   SippingHamster,
   SodaCup,
@@ -94,7 +96,7 @@ export function CompleteScreen({
                 </div>
               )}
               <div className="rat-caption">
-                {aligned && 'You have escaped and found your comrades'}
+                {aligned && 'Your freedom is a result of just and inclusive relationship.'}
                 {partial && "Good job, you're starting to come out of it. Keep going"}
                 {sipping && 'Looks like you are drinking the cool aide'}
                 {!aligned && !partial && !sipping && 'You are trapped in the capitalism rat race'}
@@ -117,35 +119,63 @@ export function CompleteScreen({
                 <Gauge angle={gaugeAngle} needleColor={needleColor} />
               </div>
             </div>
-          </div>
 
-          {/* Play Again steps back into the corner: sharing, supporting and
-              facilitating are the actions worth taking from here. */}
-          <button type="button" className="play-again-btn" onClick={onRestart}>
-            <PixelReload className="play-again-icon" />
-            <span>Play Again</span>
-          </button>
-
-          <div className="results-columns">
-            <div className="results-col">
-              {SUPPORT_URL ? (
-                <a className="btn" href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">
-                  Support Study Hall
-                </a>
-              ) : (
-                <button type="button" className="btn">
-                  Support Study Hall
+            {/* Sits alongside the scene, sharing its blue, so the route into
+                Study Mode reads as part of the ending rather than a footnote.
+                Study Mode has its own end actions, so it only shows here. */}
+            {simulation && (
+              <aside className="facilitator-panel">
+                <p className="facilitator-lead">Interested in becoming a facilitator?</p>
+                <p className="facilitator-step">
+                  <span>First step:</span> complete the game in Study Mode.
+                </p>
+                <button type="button" className="btn facilitator-cta" onClick={onStartStudy}>
+                  Start Study Mode
                 </button>
-              )}
-              <p className="facilitator-lead">Interested in becoming a facilitator?</p>
-              <p className="facilitator-step">
-                <span>First step:</span> complete the game in Study Mode.
-              </p>
-              <button type="button" className="btn btn--secondary" onClick={onStartStudy}>
-                Start Study Mode
-              </button>
-            </div>
+              </aside>
+            )}
           </div>
+
+          {/* Restarting and supporting both step back into the corner as a
+              stacked pair of square tiles, clear of the ending art. */}
+          <div className="corner-actions">
+            <button type="button" className="corner-btn" onClick={onRestart}>
+              <PixelReload className="corner-btn-icon" />
+              <span>Play Again</span>
+            </button>
+            {SUPPORT_URL ? (
+              <a
+                className="corner-btn"
+                href={SUPPORT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <PixelMoney className="corner-btn-icon" />
+                <span>Support</span>
+              </a>
+            ) : (
+              <button type="button" className="corner-btn">
+                <PixelMoney className="corner-btn-icon" />
+                <span>Support</span>
+              </button>
+            )}
+          </div>
+
+          {!simulation && (
+            <div className="results-columns">
+              <div className="results-col results-col--study">
+                <div className="study-actions">
+                  <button type="button" className="btn study-action">
+                    <PixelPdf className="study-action-icon" />
+                    <span>Cards &amp; Guide</span>
+                  </button>
+                  <button type="button" className="btn study-action">
+                    Become a Facilitator
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {simulation && <ResultsCharts answers={answers} />}
         </div>
       </div>

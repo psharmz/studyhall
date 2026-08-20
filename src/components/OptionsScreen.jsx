@@ -33,12 +33,15 @@ export function OptionsScreen({
   needleColor,
   sound = true,
   usedCalls,
+  simulationAnswers = {},
   onUseCall,
   onReveal,
   onTimeoutPenalty,
   onNext,
 }) {
   const [selected, setSelected] = useState(null);
+  const [clarity, setClarity] = useState(0); // 1-5 star rating
+  const [learnBeyondOpen, setLearnBeyondOpen] = useState(false);
   // The phone layout is a different interaction, not just different CSS:
   // the options become a swipeable deck with their own Select buttons.
   const [isPhone, setIsPhone] = useState(
@@ -234,6 +237,23 @@ export function OptionsScreen({
                 <div className="principle-inner">
                   <span className="principle-label">EJIT Principle</span>
                   <p className="principle-text">{scenario.principle}</p>
+                  <div className="clarity-rating">
+                    <label htmlFor="clarity-stars">How clear is this scenario to you?</label>
+                    <div className="clarity-stars" id="clarity-stars">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          className={`clarity-star ${star <= clarity ? 'active' : ''}`}
+                          onClick={() => setClarity(star)}
+                          title={star === 1 ? 'Very confusing' : star === 5 ? 'Very clear' : ''}
+                          aria-label={`${star} star${star !== 1 ? 's' : ''}`}
+                        >
+                          ★
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="btn-row principle-actions">
                     <a
                       className="btn btn--secondary"
@@ -243,20 +263,13 @@ export function OptionsScreen({
                     >
                       Disagree? Tell us more
                     </a>
-                    {LEARN_BEYOND_URL ? (
-                      <a
-                        className="btn btn--secondary"
-                        href={LEARN_BEYOND_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Learn Beyond
-                      </a>
-                    ) : (
-                      <button type="button" className="btn btn--secondary">
-                        Learn Beyond
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="btn btn--secondary"
+                      onClick={() => setLearnBeyondOpen(true)}
+                    >
+                      Learn Beyond
+                    </button>
                   </div>
                 </div>
               </div>
@@ -311,8 +324,15 @@ export function OptionsScreen({
                       <span className="prompt">C:/ user_{LETTERS[i]}$</span>
                       <span className="text">{opt.text}</span>
                       {study && (
-                        <div className="chip" data-align={opt.align}>
-                          {ALIGN_LABELS[opt.align]}
+                        <div className="option-tags">
+                          {simulationAnswers[scenario.code] === opt && (
+                            <div className="chip" data-align="simulation">
+                              Selected in simulation mode
+                            </div>
+                          )}
+                          <div className="chip" data-align={opt.align}>
+                            {ALIGN_LABELS[opt.align]}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -384,6 +404,26 @@ export function OptionsScreen({
               ? `Submit ${LETTERS[selected]}`
               : 'Submit'}
           </button>
+        </div>
+      )}
+      {learnBeyondOpen && (
+        <div className="learn-beyond-overlay" onClick={() => setLearnBeyondOpen(false)}>
+          <div className="learn-beyond-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="learn-beyond-header">
+              <h2>Learn Beyond</h2>
+              <button
+                type="button"
+                className="learn-beyond-close"
+                onClick={() => setLearnBeyondOpen(false)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="learn-beyond-content">
+              {/* Placeholder for learn beyond content */}
+            </div>
+          </div>
         </div>
       )}
     </div>

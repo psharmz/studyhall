@@ -38,7 +38,9 @@ const REFLECT_WORDS = [
 // Opening question before the first scenario: pick as many words as you like.
 // The picks live in App state so they survive a trip back to the rules; one
 // day they will be posted to a data store, but nothing is sent anywhere yet.
-export function ReflectionScreen({ answer, onSaveAnswer, onStart, onReview }) {
+// `label` is passed in because Study Mode inserts an extra intro screen ahead
+// of this one, pushing its number along by one.
+export function ReflectionScreen({ label = 'S.04. GOALS', answer, onSaveAnswer, onStart, onReview }) {
   const selected = answer ?? [];
 
   function toggle(word) {
@@ -50,7 +52,7 @@ export function ReflectionScreen({ answer, onSaveAnswer, onStart, onReview }) {
   return (
     <div className="setup-screen">
       <div className="setup-card">
-        <TitleBar label="S.03. GOALS" />
+        <TitleBar label={label} />
         <div className="setup-body">
           <div className="setup-inner reflect">
             <p className="reflect-line">

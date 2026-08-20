@@ -648,6 +648,76 @@ export function PixelReload({ className }) {
   );
 }
 
+// 8-bit coin: a round token with a currency bar through the middle. Same 2px
+// grid and currentColor fill as PixelReload.
+export function PixelMoney({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+    >
+      <g fill="currentColor">
+        {/* rim, stepped so the circle reads round on the grid */}
+        <rect x="8" y="2" width="8" height="2" />
+        <rect x="6" y="4" width="2" height="2" />
+        <rect x="16" y="4" width="2" height="2" />
+        <rect x="4" y="6" width="2" height="4" />
+        <rect x="18" y="6" width="2" height="4" />
+        <rect x="4" y="14" width="2" height="4" />
+        <rect x="18" y="14" width="2" height="4" />
+        <rect x="4" y="10" width="2" height="4" />
+        <rect x="18" y="10" width="2" height="4" />
+        <rect x="6" y="18" width="2" height="2" />
+        <rect x="16" y="18" width="2" height="2" />
+        <rect x="8" y="20" width="8" height="2" />
+        {/* dollar sign: an S in three bars with two connecting corners,
+            plus the stem running through it */}
+        <rect x="11" y="4" width="2" height="16" />
+        <rect x="8" y="6" width="8" height="2" />
+        <rect x="8" y="8" width="2" height="2" />
+        <rect x="8" y="10" width="8" height="2" />
+        <rect x="14" y="12" width="2" height="2" />
+        <rect x="8" y="14" width="8" height="2" />
+      </g>
+    </svg>
+  );
+}
+
+// 8-bit PDF sheet: a page with its corner folded and a download arrow across
+// the lower half. Same 2px grid and currentColor fill as PixelReload.
+export function PixelPdf({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+    >
+      <g fill="currentColor">
+        {/* page outline, with the top-right corner cut away for the fold */}
+        <rect x="4" y="0" width="10" height="2" />
+        <rect x="14" y="2" width="2" height="2" />
+        <rect x="16" y="4" width="2" height="2" />
+        <rect x="18" y="6" width="2" height="16" />
+        <rect x="4" y="22" width="14" height="2" />
+        <rect x="2" y="2" width="2" height="20" />
+        {/* the folded corner itself */}
+        <rect x="14" y="4" width="2" height="2" />
+        <rect x="14" y="6" width="4" height="2" />
+        {/* download arrow: shaft, head, then the baseline it lands on */}
+        <rect x="10" y="10" width="2" height="6" />
+        <rect x="8" y="14" width="2" height="2" />
+        <rect x="12" y="14" width="2" height="2" />
+        <rect x="6" y="18" width="10" height="2" />
+      </g>
+    </svg>
+  );
+}
+
 export function DialArc() {
   return (
     <svg viewBox="0 0 81 45" xmlns="http://www.w3.org/2000/svg" shapeRendering="crispEdges">

@@ -3,6 +3,8 @@ import { SCENARIOS, SCORE_MIN, SCORE_MAX } from './scenarios.js';
 import { SetupScreen } from './components/SetupScreen.jsx';
 import { RulesScreen } from './components/RulesScreen.jsx';
 import { GoalsScreen } from './components/GoalsScreen.jsx';
+import { ConsentScreen } from './components/ConsentScreen.jsx';
+import { StudyPreviewScreen } from './components/StudyPreviewScreen.jsx';
 import { ReflectionScreen } from './components/ReflectionScreen.jsx';
 import { PromptTransition } from './components/PromptTransition.jsx';
 import { PromptScreen } from './components/PromptScreen.jsx';
@@ -41,7 +43,7 @@ function scoreToAngle(score) {
 }
 
 export default function App() {
-  // setup | rules | goals | reflect | transition | prompt | options | complete
+  // setup | rules | goals | studyPreview | consent | reflect | transition | prompt | options | complete
   const [phase, setPhase] = useState('setup');
   // The words the player picks for their own definition of Environmental
   // Justice in Technology. Kept here so they survive a trip back to the rules.
@@ -54,6 +56,8 @@ export default function App() {
   // What was picked on each card, keyed by scenario code. Feeds the results
   // screen, where hovering a scenario chip shows the answer and its debrief.
   const [answers, setAnswers] = useState({});
+  // Track which answers were chosen in simulation mode, to tag them in study mode
+  const [simulationAnswers, setSimulationAnswers] = useState({});
   // Band picker under the results shortcut.
   const [bandsOpen, setBandsOpen] = useState(false);
   const bandsRef = useRef(null);
@@ -122,8 +126,10 @@ export default function App() {
   }
 
   // "Start Study Mode" off the results screen: same game, study settings,
-  // keeping whatever language/cards/sound the player already chose.
+  // keeping whatever language/cards/sound the player already chose. Save the
+  // simulation answers so we can tag them in study mode.
   function handleStartStudy() {
+    setSimulationAnswers(answers);
     handleStart({
       language: settings?.language ?? 'english',
       mode: 'study',
@@ -132,16 +138,39 @@ export default function App() {
     });
   }
 
+  // Study Mode slots an extra screen between the goals and the consent notice,
+  // which shifts every label after it along by one.
+  const isStudy = settings?.mode === 'study';
+
   let screen;
   if (phase === 'setup') {
     screen = <SetupScreen onStart={handleStart} initial={settings} />;
   } else if (phase === 'rules') {
     screen = <RulesScreen onBack={() => setPhase('setup')} onNext={() => setPhase('goals')} />;
   } else if (phase === 'goals') {
-    screen = <GoalsScreen onBack={() => setPhase('rules')} onNext={() => setPhase('reflect')} />;
+    screen = (
+      <GoalsScreen
+        study={isStudy}
+        onBack={() => setPhase('rules')}
+        onNext={() => setPhase(isStudy ? 'studyPreview' : 'consent')}
+      />
+    );
+  } else if (phase === 'studyPreview') {
+    screen = (
+      <StudyPreviewScreen onBack={() => setPhase('goals')} onNext={() => setPhase('consent')} />
+    );
+  } else if (phase === 'consent') {
+    screen = (
+      <ConsentScreen
+        study={isStudy}
+        onBack={() => setPhase(isStudy ? 'studyPreview' : 'goals')}
+        onNext={() => setPhase('reflect')}
+      />
+    );
   } else if (phase === 'reflect') {
     screen = (
       <ReflectionScreen
+        label={isStudy ? 'S.05. GOALS' : 'S.04. GOALS'}
         answer={reflectionWords}
         onSaveAnswer={setReflectionWords}
         onStart={() => setPhase('transition')}
@@ -173,6 +202,7 @@ export default function App() {
         needleColor={NEEDLE_COLOR}
         sound={settings?.sound !== false}
         usedCalls={usedCalls}
+        simulationAnswers={simulationAnswers}
         onUseCall={(i) => setUsedCalls((prev) => prev.map((u, j) => (j === i ? true : u)))}
         onReveal={handleReveal}
         onTimeoutPenalty={handleTimeoutPenalty}

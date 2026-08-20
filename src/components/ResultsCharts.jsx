@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import cloud from 'd3-cloud';
-import { SCENARIOS, LETTERS } from '../scenarios.js';
+import { SCENARIOS, LETTERS, ALIGN_LABELS } from '../scenarios.js';
 
 // PLACEHOLDER DATA -- both charts are wired to stand-in values until the real
 // per-player aggregates exist. Swap these two consts out, nothing else.
@@ -31,6 +31,73 @@ const WORDS = [
   { text: 'harm', size: 13 },
   { text: 'scale', size: 12 },
 ];
+
+// PLACEHOLDER DATA -- per-country breakdowns behind the cloud's scope picker.
+// "All" above is the aggregate; these are what each country said on its own.
+const COUNTRY_WORDS = {
+  USA: [
+    { text: 'extraction', size: 40 },
+    { text: 'labor', size: 36 },
+    { text: 'consent', size: 32 },
+    { text: 'datacenter', size: 28 },
+    { text: 'emissions', size: 26 },
+    { text: 'cobalt', size: 24 },
+    { text: 'accountability', size: 22 },
+    { text: 'refusal', size: 18 },
+  ],
+  India: [
+    { text: 'water', size: 42 },
+    { text: 'land', size: 38 },
+    { text: 'community', size: 34 },
+    { text: 'sovereignty', size: 30 },
+    { text: 'consent', size: 26 },
+    { text: 'emissions', size: 24 },
+    { text: 'repair', size: 20 },
+    { text: 'access', size: 18 },
+  ],
+  Brazil: [
+    { text: 'extraction', size: 44 },
+    { text: 'water', size: 40 },
+    { text: 'land', size: 38 },
+    { text: 'stewardship', size: 32 },
+    { text: 'harm', size: 26 },
+    { text: 'sovereignty', size: 24 },
+    { text: 'scale', size: 20 },
+    { text: 'justice', size: 18 },
+  ],
+  Kenya: [
+    { text: 'labor', size: 38 },
+    { text: 'e-waste', size: 36 },
+    { text: 'health', size: 32 },
+    { text: 'community', size: 30 },
+    { text: 'access', size: 26 },
+    { text: 'toxicity', size: 24 },
+    { text: 'refusal', size: 20 },
+    { text: 'reparative', size: 18 },
+  ],
+  Philippines: [
+    { text: 'mining', size: 40 },
+    { text: 'water', size: 38 },
+    { text: 'emissions', size: 34 },
+    { text: 'labor', size: 32 },
+    { text: 'community', size: 28 },
+    { text: 'consent', size: 24 },
+    { text: 'accountability', size: 20 },
+    { text: 'repair', size: 18 },
+  ],
+  Germany: [
+    { text: 'circular', size: 38 },
+    { text: 'energy', size: 36 },
+    { text: 'accountability', size: 32 },
+    { text: 'transparency', size: 30 },
+    { text: 'design', size: 26 },
+    { text: 'compliance', size: 24 },
+    { text: 'disclosure', size: 20 },
+    { text: 'standards', size: 18 },
+  ],
+};
+
+const CLOUD_ALL = 'All';
 
 // Four themes, clockwise from the top vertex. `title` is pre-split into lines
 // because SVG text does not wrap on its own.
@@ -110,7 +177,7 @@ function scenarioFor(n) {
   return SCENARIOS[(n - 1) % SCENARIOS.length];
 }
 
-function WordCloud() {
+function WordCloud({ words, scope }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -121,18 +188,18 @@ function WordCloud() {
     // draw happens in its 'end' callback rather than inline.
     const layout = cloud()
       .size([CLOUD_W, CLOUD_H])
-      .words(WORDS.map((w) => ({ ...w })))
+      .words(words.map((w) => ({ ...w })))
       .padding(2)
       .rotate((_, i) => (i % 3 === 0 ? 90 : 0))
       .font(MONO)
       .fontWeight(700)
       .fontSize((d) => d.size * 0.62)
-      .on('end', (words) => {
+      .on('end', (laidOut) => {
         svg
           .append('g')
           .attr('transform', `translate(${CLOUD_W / 2},${CLOUD_H / 2})`)
           .selectAll('text')
-          .data(words)
+          .data(laidOut)
           .join('text')
           .attr('font-family', MONO)
           .attr('font-weight', 700)
@@ -149,7 +216,7 @@ function WordCloud() {
       layout.stop();
       svg.selectAll('*').remove();
     };
-  }, []);
+  }, [words]);
 
   return (
     <svg
@@ -157,7 +224,7 @@ function WordCloud() {
       className="results-chart-svg"
       viewBox={`0 0 ${CLOUD_W} ${CLOUD_H}`}
       role="img"
-      aria-label="Word cloud of themes (placeholder data)"
+      aria-label={`Word cloud of themes for ${scope} (placeholder data)`}
     />
   );
 }
@@ -242,7 +309,7 @@ function RadarChart({ answers }) {
 
     groups.each(function (d) {
       const gg = d3.select(this);
-      const lines = [...d.title, 'average of'];
+      const lines = [...d.title, 'comprised by'];
       // Chips wrap at three per row, balanced -- four scenarios read better
       // as 2 + 2 than as 3 + 1.
       const rowCount = Math.ceil(d.scenarios.length / CHIP_PER_ROW);
@@ -419,7 +486,7 @@ function RadarChart({ answers }) {
       .attr('font-size', '12.5px')
       .attr('font-weight', 700)
       .attr('fill', 'var(--green)');
-    callout.append('tspan').attr('x', bx + 14).text(`Your score: ${axis.you}/${RADAR_MAX}`);
+    callout.append('tspan').attr('x', bx + 14).text(`Your score (sum): ${axis.you}/${RADAR_MAX}`);
     callout
       .append('tspan')
       .attr('x', bx + 14)
@@ -479,6 +546,14 @@ function RadarChart({ answers }) {
           <p className="chip-card-answer">
             <b>{LETTERS[card.options.indexOf(picked)]}.</b> {picked.text}
           </p>
+          {picked.align && (
+            <div className={`chip-card-alignment alignment--${picked.align}`}>
+              {ALIGN_LABELS[picked.align]}
+              <span className="alignment-score">
+                {picked.align === 'full' ? '(+3)' : picked.align === 'partial' ? '(+1)' : '(-2)'}
+              </span>
+            </div>
+          )}
           <div className="chip-card-label">Why</div>
           <p className="chip-card-why">{picked.explanation}</p>
         </div>
@@ -489,11 +564,34 @@ function RadarChart({ answers }) {
 
 // Simulation-mode-only charts, below the share/support/facilitator row.
 export function ResultsCharts({ answers }) {
+  // Which slice of the cloud is on show: the aggregate, or one country.
+  const [cloudScope, setCloudScope] = useState(CLOUD_ALL);
+  const cloudWords = cloudScope === CLOUD_ALL ? WORDS : COUNTRY_WORDS[cloudScope];
+
   return (
     <div className="results-charts">
       <div className="results-chart results-chart--cloud">
-        <h2 className="results-chart-title">What others think about environmental justice</h2>
-        <WordCloud />
+        <div className="results-chart-head">
+          <h2 className="results-chart-title">
+            What others think about environmental justice in technology
+          </h2>
+          <label className="cloud-scope">
+            <span className="sr-only">Filter word cloud by country</span>
+            <select
+              className="cloud-scope-select"
+              value={cloudScope}
+              onChange={(e) => setCloudScope(e.target.value)}
+            >
+              <option value={CLOUD_ALL}>All</option>
+              {Object.keys(COUNTRY_WORDS).map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <WordCloud words={cloudWords} scope={cloudScope} />
       </div>
       <div className="results-chart results-chart--wide" id="score-breakdown">
         <h2 className="results-chart-title results-chart-title--big">Score breakdown</h2>

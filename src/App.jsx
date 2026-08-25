@@ -1,9 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
-import { SCENARIOS, SCORE_MIN, SCORE_MAX } from './scenarios.js';
+import {
+  captureAdvisorCalled,
+  captureCategoryScores,
+  captureGoalWordsSubmitted,
+  captureQuestionAnswered,
+  captureResultsJumped,
+  captureRunAbandoned,
+  captureRunCompleted,
+  captureScreenExited,
+  startRun,
+} from './telemetry.js';
+import { RADAR_AXES, RADAR_MAX, RADAR_SCORES_ARE_PLACEHOLDER } from './components/ResultsCharts.jsx';
+import { SCENARIOS, SCORE_MIN, SCORE_MAX, LETTERS, ADVISOR_PROFILES } from './scenarios.js';
 import { SetupScreen } from './components/SetupScreen.jsx';
 import { RulesScreen } from './components/RulesScreen.jsx';
 import { GoalsScreen } from './components/GoalsScreen.jsx';
 import { ConsentScreen } from './components/ConsentScreen.jsx';
+import { StudyIntroScreen } from './components/StudyIntroScreen.jsx';
 import { StudyPreviewScreen } from './components/StudyPreviewScreen.jsx';
 import { ReflectionScreen } from './components/ReflectionScreen.jsx';
 import { PromptTransition } from './components/PromptTransition.jsx';
@@ -34,6 +47,10 @@ const RESULT_BANDS = [
   { name: 'Red', color: '#e0453f', fraction: 0.125 },
 ];
 
+// The phases that belong to a specific card. Screen timings for these carry
+// the scenario they were spent on; the rest carry null.
+const SCENARIO_PHASES = new Set(['transition', 'prompt', 'options']);
+
 function scoreToAngle(score) {
   // Clamped: repeated timeouts can push the total past SCORE_MIN, and the
   // needle should stop at the end of the dial rather than swing off it.
@@ -62,6 +79,18 @@ export default function App() {
   const [bandsOpen, setBandsOpen] = useState(false);
   const bandsRef = useRef(null);
 
+  // Telemetry bookkeeping. All refs -- none of it is rendered, and a re-render
+  // per captured event would be a lot of churn for nothing.
+  const screenRef = useRef(null);
+  const questionStartRef = useRef(0);
+  const runStartRef = useRef(0);
+  // Advisors called on the card currently open, so the answer event can report
+  // what was spent on it. Cleared once that answer is captured.
+  const questionCallsRef = useRef([]);
+  const runCallCountRef = useRef(0);
+  const answeredCountRef = useRef(0);
+  const timeoutCountRef = useRef(0);
+
   // Any click outside the menu closes it, the way a native select would.
   useEffect(() => {
     if (!bandsOpen) return undefined;
@@ -82,14 +111,59 @@ export default function App() {
   // Only 5 scenarios exist so far; picking 10 or 20 cards plays all of them.
   const deck = settings ? SCENARIOS.slice(0, settings.cards) : SCENARIOS;
   const scenario = deck[Math.min(index, deck.length - 1)];
+  const questionNumber = index + 1;
 
-  function handleStart(chosen) {
+  // One screen_exited row per screen visit, emitted on the way out with how
+  // long it was open. Comparing against the ref rather than using an effect
+  // cleanup keeps StrictMode's double-invoked effects from reporting a phantom
+  // zero-length visit on mount.
+  useEffect(() => {
+    const now = performance.now();
+    const onCard = SCENARIO_PHASES.has(phase);
+    const current = {
+      name: phase,
+      at: now,
+      scenarioCode: onCard ? scenario?.code ?? null : null,
+      questionNumber: onCard ? questionNumber : null,
+    };
+    const previous = screenRef.current;
+    if (
+      previous &&
+      previous.name === current.name &&
+      previous.questionNumber === current.questionNumber
+    ) {
+      return;
+    }
+    if (previous) {
+      captureScreenExited({
+        screenName: previous.name,
+        nextScreen: current.name,
+        durationMs: Math.round(now - previous.at),
+        scenarioCode: previous.scenarioCode,
+        questionNumber: previous.questionNumber,
+      });
+    }
+    screenRef.current = current;
+    // Time-to-answer is measured from the moment the options come up, so it is
+    // the deciding time on its own -- reading the prompt is its own screen.
+    if (phase === 'options') questionStartRef.current = now;
+  }, [phase, index]);
+
+  function handleStart(chosen, runContext) {
+    startRun(chosen, runContext);
+    runStartRef.current = performance.now();
+    questionCallsRef.current = [];
+    runCallCountRef.current = 0;
+    answeredCountRef.current = 0;
+    timeoutCountRef.current = 0;
     setSettings(chosen);
     setIndex(0);
     setTotalScore(0);
     setUsedCalls([false, false, false]);
     setAnswers({});
-    setPhase('rules');
+    // Study Mode never sees the how-to-play rules -- it is a second pass, so
+    // it opens on its own intro instead.
+    setPhase(chosen.mode === 'study' ? 'studyIntro' : 'rules');
   }
 
   function advance() {
@@ -97,19 +171,69 @@ export default function App() {
       setIndex(index + 1);
       setPhase('transition');
     } else {
+      captureRunCompleted({
+        deckSize: deck.length,
+        questionsAnsweredCount: answeredCountRef.current,
+        timeoutCount: timeoutCountRef.current,
+        advisorCallCount: runCallCountRef.current,
+        totalScore,
+        scoreMin: SCORE_MIN,
+        scoreMax: SCORE_MAX,
+        durationMs: Math.round(performance.now() - runStartRef.current),
+      });
+      captureCategoryScores({
+        categories: RADAR_AXES.map((axis) => ({ slug: axis.slug, score: axis.you })),
+        maxPerCategory: RADAR_MAX,
+        totalScore,
+        scoreMin: SCORE_MIN,
+        scoreMax: SCORE_MAX,
+        isPlaceholder: RADAR_SCORES_ARE_PLACEHOLDER,
+      });
       setPhase('complete');
     }
   }
 
   // Scoring happens at reveal so the needle can swing while the answer is
   // still on screen; advancing is a separate, later step.
-  function handleReveal(option) {
+  function handleReveal(option, optionIndex) {
+    answeredCountRef.current += 1;
+    captureQuestionAnswered({
+      scenarioCode: scenario.code,
+      questionNumber,
+      optionLetter: LETTERS[optionIndex],
+      optionIndex,
+      optionAlignment: option.align,
+      optionScore: option.score,
+      isTimeout: false,
+      pointsApplied: option.score,
+      timeToAnswerMs: Math.round(performance.now() - questionStartRef.current),
+      totalScoreAfter: totalScore + option.score,
+      advisorCallCount: questionCallsRef.current.length,
+      advisorRoles: questionCallsRef.current.map((call) => call.role),
+    });
+    questionCallsRef.current = [];
     setTotalScore((t) => t + option.score);
     setAnswers((a) => ({ ...a, [scenario.code]: option }));
   }
 
   // Out of time with nothing picked -- no answer to score, just the penalty.
   function handleTimeoutPenalty() {
+    timeoutCountRef.current += 1;
+    captureQuestionAnswered({
+      scenarioCode: scenario.code,
+      questionNumber,
+      optionLetter: null,
+      optionIndex: null,
+      optionAlignment: null,
+      optionScore: null,
+      isTimeout: true,
+      pointsApplied: -TIMEOUT_PENALTY,
+      timeToAnswerMs: Math.round(performance.now() - questionStartRef.current),
+      totalScoreAfter: totalScore - TIMEOUT_PENALTY,
+      advisorCallCount: questionCallsRef.current.length,
+      advisorRoles: questionCallsRef.current.map((call) => call.role),
+    });
+    questionCallsRef.current = [];
     setTotalScore((t) => t - TIMEOUT_PENALTY);
   }
 
@@ -119,27 +243,75 @@ export default function App() {
 
   // Shortcut straight to the results screen with the needle parked in the
   // chosen band, whatever has been answered so far.
-  function handleSkipToResults(fraction) {
-    setTotalScore(SCORE_MIN + fraction * (SCORE_MAX - SCORE_MIN));
+  // `band` is null in Study Mode, where the results screen has only one
+  // version and there is no needle to park.
+  function handleSkipToResults(band) {
+    // A dev shortcut, not a played run: the jump is reported on its own event
+    // and no score, run_completed or category total follows it.
+    captureResultsJumped({
+      bandName: band?.name ?? null,
+      bandFraction: band?.fraction ?? null,
+      fromScreen: phase,
+    });
+    if (band) setTotalScore(SCORE_MIN + band.fraction * (SCORE_MAX - SCORE_MIN));
     setBandsOpen(false);
     setPhase('complete');
+  }
+
+  // A phone was picked up on the card currently open. Counted at the ring, so a
+  // call that was rung and then abandoned still counts as a call that was made.
+  function handleAdvisorCall(advisorIndex, advisor) {
+    questionCallsRef.current = [
+      ...questionCallsRef.current,
+      { index: advisorIndex, role: advisor?.role ?? null },
+    ];
+    runCallCountRef.current += 1;
+    captureAdvisorCalled({
+      scenarioCode: scenario.code,
+      questionNumber,
+      advisorIndex,
+      advisorRole: advisor?.role,
+      advisorTone: ADVISOR_PROFILES[advisor?.role]?.tone,
+      isUnlimited: isStudy,
+      callsAvailable: isStudy ? null : usedCalls.filter((used) => !used).length,
+    });
+  }
+
+  // The floating Restart button drops the run on the floor. Reported as an
+  // abandonment so a half-played run is never mistaken for a completed one.
+  // Restarting from the results screen is not an abandonment -- that run
+  // already reported itself as completed -- so it stays silent.
+  function handleRestart() {
+    if (settings && phase !== 'complete') {
+      captureRunAbandoned({
+        fromScreen: phase,
+        questionsAnsweredCount: answeredCountRef.current,
+        durationMs: Math.round(performance.now() - runStartRef.current),
+      });
+    }
+    setPhase('setup');
   }
 
   // "Start Study Mode" off the results screen: same game, study settings,
   // keeping whatever language/cards/sound the player already chose. Save the
   // simulation answers so we can tag them in study mode.
   function handleStartStudy() {
+    const simulationAnswerCount = Object.keys(answers).length;
     setSimulationAnswers(answers);
-    handleStart({
-      language: settings?.language ?? 'english',
-      mode: 'study',
-      cards: settings?.cards ?? SCENARIOS.length,
-      sound: settings?.sound !== false,
-    });
+    handleStart(
+      {
+        language: settings?.language ?? 'english',
+        mode: 'study',
+        cards: settings?.cards ?? SCENARIOS.length,
+        sound: settings?.sound !== false,
+      },
+      { isStudyFollowUp: true, simulationAnswerCount }
+    );
   }
 
-  // Study Mode slots an extra screen between the goals and the consent notice,
-  // which shifts every label after it along by one.
+  // The two flows run the same number of screens -- Study Mode trades the
+  // rules and goal screens for its own two -- so the numbering in the title
+  // bars matches all the way through.
   const isStudy = settings?.mode === 'study';
 
   let screen;
@@ -148,16 +320,17 @@ export default function App() {
   } else if (phase === 'rules') {
     screen = <RulesScreen onBack={() => setPhase('setup')} onNext={() => setPhase('goals')} />;
   } else if (phase === 'goals') {
+    screen = <GoalsScreen onBack={() => setPhase('rules')} onNext={() => setPhase('consent')} />;
+  } else if (phase === 'studyIntro') {
     screen = (
-      <GoalsScreen
-        study={isStudy}
-        onBack={() => setPhase('rules')}
-        onNext={() => setPhase(isStudy ? 'studyPreview' : 'consent')}
-      />
+      <StudyIntroScreen onBack={() => setPhase('setup')} onNext={() => setPhase('studyPreview')} />
     );
   } else if (phase === 'studyPreview') {
     screen = (
-      <StudyPreviewScreen onBack={() => setPhase('goals')} onNext={() => setPhase('consent')} />
+      <StudyPreviewScreen
+        onBack={() => setPhase('studyIntro')}
+        onNext={() => setPhase('consent')}
+      />
     );
   } else if (phase === 'consent') {
     screen = (
@@ -170,11 +343,14 @@ export default function App() {
   } else if (phase === 'reflect') {
     screen = (
       <ReflectionScreen
-        label={isStudy ? 'S.05. GOALS' : 'S.04. GOALS'}
+        label="S.04. GOALS"
         answer={reflectionWords}
         onSaveAnswer={setReflectionWords}
-        onStart={() => setPhase('transition')}
-        onReview={() => setPhase('rules')}
+        onStart={() => {
+          captureGoalWordsSubmitted({ words: reflectionWords });
+          setPhase('transition');
+        }}
+        onReview={() => setPhase(isStudy ? 'studyIntro' : 'rules')}
       />
     );
   } else if (phase === 'transition') {
@@ -184,6 +360,7 @@ export default function App() {
       <CompleteScreen
         gaugeAngle={scoreToAngle(totalScore)}
         needleColor={NEEDLE_COLOR}
+        totalScore={totalScore}
         simulation={settings?.mode !== 'study'}
         answers={answers}
         onRestart={() => setPhase('setup')}
@@ -204,6 +381,8 @@ export default function App() {
         usedCalls={usedCalls}
         simulationAnswers={simulationAnswers}
         onUseCall={(i) => setUsedCalls((prev) => prev.map((u, j) => (j === i ? true : u)))}
+        onAdvisorCall={handleAdvisorCall}
+        questionNumber={questionNumber}
         onReveal={handleReveal}
         onTimeoutPenalty={handleTimeoutPenalty}
         onNext={handleNext}
@@ -232,36 +411,49 @@ export default function App() {
       </div>
       {phase !== 'setup' && (
         <div className="float-actions">
-          <button type="button" className="restart-float" onClick={() => setPhase('setup')}>
+          <button type="button" className="restart-float" onClick={handleRestart}>
             Restart
           </button>
-          <div className="results-jump" ref={bandsRef}>
+          {/* Study Mode's results screen shows every ending at once, so the
+              band picker has nothing left to pick -- the button goes straight
+              there. Simulation Mode still chooses where the needle lands. */}
+          {settings?.mode === 'study' ? (
             <button
               type="button"
               className="restart-float"
-              aria-expanded={bandsOpen}
-              aria-haspopup="menu"
-              onClick={() => setBandsOpen((open) => !open)}
+              onClick={() => handleSkipToResults(null)}
             >
               Go to Results Screen
             </button>
-            {bandsOpen && (
-              <div className="results-jump-menu" role="menu">
-                {RESULT_BANDS.map((band) => (
-                  <button
-                    key={band.name}
-                    type="button"
-                    role="menuitem"
-                    className="results-jump-item"
-                    onClick={() => handleSkipToResults(band.fraction)}
-                  >
-                    <i style={{ background: band.color }} />
-                    {band.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          ) : (
+            <div className="results-jump" ref={bandsRef}>
+              <button
+                type="button"
+                className="restart-float"
+                aria-expanded={bandsOpen}
+                aria-haspopup="menu"
+                onClick={() => setBandsOpen((open) => !open)}
+              >
+                Go to Results Screen
+              </button>
+              {bandsOpen && (
+                <div className="results-jump-menu" role="menu">
+                  {RESULT_BANDS.map((band) => (
+                    <button
+                      key={band.name}
+                      type="button"
+                      role="menuitem"
+                      className="results-jump-item"
+                      onClick={() => handleSkipToResults(band)}
+                    >
+                      <i style={{ background: band.color }} />
+                      {band.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
       {screen}

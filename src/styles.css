@@ -14,6 +14,12 @@
        type legible on it. */
     --cloud-bg: #1B1130;
     --cloud-edge: #6B48B8;
+    /* Pop-up windows in the info copy -- the cloud's purple, a shade deeper
+       so body text still reads at 12.5px. */
+    --win-bg: #150E28;
+    --win-edge: #6B48B8;
+    --win-chrome-top: #3D2C68;
+    --win-chrome-bottom: #2A1D48;
     /* Panel behind the ending illustration + its dial. */
     --scene-bg: #0C1720;
     --scene-edge: #2E5A6B;
@@ -472,6 +478,23 @@
     background: rgba(255, 255, 255, 0.06);
   }
 
+  /* ---- Study Mode reading room ----
+     Stands where the dial does in Simulation Mode. Deliberately still: the
+     other hamsters in the game bob, and this one is meant to read as a room
+     settled down to work. */
+  .study-hamsters {
+    display: block;
+    /* Fills the panel rather than sitting as a small island in it -- the
+       scene is wide and short, so width is what closes the gap above and
+       below it. Capped so it never outgrows the answer sheet it alternates
+       with. */
+    width: 100%;
+    max-width: 560px;
+    height: auto;
+    margin: 0 auto;
+    filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.45));
+  }
+
   /* ---- Gauge ---- */
   .gauge-wrap {
     margin-top: 20px;
@@ -670,35 +693,88 @@
     margin-bottom: -6px;
   }
 
-  /* Four beats, hard cuts, no fading: the puff nearest the ear, then two,
-     then the whole balloon, then an empty beat before it starts over. */
+  /* The bubble no longer grows in beats -- everything stays put and breathes
+     instead. Each piece pulses on the same cycle, offset a little, so the
+     three read as one thought rather than three separate blinks.
+     transform-box: fill-box makes the scale pivot on each shape's own centre
+     rather than the SVG's origin. */
+  .thought-bubble .thought-balloon,
+  .thought-bubble .thought-puff {
+    transform-box: fill-box;
+    transform-origin: center;
+    /* steps(1, end), like every other beat in this art: the bubble cuts
+       between two sizes rather than easing between them. A smooth scale
+       reads as a modern tween and fights the pixel grid. */
+    animation: bubblePulse 1.8s steps(1, end) infinite;
+  }
+
+  .thought-bubble .thought-puff {
+    animation-delay: 0.18s;
+  }
+
   .thought-bubble .thought-puff--2 {
-    animation: thinkBeat1 3.6s steps(1, end) infinite;
+    animation-delay: 0.36s;
   }
 
-  .thought-bubble .thought-puff:not(.thought-puff--2) {
-    animation: thinkBeat2 3.6s steps(1, end) infinite;
+  @keyframes bubblePulse {
+    0%, 49.99% { transform: scale(1); }
+    50%, 100% { transform: scale(1.09); }
   }
 
-  .thought-balloon {
-    animation: thinkBeat3 3.6s steps(1, end) infinite;
+  /* The flowers grow back on their own cycle: stem, then core, then petals,
+     then a bare beat before it starts over. Hard steps, like the pulse. */
+  .thought-bubble .bloom-stem,
+  .thought-bubble .bloom-core,
+  .thought-bubble .bloom-petal {
+    animation-duration: 3.6s;
+    animation-timing-function: steps(1, end);
+    animation-iteration-count: infinite;
+    animation-delay: var(--bloom-delay, 0s);
   }
 
-  @keyframes thinkBeat1 {
-    0%, 74.99% { opacity: 1; }
-    75%, 100% { opacity: 0; }
+  .thought-bubble .bloom-stem {
+    animation-name: bloomStem;
   }
 
-  @keyframes thinkBeat2 {
-    0%, 24.99% { opacity: 0; }
-    25%, 74.99% { opacity: 1; }
-    75%, 100% { opacity: 0; }
+  .thought-bubble .bloom-core {
+    animation-name: bloomCore;
   }
 
-  @keyframes thinkBeat3 {
-    0%, 49.99% { opacity: 0; }
-    50%, 74.99% { opacity: 1; }
-    75%, 100% { opacity: 0; }
+  .thought-bubble .bloom-petal {
+    animation-name: bloomPetals;
+  }
+
+  @keyframes bloomStem {
+    0%, 9.99% { opacity: 0; }
+    10%, 91.99% { opacity: 1; }
+    92%, 100% { opacity: 0; }
+  }
+
+  @keyframes bloomCore {
+    0%, 29.99% { opacity: 0; }
+    30%, 91.99% { opacity: 1; }
+    92%, 100% { opacity: 0; }
+  }
+
+  @keyframes bloomPetals {
+    0%, 54.99% { opacity: 0; }
+    55%, 91.99% { opacity: 1; }
+    92%, 100% { opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .thought-bubble .thought-balloon,
+    .thought-bubble .thought-puff {
+      animation: none;
+    }
+
+    /* Left in full bloom rather than mid-cycle. */
+    .thought-bubble .bloom-stem,
+    .thought-bubble .bloom-core,
+    .thought-bubble .bloom-petal {
+      animation: none;
+      opacity: 1;
+    }
   }
 
   @keyframes hamsterHop {
@@ -890,6 +966,77 @@
     font-size: 10px;
   }
 
+  /* The score breakdown, opened in place under the Scoring Details button. */
+  .score-breakdown {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.12);
+    animation: fadeUp 0.22s ease both;
+  }
+
+  /* Simulation Mode: the scene and the facilitator panel drop below the
+     corner tiles rather than squeezing into a gutter beside them, so the row
+     can run the full width of the charts underneath it. Study Mode keeps the
+     gutter -- its offers row is aligned to it. */
+  .screen-complete--sim .results-visuals {
+    padding-right: 0;
+    margin-top: 116px;
+  }
+
+  /* ---- Study Mode: what the run leads to ----
+     Two cards above the endings, each carrying its own illustration rather
+     than an icon on a button. */
+  .study-offers {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin: 0 0 26px;
+    /* Keeps the pair clear of the corner action tiles. */
+    padding-right: 110px;
+  }
+
+  .study-offer {
+    /* No max-width: the pair fills the row so the left card's left edge and
+       the right card's right edge line up with the results box below, which
+       shares this container's padding. */
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 18px 16px 16px;
+    background: rgba(124, 250, 107, 0.04);
+    border: 1.5px solid rgba(124, 250, 107, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .study-offer:hover {
+    border-color: var(--green);
+    background: rgba(124, 250, 107, 0.09);
+  }
+
+  .study-offer-art {
+    display: block;
+    width: 100%;
+    max-width: 210px;
+    height: auto;
+    filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.45));
+  }
+
+  .study-offer-label {
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
   /* Two columns of next steps under the scene. */
   .results-columns {
     display: flex;
@@ -1005,6 +1152,32 @@
     overflow: visible;
   }
 
+  /* The band the needle landed in, as a chip between the ending art and its
+     caption. Reuses the in-game chip -- same pill, same band colours, same
+     bold score after the label -- so the result reads the way every answer
+     chip in Study Mode did. */
+  .results-score {
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+  }
+
+  /* The in-game chip is hidden until its terminal reveals; here it is the
+     headline, so it shows on its own and centres rather than sitting right.
+     Scaled up from the in-game size too -- this one is the result, not an
+     annotation on an answer. */
+  .results-score .chip {
+    visibility: visible;
+    margin: 0;
+    padding: 7px 18px;
+    font-size: 13px;
+  }
+
+  .results-score .chip-score {
+    margin-left: 10px;
+    font-size: 17px;
+  }
+
   .rat-caption {
     margin-top: 16px;
     font-size: 11px;
@@ -1013,6 +1186,102 @@
     text-transform: uppercase;
     color: var(--green);
     line-height: 1.4;
+  }
+
+  /* ---- Study Mode ending strip ---- */
+  /* Every ending at once, worst to best, in one row. The art is drawn at
+     fixed pixel sizes, so the whole strip scales off a single factor --
+     phones turn `--art` down rather than wrapping the row. */
+  .ending-strip {
+    --art: 0.5;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .ending-strip-item {
+    flex: 1 1 0;
+    /* Without this a flex item refuses to shrink past its content. */
+    min-width: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Fixed box per cell so the four captions sit on one line, whatever the
+     art inside is shaped like. */
+  .ending-strip-art {
+    height: calc(210px * var(--art));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ending-strip figcaption {
+    margin-top: 10px;
+    font-size: 9px;
+    letter-spacing: 0.03em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--green);
+    line-height: 1.45;
+    text-align: center;
+  }
+
+  /* Scaled copies of the full-size art. Every value below is the original
+     multiplied by `--art`, so the proportions and the overlaps (the straw,
+     the thought bubble's tail) survive the shrink. */
+  .ending-strip .rat-wheel {
+    width: calc(210px * var(--art));
+    height: calc(210px * var(--art));
+    margin: 0;
+  }
+
+  .ending-strip .hamster-showcase-box {
+    width: auto;
+    max-width: none;
+    height: auto;
+    flex-wrap: nowrap;
+    gap: calc(8px * var(--art));
+  }
+
+  .ending-strip .hamster-showcase-box--sip {
+    gap: 0;
+    padding-bottom: calc(18px * var(--art));
+  }
+
+  .ending-strip .hamster-showcase-box--pause {
+    gap: calc(14px * var(--art));
+    padding-bottom: calc(24px * var(--art));
+  }
+
+  .ending-strip .hamster-showcase-box--pause .rat-wheel {
+    width: calc(150px * var(--art));
+    height: calc(150px * var(--art));
+  }
+
+  .ending-strip .mini-hamster-big {
+    width: calc(80px * var(--art));
+    height: calc(73px * var(--art));
+  }
+
+  .ending-strip .sip-hamster {
+    width: calc(104px * var(--art));
+    height: calc(121px * var(--art));
+    margin-right: calc(-15px * var(--art));
+  }
+
+  .ending-strip .drink-cup {
+    width: calc(72px * var(--art));
+    height: calc(90px * var(--art));
+  }
+
+  .ending-strip .thought-bubble {
+    width: calc(100px * var(--art));
+    height: calc(84px * var(--art));
+    margin-bottom: calc(-6px * var(--art));
   }
 
   /* ---- Results screen: secondary actions + facilitator box ---- */
@@ -1431,6 +1700,16 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   }
 
+  /* Windows stack taller than the plain copy did, so the info screens size
+     to their content and keep 595px only as a floor. */
+  /* Every info screen is the same height, so Back/Next never move between
+     them. Sized to the tallest -- the Study Mode welcome, whose windows need
+     660.6px with padding -- rather than to each screen's own content. */
+  .setup-card--info .setup-body {
+    height: 672px;
+    min-height: 0;
+  }
+
   .setup-body {
     height: 595px;
     padding: 32px;
@@ -1685,6 +1964,131 @@
     margin-bottom: 0;
   }
 
+  /* Card sprite under the Study Mode sign-off. The interior is the card
+     body; the halo is the white keyline that separates the stacked cards
+     from each other and from the screen. */
+  .pixel-card-fill {
+    fill: var(--black);
+  }
+
+  .pixel-card-halo {
+    fill: #FFFFFF;
+  }
+
+  .final-gift-cards {
+    display: block;
+    width: 216px;
+    height: auto;
+    margin: 26px auto 0;
+    color: var(--green);
+    filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+  }
+
+  /* ---- Pop-up windows in the info copy ----
+     Each block of copy gets its own little window, with the same chrome
+     furniture as the card it sits inside. The purple is the word cloud's,
+     and the magenta/cyan edge is the same split the headings boot with, so
+     the vaporwave note is already in the app rather than bolted onto it. */
+  .info-window {
+    /* Hidden until its first line starts -- see .decode-line. */
+    visibility: hidden;
+    margin: 0 0 14px;
+    border: 1.5px solid var(--win-edge);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--win-bg);
+    box-shadow:
+      -2px 0 0 rgba(255, 62, 200, 0.16),
+      2px 0 0 rgba(62, 240, 255, 0.16),
+      0 6px 18px rgba(0, 0, 0, 0.45);
+  }
+
+  .info-window.is-live {
+    visibility: visible;
+    animation: lineArrive 0.22s ease-out both;
+  }
+
+  .info-window:last-child {
+    margin-bottom: 0;
+  }
+
+  .info-window-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    background: linear-gradient(180deg, var(--win-chrome-top) 0%, var(--win-chrome-bottom) 100%);
+    border-bottom: 1.5px solid var(--win-edge);
+    color: #E9E2FF;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .info-window-bar .icons {
+    display: flex;
+    gap: 4px;
+  }
+
+  .info-window-bar .icons span {
+    width: 11px;
+    height: 11px;
+    border: 1px solid rgba(233, 226, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    line-height: 1;
+  }
+
+  .info-window-bar .label {
+    flex: 1;
+    text-align: center;
+    /* Keeps the title clear of the furniture on a narrow window. */
+    padding-right: 41px;
+  }
+
+  .info-window-body {
+    padding: 12px 14px;
+  }
+
+  .info-window-body p {
+    margin: 0 0 10px;
+  }
+
+  .info-window-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Consent list: one bordered cell per item, pixel icon beside the copy,
+     instead of a run of bullets. */
+  .consent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 8px;
+    padding: 9px 12px;
+    border: 1.5px solid rgba(124, 250, 107, 0.3);
+    background: rgba(124, 250, 107, 0.05);
+  }
+
+  .consent-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .consent-item p {
+    margin: 0;
+  }
+
+  .consent-item-icon {
+    /* Never squeezed by a long line of copy beside it. */
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    color: var(--green);
+  }
+
   /* ---- Tabs ---- */
   .page {
     display: flex;
@@ -1759,6 +2163,16 @@
 
   .terminal.revealed .chip {
     visibility: visible;
+  }
+
+  /* The score the answer is worth, after the label. The chip label is already
+     700 and JetBrains Mono only ships to 700 here, so 900 renders as a
+     synthesised bold -- the size bump is what carries most of the emphasis.
+     Set explicitly rather than leaning on the UA's `b { bolder }`. */
+  .chip-score {
+    margin-left: 7px;
+    font-size: 11px;
+    font-weight: 900;
   }
 
   .chip[data-align="full"] {
@@ -2164,7 +2578,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 911px;
+    /* Was 911px. Widened so the desktop side gutters come out at roughly
+       half what they were -- about 90px a side at 1280 rather than 185. */
+    width: 1100px;
     max-width: 100%;
   }
 
@@ -2266,8 +2682,9 @@
   /* ---- Complete screen ---- */
   .results-card {
     /* Wider than the other cards to leave a right-hand gutter for the corner
-       action tiles, which would otherwise sit on top of the visuals row. */
-    width: 911px;
+       action tiles, which would otherwise sit on top of the visuals row.
+       Tracks .screen-complete so the card fills it. */
+    width: 1100px;
     max-width: 100%;
     border-radius: 6px;
   }
@@ -2278,7 +2695,10 @@
   .corner-actions {
     position: absolute;
     top: 18px;
-    right: 18px;
+    /* Matches the card body's horizontal padding, so the tiles' right edge
+       lines up with the panels and charts below rather than sitting proud
+       of them. */
+    right: 32px;
     z-index: 4;
     display: flex;
     flex-direction: column;
@@ -2386,6 +2806,11 @@
   .setup-body {
     height: auto;
     min-height: 560px;
+  }
+
+  .setup-card--info .setup-body {
+    height: 672px;
+    min-height: 0;
   }
 
   /* Options screen sizes itself to the green (620px) + black (713px)
@@ -2499,6 +2924,319 @@
     vertical-align: -4px;
   }
 
+  /* ---- Study Mode side panel ----
+     One stage holding both states of the scenario screen. Fixed height, so
+     the top row measures the same before and after the answer and the page
+     does not jump. Everything inside is absolutely positioned, which is what
+     lets the board grow without reflowing anything around it. */
+  .study-slot {
+    position: relative;
+    /* Tall enough that the longest principle in the deck still fits the
+       board once its 17px frame and padding are taken out. */
+    height: 248px;
+  }
+
+  /* The reading room, which hands over to the board on the reveal. Scoped to
+     the slot: the phone layout renders the same scene inside the green panel,
+     where it must stay in normal flow. */
+  .study-slot .study-hamsters {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .study-slot.is-revealed .study-hamsters {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Starts on the scene's slate -- same place, same size -- then grows to
+     the left half of the stage, so it reads as the board expanding rather
+     than as one panel swapping for another. */
+  .study-board {
+    position: absolute;
+    left: 25.5%;
+    top: 17.6%;
+    width: 33.8%;
+    height: 43%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    /* Bottom padding reserves the corner the Learn More button sits in, so
+       a long principle can never run underneath it. */
+    padding: 12px 14px 34px;
+    overflow: hidden;
+    background: #12161A;
+    /* 17px is the scene slate's frame measured on screen: its 4-unit border
+       at the 132-unit viewBox's rendered scale. Matching it in px keeps the
+       frame looking the same weight before and after the board expands. */
+    border: 17px solid #7A5230;
+    opacity: 0;
+    /* Transparent is not gone: without this the hidden board still takes
+       clicks, and its Learn More button fires before the answer is revealed.
+       Gated the same way .study-answer already is. */
+    pointer-events: none;
+    transition:
+      left 0.5s ease,
+      top 0.5s ease,
+      width 0.5s ease,
+      height 0.5s ease,
+      opacity 0.3s ease;
+  }
+
+  .study-slot.is-revealed .study-board {
+    left: 0;
+    top: 0;
+    width: 57%;
+    height: 100%;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .study-board .principle-label {
+    display: block;
+    color: var(--green);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .study-board-text {
+    margin: 0;
+    color: #E8E8E8;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  /* Chalked into the board's bottom-right corner. Renders as an <a> when the
+     scenario has a single resource, so it needs the anchor resets too. */
+  .study-board-learn {
+    position: absolute;
+    display: inline-block;
+    text-decoration: none;
+    right: 14px;
+    bottom: 12px;
+    padding: 4px 11px;
+    background: transparent;
+    border: 1.5px solid rgba(124, 250, 107, 0.6);
+    border-radius: 3px;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .study-board-learn:hover {
+    background: var(--green);
+    color: var(--black);
+    box-shadow: 0 0 10px rgba(124, 250, 107, 0.4);
+  }
+
+  /* Sits beside the board and arrives just behind it. */
+  .study-answer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 39%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease 0.25s;
+  }
+
+  .study-slot.is-revealed .study-answer {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .study-answer .clarity-rating {
+    margin: 0;
+  }
+
+  .study-answer .principle-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* Three faces in place of the old five stars: confusing, unsure, clear.
+     Greyed until picked, so the chosen one reads at a glance. */
+  .study-faces {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .study-face {
+    background: none;
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+    padding: 3px 7px;
+    font-size: 24px;
+    line-height: 1.1;
+    cursor: pointer;
+    /* Resting: knocked back to grey, so the picked face is the only one
+       carrying colour. */
+    filter: grayscale(1);
+    opacity: 0.55;
+    transition: filter 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+  }
+
+  .study-face:hover {
+    filter: none;
+    opacity: 1;
+  }
+
+  /* Picked: no outline -- the glow around the glyph is the whole signal.
+     drop-shadow follows the emoji's own shape, which a box-shadow would not.
+     The transparent border on the base rule stays, so nothing shifts. */
+  .study-face.is-picked {
+    opacity: 1;
+    filter:
+      drop-shadow(0 0 4px rgba(124, 250, 107, 0.55))
+      drop-shadow(0 0 11px rgba(124, 250, 107, 0.3));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .study-slot .study-hamsters,
+    .study-board,
+    .study-answer {
+      transition: none;
+    }
+  }
+  /* Opens under the faces once one is picked. The prompt inside it is the
+     one that face carries, so the box asks a question that fits the rating.
+     Submit sits in its bottom-right corner and stays disabled until there is
+     something to send. */
+  .study-feedback {
+    position: relative;
+    width: 100%;
+    margin-top: 12px;
+    animation: feedbackOpen 0.28s ease both;
+  }
+
+  @keyframes feedbackOpen {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .study-feedback-input {
+    display: block;
+    width: 100%;
+    height: 74px;
+    resize: none;
+    /* Room for the button parked in the corner. */
+    padding: 9px 10px 30px;
+    /* Purple, like the pop-up windows and the question above it, rather than
+       another green box -- the green is saved for the action. */
+    background: rgba(139, 90, 214, 0.08);
+    border: 1.5px solid rgba(139, 90, 214, 0.55);
+    border-radius: 3px;
+    color: #DDD;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .study-feedback-input::placeholder {
+    color: #8A8A8A;
+  }
+
+  .study-feedback-input:focus {
+    outline: none;
+    border-color: #A97BE8;
+    /* The same magenta/cyan split the pop-up windows carry. */
+    box-shadow:
+      -2px 0 0 rgba(255, 62, 200, 0.16),
+      2px 0 0 rgba(62, 240, 255, 0.16);
+  }
+
+  .study-feedback-send {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    padding: 4px 12px;
+    background: transparent;
+    border: 1.5px solid var(--green);
+    border-radius: 3px;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .study-feedback-send:hover:not(:disabled) {
+    background: var(--green);
+    color: var(--black);
+    box-shadow: 0 0 10px rgba(124, 250, 107, 0.4);
+  }
+
+  /* Not a control any more -- just the receipt, sitting where the button was. */
+  .study-feedback-sent {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--green);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-shadow: 0 0 9px rgba(124, 250, 107, 0.45);
+    animation: sentIn 0.25s ease both;
+  }
+
+  @keyframes sentIn {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .study-feedback-send:disabled {
+    border-color: #4B4B4B;
+    color: #6A6A6A;
+    cursor: not-allowed;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .study-feedback,
+    .study-feedback-sent {
+      animation: none;
+    }
+  }
+
+
+  /* The dial as a corner readout on the green panel: no wheel, no hamsters
+     (both already hidden by .gauge-pin), and small enough to stay out of the
+     story text's way. */
+  .gauge-pin--story {
+    top: 12px;
+    right: 12px;
+    width: 64px;
+  }
+
+  .gauge-pin--story .dial {
+    width: 62px;
+  }
+
   /* ---- Study Mode answer sheet: the card's EJIT principle ----
      Sits in the gap between the green/black panels and the terminal's
      -bash bar, so it reads as a header for the answers below it. */
@@ -2544,7 +3282,7 @@
 
   .clarity-rating label {
     display: block;
-    color: #9A9A9A;
+    color: #A97BE8;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -3110,6 +3848,13 @@
       padding: 22px 14px;
     }
 
+    /* A fixed height would clip on a narrow screen, where the same copy runs
+       much taller. The footer is not shared across a fold here anyway. */
+    .setup-card--info .setup-body {
+      height: auto;
+      min-height: 0;
+    }
+
     .skip-type-btn {
       font-size: 8px;
       padding: 6px 9px;
@@ -3407,9 +4152,44 @@
       height: 62px;
     }
 
-    /* Narrow screens stack everything anyway, so the gutter is dead space. */
+    /* Narrow screens stack everything anyway, so the side gutter is dead
+       space -- but the corner tiles are absolutely positioned and still hang
+       down over the top of the scene, so the row drops clear of them
+       instead. */
     .results-visuals {
       padding-right: 0;
+      margin-top: 36px;
+    }
+
+    /* Same treatment for the offers row, which now sits above the scene and
+       runs into the Support tile without it. Dropping the gutter is also what
+       keeps its right edge flush with the results box below. */
+    .study-offers {
+      padding-right: 0;
+      margin-top: 36px;
+    }
+
+    /* Stacked, the tiles are shorter and 36px already clears them -- the
+       desktop drop would leave a hole. Restated because the Simulation rule
+       outranks the plain .results-visuals one above. */
+    .screen-complete--sim .results-visuals {
+      margin-top: 36px;
+    }
+
+    /* The strip stays a single row on phones -- the art shrinks instead. */
+    .ending-strip {
+      /* Sized so the widest cell -- the stopped wheel plus the thinking
+         hamster, 264 art units across -- still fits a quarter of a 320px
+         screen without the row breaking. */
+      --art: 0.21;
+      gap: 4px;
+    }
+
+    .ending-strip figcaption {
+      margin-top: 7px;
+      font-size: 7px;
+      letter-spacing: 0.02em;
+      line-height: 1.35;
     }
 
     /* The corner tiles and the pixel heading need to stop fighting. */
@@ -3448,6 +4228,11 @@
 
     .results-scene {
       padding: 14px 14px 16px;
+      /* The desktop 420px floor is wider than a phone, and a flex item will
+         not shrink below its basis or min-width -- so the scene overflowed
+         the card. Let it take the width it is given. */
+      flex-basis: auto;
+      min-width: 0;
     }
 
     .gauge-pin {
@@ -3848,3 +4633,88 @@
     overflow-y: auto;
   }
 
+  /* Reading list inside the Learn More panel: one row per resource, the
+     site's own icon beside its title and domain. */
+  .learn-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .learn-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1.5px solid rgba(124, 250, 107, 0.28);
+    border-radius: 4px;
+    background: rgba(124, 250, 107, 0.04);
+    text-decoration: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .learn-item:hover {
+    border-color: var(--green);
+    background: rgba(124, 250, 107, 0.09);
+  }
+
+  .learn-item-icon {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    /* Icons come in at wildly different sizes; keep the box square. */
+    object-fit: contain;
+  }
+
+  .learn-item-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .learn-item-title {
+    color: #E8E8E8;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .learn-item:hover .learn-item-title {
+    color: var(--green);
+  }
+
+  .learn-item-blurb {
+    color: #9A9A9A;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .learn-item-domain {
+    color: var(--green);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .learn-empty {
+    margin: 0;
+    color: #8A8A8A;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+
+  /* Smallest phones: the row still has to hold four, so the art steps down
+     once more rather than spilling into its neighbours. */
+  @media (max-width: 400px) {
+    .ending-strip {
+      --art: 0.18;
+      gap: 3px;
+    }
+  }

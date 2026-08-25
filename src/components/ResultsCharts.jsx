@@ -100,27 +100,34 @@ const COUNTRY_WORDS = {
 const CLOUD_ALL = 'All';
 
 // Four themes, clockwise from the top vertex. `title` is pre-split into lines
-// because SVG text does not wrap on its own.
-const RADAR_AXES = [
+// because SVG text does not wrap on its own. `slug` is the stable name the
+// telemetry uses for this theme's column (category_<slug>_score) -- it does not
+// change when the wording of a title does. Not to be confused with RADAR_SERIES'
+// `key`, which names the field a series reads off each axis.
+export const RADAR_AXES = [
   {
+    slug: 'power_positionality',
     title: ['Designing with Power and Positionality in Mind'],
     scenarios: [1, 3, 4],
     you: 5,
     avg: 15,
   },
   {
+    slug: 'collective_flourishing',
     title: ['Restructuring Innovation for', 'Collective Flourishing'],
     scenarios: [2, 6, 11, 13],
     you: 22,
     avg: 13,
   },
   {
+    slug: 'technology_nature',
     title: ['Reorienting the Relationship Between Technology and Nature'],
     scenarios: [7, 8, 14, 16],
     you: 24,
     avg: 11,
   },
   {
+    slug: 'access_accountability',
     title: ['Embedding Access, Accountability,', 'and Reparative Practice'],
     scenarios: [5, 9, 10, 12],
     you: 20,
@@ -128,7 +135,12 @@ const RADAR_AXES = [
   },
 ];
 
-const RADAR_MAX = 30;
+export const RADAR_MAX = 30;
+
+// `you` above is still hardcoded placeholder data, so the totals reported to
+// telemetry are tagged with is_placeholder_scores. Flip this to false in the
+// same commit that wires RADAR_AXES to the player's actual answers.
+export const RADAR_SCORES_ARE_PLACEHOLDER = true;
 const RADAR_SERIES = [
   { key: 'you', name: 'Your score', stroke: '#A9E9E4', fill: 'rgba(124, 186, 186, 0.42)' },
   {
@@ -563,6 +575,25 @@ function RadarChart({ answers }) {
 }
 
 // Simulation-mode-only charts, below the share/support/facilitator row.
+// The score breakdown, lifted out of the charts stack so the results screen
+// can open it under the Scoring Details button instead of scrolling the
+// player down to it.
+export function ScoreBreakdown({ answers }) {
+  return (
+    <div className="score-breakdown" id="score-breakdown">
+      <RadarChart answers={answers} />
+      <div className="results-chart-legend">
+        {RADAR_SERIES.map((s) => (
+          <span key={s.name}>
+            <i style={{ background: s.stroke }} />
+            {s.name}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ResultsCharts({ answers }) {
   // Which slice of the cloud is on show: the aggregate, or one country.
   const [cloudScope, setCloudScope] = useState(CLOUD_ALL);
@@ -592,18 +623,6 @@ export function ResultsCharts({ answers }) {
           </label>
         </div>
         <WordCloud words={cloudWords} scope={cloudScope} />
-      </div>
-      <div className="results-chart results-chart--wide" id="score-breakdown">
-        <h2 className="results-chart-title results-chart-title--big">Score breakdown</h2>
-        <RadarChart answers={answers} />
-        <div className="results-chart-legend">
-          {RADAR_SERIES.map((s) => (
-            <span key={s.name}>
-              <i style={{ background: s.stroke }} />
-              {s.name}
-            </span>
-          ))}
-        </div>
       </div>
       <p className="results-chart-note">Placeholder data &mdash; not yet wired to your answers.</p>
     </div>

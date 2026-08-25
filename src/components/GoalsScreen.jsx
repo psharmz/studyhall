@@ -6,26 +6,14 @@ const GOALS_PARAGRAPHS = [
   'Simple like that.',
 ];
 
-// Study Mode arrives here having already played the simulation, so the copy
-// sets out what the untimed pass adds rather than restating the goal.
-const STUDY_PARAGRAPHS = [
-  'Welcome to the study mode!',
-  'If you are here, it means you already had a first experience with the simulation mode and you were able to reflect a little about Environmental Justice in Technology.',
-  'In this mode you will have no time pressure, leaving you with the opportunity to contemplate and further reflect on the scenarios you encountered in the simulation mode. More specifically, here you will be able to:',
-  '• See the EJIT Principle is aligned to each answer.',
-  '• See how each answer aligns to the principle.',
-  '• See the suggestions and biases of all advisors for each scenario.',
-  '• See a reasoning behind the answer alignment.',
-  '• Access additional learning resources associated to each scenario.',
-  '• Provide feedback to us on corrections or ideas for improvement of each scenario.',
-];
-
-export function GoalsScreen({ study = false, onBack, onNext }) {
+// Simulation Mode only. Study Mode arrives having already played the
+// simulation, so it shows StudyPreviewScreen in this slot instead.
+export function GoalsScreen({ onBack, onNext }) {
   return (
     <InfoScreen
-      label={study ? 'S.02. STUDY MODE' : 'S.02. YOUR GOAL'}
-      heading={study ? ['STUDY', 'MODE'] : ['YOUR', 'GOAL']}
-      paragraphs={study ? STUDY_PARAGRAPHS : GOALS_PARAGRAPHS}
+      label="S.02. YOUR GOAL"
+      heading={['YOUR', 'GOAL']}
+      paragraphs={GOALS_PARAGRAPHS}
       onBack={onBack}
       onNext={onNext}
     />

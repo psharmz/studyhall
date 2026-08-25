@@ -21,6 +21,7 @@ export function AdvisorCall({
   sound = true,
   usedCalls,
   onUseCall,
+  onAdvisorCall,
   unlimited = false,
   showRole = true,
 }) {
@@ -36,6 +37,9 @@ export function AdvisorCall({
 
   function ring(i) {
     if (phase !== 'idle' || (!unlimited && usedCalls[i])) return;
+    // Reported at the ring rather than at the dismiss: a call that was placed
+    // and then walked away from is still a call that was made.
+    onAdvisorCall?.(i, advisors[i]);
     setActive(i);
     setPhase('ringing');
     // Sound off still rings visually -- same timing, no audio

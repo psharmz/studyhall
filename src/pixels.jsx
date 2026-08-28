@@ -1063,7 +1063,8 @@ export function PixelLock({ className }) {
 // Built as a pixel sprite on a 2-unit cell grid, in three passes per shape:
 // a white halo, then the black interior, then the lime outline. The halo is
 // what makes the stack read -- it is the keyline separating the front card
-// from the one behind it, which an outline on its own cannot do.
+// from the one behind it, which an outline on its own cannot do. The guide's
+// ruled lines are drawn in the halo pass, so they come out white.
 //
 // Every corner has its single corner cell dropped, so the outline turns in
 // two steps rather than one right angle -- that is a rounded corner at this
@@ -1114,6 +1115,7 @@ export function PixelCardsGuide({ className }) {
         <rect className="pixel-card-halo" x="22" y="18" width="2" height="2" />
         <rect className="pixel-card-halo" x="26" y="18" width="2" height="2" />
         <rect className="pixel-card-halo" x="40" y="18" width="2" height="2" />
+        <rect className="pixel-card-halo" x="46" y="18" width="12" height="2" />
         <rect className="pixel-card-halo" x="62" y="18" width="2" height="2" />
         <rect className="pixel-card-halo" x="0" y="20" width="2" height="2" />
         <rect className="pixel-card-halo" x="22" y="20" width="2" height="2" />
@@ -1123,6 +1125,7 @@ export function PixelCardsGuide({ className }) {
         <rect className="pixel-card-halo" x="0" y="22" width="2" height="2" />
         <rect className="pixel-card-halo" x="22" y="22" width="6" height="2" />
         <rect className="pixel-card-halo" x="40" y="22" width="2" height="2" />
+        <rect className="pixel-card-halo" x="46" y="22" width="12" height="2" />
         <rect className="pixel-card-halo" x="62" y="22" width="2" height="2" />
         <rect className="pixel-card-halo" x="0" y="24" width="2" height="2" />
         <rect className="pixel-card-halo" x="22" y="24" width="4" height="2" />
@@ -1131,6 +1134,7 @@ export function PixelCardsGuide({ className }) {
         <rect className="pixel-card-halo" x="0" y="26" width="2" height="2" />
         <rect className="pixel-card-halo" x="22" y="26" width="4" height="2" />
         <rect className="pixel-card-halo" x="40" y="26" width="2" height="2" />
+        <rect className="pixel-card-halo" x="46" y="26" width="12" height="2" />
         <rect className="pixel-card-halo" x="62" y="26" width="2" height="2" />
         <rect className="pixel-card-halo" x="0" y="28" width="2" height="2" />
         <rect className="pixel-card-halo" x="22" y="28" width="4" height="2" />
@@ -1139,6 +1143,7 @@ export function PixelCardsGuide({ className }) {
         <rect className="pixel-card-halo" x="0" y="30" width="2" height="2" />
         <rect className="pixel-card-halo" x="22" y="30" width="2" height="2" />
         <rect className="pixel-card-halo" x="40" y="30" width="2" height="2" />
+        <rect className="pixel-card-halo" x="46" y="30" width="6" height="2" />
         <rect className="pixel-card-halo" x="62" y="30" width="2" height="2" />
         <rect className="pixel-card-halo" x="0" y="32" width="2" height="2" />
         <rect className="pixel-card-halo" x="22" y="32" width="2" height="2" />
@@ -1212,7 +1217,6 @@ export function PixelCardsGuide({ className }) {
         <rect x="20" y="18" width="2" height="2" />
         <rect x="24" y="18" width="2" height="2" />
         <rect x="42" y="18" width="2" height="2" />
-        <rect x="46" y="18" width="12" height="2" />
         <rect x="60" y="18" width="2" height="2" />
         <rect x="2" y="20" width="2" height="2" />
         <rect x="20" y="20" width="2" height="2" />
@@ -1222,7 +1226,6 @@ export function PixelCardsGuide({ className }) {
         <rect x="2" y="22" width="2" height="2" />
         <rect x="20" y="22" width="2" height="2" />
         <rect x="42" y="22" width="2" height="2" />
-        <rect x="46" y="22" width="12" height="2" />
         <rect x="60" y="22" width="2" height="2" />
         <rect x="2" y="24" width="2" height="2" />
         <rect x="20" y="24" width="2" height="2" />
@@ -1231,7 +1234,6 @@ export function PixelCardsGuide({ className }) {
         <rect x="2" y="26" width="2" height="2" />
         <rect x="20" y="26" width="2" height="2" />
         <rect x="42" y="26" width="2" height="2" />
-        <rect x="46" y="26" width="12" height="2" />
         <rect x="60" y="26" width="2" height="2" />
         <rect x="2" y="28" width="2" height="2" />
         <rect x="20" y="28" width="2" height="2" />
@@ -1240,7 +1242,6 @@ export function PixelCardsGuide({ className }) {
         <rect x="2" y="30" width="2" height="2" />
         <rect x="20" y="30" width="2" height="2" />
         <rect x="42" y="30" width="2" height="2" />
-        <rect x="46" y="30" width="6" height="2" />
         <rect x="60" y="30" width="2" height="2" />
         <rect x="2" y="32" width="2" height="2" />
         <rect x="20" y="32" width="2" height="2" />
@@ -1391,6 +1392,27 @@ export function PixelClassroom({ className }) {
       <StudyHamster x={6} y={32} />
       <StudyHamster x={26} y={32} />
       <StudyHamster x={46} y={32} />
+    </svg>
+  );
+}
+
+// The advisors' phone. Not on the pixel grid like the rest of this file --
+// it is the same glyph the call buttons use, and the consent screen points at
+// that feature, so both render from this one definition rather than drifting.
+export function PhoneIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        fill="currentColor"
+        d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01l-2.2 2.2z"
+      />
     </svg>
   );
 }

@@ -1,5 +1,16 @@
 node_modules/
 dist/
 .DS_Store
+
+# Local-only env overrides. `.env` itself IS committed -- it holds the
+# production config, and the PostHog project key in it is a public client
+# token that ships inside the bundle anyway. Anything genuinely secret must
+# not go in either file.
 *.local
-.env
+
+# The dev bundle is a local artefact -- prod (index.html) is the one Pages
+# serves, and it is committed.
+index.dev.html
+
+# Python venv for the Modal app.
+.venv/

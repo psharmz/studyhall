@@ -10,8 +10,9 @@ import {
   captureScreenExited,
   startRun,
 } from './telemetry.js';
-import { RADAR_AXES, RADAR_MAX, RADAR_SCORES_ARE_PLACEHOLDER } from './components/ResultsCharts.jsx';
+import { RADAR_AXES, RADAR_SCORES_ARE_PLACEHOLDER, axisScore } from './components/ResultsCharts.jsx';
 import { SCENARIOS, SCORE_MIN, SCORE_MAX, LETTERS, ADVISOR_PROFILES } from './scenarios.js';
+import { DEV_MODE } from './env.js';
 import { SetupScreen } from './components/SetupScreen.jsx';
 import { RulesScreen } from './components/RulesScreen.jsx';
 import { GoalsScreen } from './components/GoalsScreen.jsx';
@@ -182,8 +183,11 @@ export default function App() {
         durationMs: Math.round(performance.now() - runStartRef.current),
       });
       captureCategoryScores({
-        categories: RADAR_AXES.map((axis) => ({ slug: axis.slug, score: axis.you })),
-        maxPerCategory: RADAR_MAX,
+        categories: RADAR_AXES.map((axis) => ({
+          slug: axis.slug,
+          score: axisScore(axis, answers),
+          max: axis.max,
+        })),
         totalScore,
         scoreMin: SCORE_MIN,
         scoreMax: SCORE_MAX,
@@ -344,10 +348,12 @@ export default function App() {
     screen = (
       <ReflectionScreen
         label="S.04. GOALS"
+        study={isStudy}
         answer={reflectionWords}
         onSaveAnswer={setReflectionWords}
         onStart={() => {
-          captureGoalWordsSubmitted({ words: reflectionWords });
+          // Study Mode never shows the words, so there is nothing to report.
+          if (!isStudy) captureGoalWordsSubmitted({ words: reflectionWords });
           setPhase('transition');
         }}
         onReview={() => setPhase(isStudy ? 'studyIntro' : 'rules')}
@@ -414,10 +420,13 @@ export default function App() {
           <button type="button" className="restart-float" onClick={handleRestart}>
             Restart
           </button>
-          {/* Study Mode's results screen shows every ending at once, so the
-              band picker has nothing left to pick -- the button goes straight
-              there. Simulation Mode still chooses where the needle lands. */}
-          {settings?.mode === 'study' ? (
+          {/* Dev builds only -- it skips the whole game, so it must never
+              reach players. Study Mode's results screen shows every ending at
+              once, so the band picker has nothing left to pick and the button
+              goes straight there. Simulation Mode still chooses where the
+              needle lands. */}
+          {DEV_MODE &&
+            (settings?.mode === 'study' ? (
             <button
               type="button"
               className="restart-float"
@@ -453,7 +462,7 @@ export default function App() {
                 </div>
               )}
             </div>
-          )}
+            ))}
         </div>
       )}
       {screen}

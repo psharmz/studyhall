@@ -141,6 +141,14 @@ export function captureScreenExited({ screenName, nextScreen, durationMs, scenar
 // The words are picked from a fixed vocabulary (no free text), so this carries
 // no personal data. goal_words is the one array in the schema -- flat strings,
 // which every warehouse handles.
+// One row per player. `goal_words` is the array of chips they picked, and the
+// results word cloud is built from it -- the aggregation unpacks the array in
+// HogQL rather than this sending an event per word, which would multiply the
+// event count by up to thirty for the same information.
+//
+// Country is not sent. PostHog resolves it server-side at ingestion into
+// $geoip_country_name, which is what the cloud groups on, so the browser never
+// makes a geolocation request.
 export function captureGoalWordsSubmitted({ words }) {
   capture('goal_words_submitted', {
     goal_words: words,
@@ -221,27 +229,34 @@ export function captureAdvisorCalled({
 // totals and set it false -- the event shape does not change.
 export function captureCategoryScores({
   categories,
-  maxPerCategory,
   totalScore,
   scoreMin,
   scoreMax,
   isPlaceholder,
 }) {
   const properties = {
-    category_score_max: maxPerCategory,
     total_score: totalScore,
     score_min: scoreMin,
     score_max: scoreMax,
     is_placeholder_scores: isPlaceholder,
   };
+  // Each quadrant holds a different number of cards, so its max rides
+  // alongside its score rather than as one shared column.
   for (const category of categories) {
     properties[`category_${category.slug}_score`] = category.score;
+    properties[`category_${category.slug}_max`] = category.max;
   }
   capture('category_scores_reported', properties);
 }
 
 export function captureScoreBreakdownViewed() {
   capture('score_breakdown_viewed', {});
+}
+
+// Opening the preview, separately from actually sending -- the gap between
+// the two is the interesting number.
+export function captureSharePreviewOpened({ ending }) {
+  capture('share_preview_opened', { result_ending: ending });
 }
 
 export function captureResultsShared({ method }) {

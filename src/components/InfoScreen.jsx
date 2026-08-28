@@ -15,7 +15,7 @@ const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 //
 // The copy decodes in on mount -- see useDecodeLines. Back/Next stay live
 // throughout, and any click or keypress snaps the text to its final state.
-export function InfoScreen({ label, heading, paragraphs, art, onBack, onNext }) {
+export function InfoScreen({ label, heading, paragraphs, art, scrollBody = false, onBack, onNext }) {
   const [animate] = useState(() => !window.matchMedia?.(REDUCED_MOTION).matches);
 
   // The decoder animates one flat list of strings, so the blocks are
@@ -59,12 +59,69 @@ export function InfoScreen({ label, heading, paragraphs, art, onBack, onNext }) 
     };
   }
 
+  const textClass = animate && !done ? 'rules-text decoding' : 'rules-text';
+  // Where the boxes start. Everything before it is the lead-in paragraph, and
+  // with scrollBody that stays put while only the boxes scroll.
+  const firstCell = blocks.findIndex((b) => b.kind !== 'text');
+  const splitting = scrollBody && firstCell > 0;
+
+  // One block of copy: a plain paragraph, an icon cell, or a pop-up window.
+  function renderBlock(block, i) {
+    if (block.kind === 'text') {
+      const l = readLine(block.at);
+      return (
+        <p key={i} className={l.cls}>
+          {l.text}
+        </p>
+      );
+    }
+
+    if (block.kind === 'item') {
+      const l = readLine(block.at);
+      const Icon = block.icon;
+      // The cell carries the arrival class so its border and icon appear
+      // with the line rather than ahead of it.
+      return (
+        <div key={i} className={`consent-item ${l.cls}`}>
+          <Icon className="consent-item-icon" />
+          <p>{l.text}</p>
+        </div>
+      );
+    }
+
+    // The frame arrives with its first line; the rest of the copy then
+    // decodes inside it, window by window down the screen.
+    const opened = readLine(block.at).started;
+    return (
+      <section key={i} className={opened ? 'info-window is-live' : 'info-window'}>
+        <div className="info-window-bar">
+          <div className="icons">
+            <span>&#x2612;</span>
+            <span>&minus;</span>
+            <span>+</span>
+          </div>
+          <div className="label">{block.title}</div>
+        </div>
+        <div className="info-window-body">
+          {Array.from({ length: block.count }, (_, k) => {
+            const l = readLine(block.at + k);
+            return (
+              <p key={k} className={l.cls}>
+                {l.text}
+              </p>
+            );
+          })}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <div className="setup-screen">
       <div className="setup-card setup-card--info">
         <TitleBar label={label} />
         <div className="setup-body">
-          <div className="setup-inner">
+          <div className={'setup-inner' + (scrollBody ? ' setup-inner--scroll' : '')}>
             <h1 className={animate ? 'pixel info-heading info-heading--boot' : 'pixel info-heading'}>
               {heading.map((line, i) => (
                 <span key={line}>
@@ -74,56 +131,18 @@ export function InfoScreen({ label, heading, paragraphs, art, onBack, onNext }) 
               ))}
             </h1>
 
-            <div className={animate && !done ? 'rules-text decoding' : 'rules-text'}>
-              {blocks.map((block, i) => {
-                if (block.kind === 'text') {
-                  const l = readLine(block.at);
-                  return (
-                    <p key={i} className={l.cls}>
-                      {l.text}
-                    </p>
-                  );
-                }
+            {/* The lead-in stays put so the reader keeps the sentence the
+                boxes answer to; only the boxes below it scroll. */}
+            {splitting && (
+              <div className={textClass}>
+                {blocks.slice(0, firstCell).map((b, i) => renderBlock(b, i))}
+              </div>
+            )}
 
-                if (block.kind === 'item') {
-                  const l = readLine(block.at);
-                  const Icon = block.icon;
-                  // The cell carries the arrival class so its border and icon
-                  // appear with the line rather than ahead of it.
-                  return (
-                    <div key={i} className={`consent-item ${l.cls}`}>
-                      <Icon className="consent-item-icon" />
-                      <p>{l.text}</p>
-                    </div>
-                  );
-                }
-
-                // The frame arrives with its first line; the rest of the copy
-                // then decodes inside it, window by window down the screen.
-                const opened = readLine(block.at).started;
-                return (
-                  <section key={i} className={opened ? 'info-window is-live' : 'info-window'}>
-                    <div className="info-window-bar">
-                      <div className="icons">
-                        <span>&#x2612;</span>
-                        <span>&minus;</span>
-                        <span>+</span>
-                      </div>
-                      <div className="label">{block.title}</div>
-                    </div>
-                    <div className="info-window-body">
-                      {Array.from({ length: block.count }, (_, k) => {
-                        const l = readLine(block.at + k);
-                        return (
-                          <p key={k} className={l.cls}>
-                            {l.text}
-                          </p>
-                        );
-                      })}
-                    </div>
-                  </section>
-                );
-              })}
+            <div className={textClass + (scrollBody ? ' rules-text--scroll' : '')}>
+              {(splitting ? blocks.slice(firstCell) : blocks).map((b, i) =>
+                renderBlock(b, splitting ? i + firstCell : i)
+              )}
             </div>
 
             {/* Optional illustration, sitting under the copy. */}

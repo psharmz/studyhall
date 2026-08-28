@@ -966,6 +966,170 @@
     font-size: 10px;
   }
 
+  /* ---- Share preview ----
+     Opens over the results screen: the card as the recipient will see it,
+     then the literal text that gets sent, then the ways to send it. */
+  .share-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background: rgba(0, 0, 0, 0.72);
+    animation: fadeInSoft 0.16s ease both;
+  }
+
+  .share-sheet {
+    width: 420px;
+    max-width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 18px;
+    background: var(--black);
+    border: 1.5px solid var(--green);
+    border-radius: 6px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.7);
+    animation: fadeUp 0.2s ease both;
+  }
+
+  .share-sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .share-sheet-head h2 {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green);
+  }
+
+  .share-close {
+    background: transparent;
+    border: none;
+    color: var(--green);
+    font-size: 13px;
+    line-height: 1;
+    padding: 4px 6px;
+    cursor: pointer;
+  }
+
+  .share-close:hover {
+    background: var(--green);
+    color: var(--black);
+  }
+
+  /* The card itself -- same scene colours as the ending it came from. */
+  .share-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 16px;
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 35%, rgba(124, 250, 107, 0.07), transparent 70%),
+      linear-gradient(180deg, #14242F 0%, var(--scene-bg) 100%);
+    border: 1.5px solid var(--scene-edge);
+    box-shadow: inset 0 0 36px rgba(0, 0, 0, 0.5);
+  }
+
+  .share-preview-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .share-preview-game {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    color: var(--green);
+  }
+
+  .share-preview-sub {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #9A9A9A;
+  }
+
+  /* One fixed stage for all four endings, so the card is the same size
+     whatever result opened it. */
+  .share-preview-art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 132px;
+    width: 100%;
+    transform: scale(0.74);
+  }
+
+  .share-preview .chip {
+    display: block;
+    visibility: visible;
+    margin: 0;
+    font-size: 11px;
+    padding: 5px 12px;
+  }
+
+  .share-preview-dial {
+    font-size: 15px;
+    letter-spacing: 0.14em;
+    line-height: 1;
+  }
+
+  .share-preview-caption {
+    margin: 0;
+    font-size: 10px;
+    line-height: 1.6;
+    text-align: center;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--green);
+  }
+
+  .share-preview-link {
+    margin: 0;
+    font-size: 9px;
+    color: #7A7A7A;
+    word-break: break-all;
+    text-align: center;
+  }
+
+  /* Exactly what gets sent. Shown so there is no gap between the card above
+     and what lands in the message. */
+  .share-text {
+    margin: 14px 0 0;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(124, 250, 107, 0.22);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    line-height: 1.7;
+    color: #C8C8C8;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .share-actions {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .share-actions .btn {
+    padding: 10px 8px;
+    font-size: 10px;
+  }
+
   /* The score breakdown, opened in place under the Scoring Details button. */
   .score-breakdown {
     margin-top: 18px;
@@ -1152,6 +1316,22 @@
     overflow: visible;
   }
 
+  /* All four endings share one stage, so the chip and caption beneath sit at
+     the same height whatever result came up. The tallest art -- the wheel and
+     the three hamsters, both 210px -- sets the size. */
+  .results-art {
+    height: 210px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Already centred by the stage; their own auto margins would fight it. */
+  .results-art > .rat-wheel,
+  .results-art > .hamster-showcase-box {
+    margin: 0;
+  }
+
   /* The band the needle landed in, as a chip between the ending art and its
      caption. Reuses the in-game chip -- same pill, same band colours, same
      bold score after the label -- so the result reads the way every answer
@@ -1186,6 +1366,7 @@
     text-transform: uppercase;
     color: var(--green);
     line-height: 1.4;
+    text-align: center;
   }
 
   /* ---- Study Mode ending strip ---- */
@@ -1503,9 +1684,10 @@
     animation: radar-dot-breathe 2.8s ease-in-out infinite;
   }
 
-  /* Under the cursor the breathing stops: a bigger, solid red mark. */
-  .radar-dot--hovered {
-    animation: none;
+  /* The selection mark, behind the vertex it belongs to. Unanimated, so the
+     dot keeps breathing over a mark that holds still. */
+  .radar-dot-selected {
+    pointer-events: none;
   }
 
   .radar-dot-aura {
@@ -1532,40 +1714,210 @@
     }
   }
 
-  /* ---- Scenario chip hover card ---- */
+  /* Every quadrant is named around the diamond. The unselected ones stay
+     readable but recede, so the chart reads as one thing with a focus rather
+     than four competing labels. */
+  .radar-axis-label {
+    opacity: 0.4;
+    transition: opacity 0.15s ease;
+  }
+
+  .radar-axis-label:hover {
+    opacity: 0.75;
+  }
+
+  .radar-axis-label.is-selected {
+    opacity: 1;
+  }
+
+  .radar-axis-title {
+    fill: var(--green);
+  }
+
+  .radar-axis-score {
+    fill: #E8E8E8;
+  }
+
+  .radar-axis-label.is-selected .radar-axis-score {
+    fill: var(--red);
+  }
+
+  /* ---- The web, and the detail card for the selected point ---- */
   .radar-wrap {
-    position: relative;
+    display: flex;
+    /* Top-aligned, not centred: the text column changes height as quadrants
+       are switched and scenarios opened, and centring made both the chart and
+       the heading beside it slide up and down every time. */
+    align-items: flex-start;
+    gap: 26px;
+    /* Wraps the chart and its reading together -- they are one panel, and the
+       red matches the selected vertex. */
+    padding: 18px 20px;
+    background: rgba(0, 0, 0, 0.42);
+    border: 1.5px solid var(--red);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   }
 
-  /* Placed by JS relative to its chip -- below it in the top half of the
-     chart, above it in the bottom half -- so the chip stays readable. */
-  .chip-card {
-    position: absolute;
-    z-index: 3;
-    width: 340px;
-    max-width: 100%;
-    padding: 14px 16px;
-    background: var(--black);
-    border: 1.5px solid var(--green);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  .radar-scroll {
+    flex: 0 0 auto;
+    /* Close to the 760-unit viewBox, so the web is not scaled into
+       illegibility -- most of that width is the four headers' room. */
+    width: 560px;
+  }
+
+  /* Inside the shared frame now, so it carries no border of its own. */
+  .radar-detail {
+    flex: 1 1 0;
+    min-width: 0;
     text-align: left;
-    pointer-events: none;
   }
 
-  .chip-card--above {
-    transform: translateY(-100%);
+  .radar-detail-title {
+    margin: 0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--green);
   }
 
-  .chip-card-head {
-    margin-bottom: 10px;
+  .radar-detail-comprised {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.12);
     font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #9A9A9A;
+  }
+
+  /* One per scenario feeding this axis, carrying how the player answered it. */
+  .radar-chip {
+    /* Wide enough for "Scenario 16" without wrapping mid-label. */
+    white-space: nowrap;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 9.5px;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.04em;
+    text-align: center;
+  }
+
+  /* Chips are buttons now -- each opens that scenario in the card below. */
+  .radar-chip {
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
+    transition: filter 0.12s ease;
+  }
+
+  .radar-chip:hover,
+  .radar-chip:focus-visible {
+    filter: brightness(1.25);
+  }
+
+  .radar-chip[aria-pressed='true'] {
+    box-shadow: 0 0 0 2px var(--black), 0 0 0 3px currentColor;
+  }
+
+  /* ---- One scenario, opened from its chip ---- */
+  .scenario-detail {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.12);
+    animation: fadeUp 0.18s ease both;
+  }
+
+  .scenario-detail-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .scenario-detail-head .chip {
+    display: block;
+    visibility: visible;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 3px 9px;
+    font-size: 10px;
+  }
+
+  .scenario-detail-title {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--green);
   }
 
-  .chip-card-label {
+  /* Points scored and the way back out, together in the corner. */
+  .scenario-detail-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .scenario-detail-actions .chip {
+    display: block;
+    visibility: visible;
+    margin: 0;
+    padding: 3px 9px;
+    font-size: 10px;
+  }
+
+  .scenario-detail-close {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #C8C8C8;
+    font-size: 11px;
+    line-height: 1;
+    padding: 4px 7px;
+    cursor: pointer;
+  }
+
+  .scenario-detail-close:hover {
+    background: var(--green);
+    border-color: var(--green);
+    color: var(--black);
+  }
+
+  .scenario-detail-label {
+    margin: 14px 0 6px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #9A9A9A;
+  }
+
+  .scenario-detail-answer {
+    margin: 0 0 6px;
+    padding: 9px 11px;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: #E8E8E8;
+    background: rgba(255, 255, 255, 0.04);
+    border-left: 3px solid #9A9A9A;
+  }
+
+  .scenario-detail-answer[data-align='full']    { border-left-color: #3F9142; }
+  .scenario-detail-answer[data-align='partial'] { border-left-color: #F2C94C; }
+  .scenario-detail-answer[data-align='non']     { border-left-color: #E0453F; }
+
+  /* The alignment, called out at the end of their own answer. */
+  .scenario-detail-align {
+    display: block;
+    margin-top: 6px;
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 0.12em;
@@ -1573,55 +1925,91 @@
     color: #9A9A9A;
   }
 
-  .chip-card-answer,
-  .chip-card-why {
-    margin: 5px 0 12px;
+  .scenario-detail-prompt,
+  .scenario-detail-why,
+  .scenario-detail-note {
+    margin: 0 0 8px;
     font-size: 11.5px;
-    line-height: 1.55;
-    color: #E8E8E8;
+    line-height: 1.7;
+    color: #C8C8C8;
   }
 
-  .chip-card-answer b {
-    color: var(--green);
+  .scenario-detail-note {
+    color: #9A9A9A;
+    font-style: italic;
   }
 
-  .chip-card-why {
-    margin-bottom: 0;
-    color: #B4B4B4;
+  .radar-chip[data-align="full"] {
+    background: #3F9142;
+    color: #FFF;
   }
 
-  .chip-card-alignment {
-    display: inline-block;
-    margin: 6px 0 12px;
-    padding: 4px 8px;
-    font-size: 9px;
+  .radar-chip[data-align="partial"] {
+    background: #F2C94C;
+    color: #1A1A1A;
+  }
+
+  .radar-chip[data-align="non"] {
+    background: #E0453F;
+    color: #FFF;
+  }
+
+  /* No answer on record -- most scenarios, until the deck is finished.
+     Held at the "fully aligned" green on purpose. */
+  .radar-chip[data-align="unanswered"] {
+    background: #3F9142;
+    color: #FFF;
+  }
+
+  .radar-detail-score {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 12px;
+  }
+
+  .radar-detail-range {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    font-size: 9.5px;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
+    color: #A9E9E4;
+    background: rgba(124, 186, 186, 0.18);
+    border: 1px solid rgba(169, 233, 228, 0.55);
     border-radius: 2px;
   }
 
-  .alignment--full {
-    background-color: rgba(63, 145, 66, 0.25);
-    border: 1px solid #3f9142;
-    color: #7CFA6B;
+  .radar-detail-value {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    color: #E8E8E8;
   }
 
-  .alignment--partial {
-    background-color: rgba(242, 201, 76, 0.25);
-    border: 1px solid #d4a839;
-    color: #f2c94c;
+  /* Sits above the suggestion on every axis, so the paragraph always reads
+     as advice rather than as more of the score readout. */
+  .radar-detail-suggest {
+    /* The heading and the band it applies to read as one line; the band
+       drops beneath rather than squeezing the heading when the card
+       narrows. Sized to match the quadrant headers on the chart. */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green);
   }
 
-  .alignment--non {
-    background-color: rgba(224, 69, 63, 0.25);
-    border: 1px solid #e0453f;
-    color: #ff6b5b;
-  }
-
-  .alignment-score {
-    margin-left: 4px;
-    opacity: 0.8;
+  .radar-detail-text {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.75;
+    color: #C8C8C8;
   }
 
   .results-chart-legend {
@@ -1634,6 +2022,13 @@
     color: #9A9A9A;
   }
 
+  /* How many runs the comparison average is drawn from -- a small number is
+     worth knowing when reading it against your own score. */
+  .radar-legend-n {
+    color: #7A7A7A;
+    font-style: italic;
+  }
+
   .results-chart-legend span {
     display: inline-flex;
     align-items: center;
@@ -1644,6 +2039,73 @@
     width: 9px;
     height: 9px;
     display: inline-block;
+  }
+
+  /* Anchors the hover readout, which is positioned against this box rather
+     than the SVG -- the SVG is scaled by its viewBox, so its own coordinates
+     are not screen pixels. */
+  .cloud-wrap {
+    position: relative;
+  }
+
+  .cloud-word {
+    cursor: default;
+    transition: opacity 0.12s ease;
+  }
+
+  /* Dim the rest so the word under the cursor reads clearly. */
+  .cloud-wrap:hover .cloud-word {
+    opacity: 0.35;
+  }
+
+  .cloud-wrap .cloud-word:hover {
+    opacity: 1;
+  }
+
+  .cloud-tip {
+    position: absolute;
+    z-index: 4;
+    /* Sits above and right of the cursor, and never swallows the pointer --
+       otherwise it would trigger its own mouseleave and flicker. */
+    transform: translate(12px, -100%);
+    pointer-events: none;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 10px;
+    white-space: nowrap;
+    background: var(--black);
+    border: 1px solid var(--cloud-edge);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  }
+
+  .cloud-tip-word {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #E8E8E8;
+  }
+
+  .cloud-tip-count {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--green);
+  }
+
+  /* Stands in for the cloud until there are counts to draw. Same height as
+     the cloud's canvas, so opening the results screen does not reflow when
+     the data arrives. */
+  .word-cloud-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8C7BA6;
   }
 
   .results-chart-note {
@@ -1682,6 +2144,7 @@
     text-transform: uppercase;
     color: var(--green);
     line-height: 1.4;
+    text-align: center;
   }
 
   /* ---- Setup screen ---- */
@@ -1700,13 +2163,22 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   }
 
-  /* Windows stack taller than the plain copy did, so the info screens size
-     to their content and keep 595px only as a floor. */
   /* Every info screen is the same height, so Back/Next never move between
      them. Sized to the tallest -- the Study Mode welcome, whose windows need
-     660.6px with padding -- rather than to each screen's own content. */
+     660.6px with padding -- rather than to each screen's own content.
+     The height is pinned on the card rather than the body so that a screen
+     carrying no Back/Next footer -- Study Mode's Goals, whose YES/NO choices
+     are its navigation -- still lands on the same total height instead of
+     coming up short by the footer's height. */
+  .setup-card--info {
+    display: flex;
+    flex-direction: column;
+    height: 759px;
+  }
+
   .setup-card--info .setup-body {
-    height: 672px;
+    flex: 1 1 auto;
+    height: auto;
     min-height: 0;
   }
 
@@ -1718,9 +2190,13 @@
     justify-content: center;
   }
 
+  /* Pinned rather than 100%: .setup-screen shrink-wraps its card, so a
+     percentage width let each screen's own content decide how wide the card
+     came out -- the sparse Goals screen landed ~200px narrower than the info
+     screens either side of it. A definite width keeps the footprint fixed. */
   .setup-inner {
-    width: 100%;
-    max-width: 560px;
+    width: 560px;
+    max-width: 100%;
     margin: 0 auto;
   }
 
@@ -1744,14 +2220,32 @@
     margin-bottom: 10px;
   }
 
+  /* Grid, not flex: every row holds exactly two choices, and 1fr columns are
+     guaranteed equal. With flex the two still came out uneven (272 vs 242)
+     even at flex: 1 1 0, because content kept feeding back into the size. */
   .setup-choices {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 
+  /* A grid item's automatic minimum is its content, which would push a long
+     label past its track. */
+  .setup-choices > * {
+    min-width: 0;
+  }
+
+  .setup-lang-col > .setup-btn {
+    width: 100%;
+  }
+
   .setup-btn {
-    flex: 1 1 auto;
+    /* Fixed height and centred content, so the lock emoji on Study Mode
+       cannot make that one button taller than the rest. */
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: transparent;
     border: 1.5px solid var(--terminal-border);
     color: #C9C9C9;
@@ -1759,7 +2253,7 @@
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.03em;
-    padding: 12px 14px;
+    padding: 0 14px;
     cursor: pointer;
     transition: background .15s ease, color .15s ease, border-color .15s ease;
   }
@@ -2059,6 +2553,31 @@
 
   .info-window-body p:last-child {
     margin-bottom: 0;
+  }
+
+  /* Consent screen only: the cells outgrow the card's fixed height, and with
+     the body centred the overflow spilled equally top and bottom -- clipping
+     the heading. Pinning the heading and scrolling just the list keeps the
+     card the same size as the other info screens. */
+  .setup-inner--scroll {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+  }
+
+  .setup-inner--scroll h1 {
+    flex: none;
+  }
+
+  .rules-text--scroll {
+    flex: 1 1 auto;
+    /* Without this a flex item refuses to shrink below its content, and
+       nothing would ever scroll. */
+    min-height: 0;
+    overflow-y: auto;
+    /* Keeps the copy off the scrollbar. */
+    padding-right: 10px;
   }
 
   /* Consent list: one bordered cell per item, pixel icon beside the copy,
@@ -2809,7 +3328,7 @@
   }
 
   .setup-card--info .setup-body {
-    height: 672px;
+    height: auto;
     min-height: 0;
   }
 
@@ -3795,25 +4314,34 @@
       width: 100%;
     }
 
-    .results-visuals {
-      flex-direction: column;
-      align-items: center;
-      gap: 22px;
+    /* Stays a row here: the card is 1100px now, so stacking at this width
+       dropped the facilitator panel below the results box on an ordinary
+       laptop. It stacks at the phone breakpoint instead. Wrapping is decided
+       on the basis, not the min-width, so the 420px floor has to go too --
+       otherwise the panel wrapped again anywhere under ~780px. */
+    .results-scene {
+      flex-basis: 0;
+      min-width: 0;
     }
 
-    /* The chart is drawn on a 960-unit canvas; let it scroll rather than
-       shrink its labels into illegibility. */
     .radar-scroll {
-      overflow-x: auto;
-    }
-
-    .radar-scroll .results-chart-svg {
-      min-width: 620px;
+      width: 440px;
     }
   }
 
   /* ---- Phone ---- */
   @media (max-width: 700px) {
+    .share-sheet {
+      width: 100%;
+      padding: 14px;
+    }
+
+    /* Three buttons at desk width, stacked here so the labels stay legible. */
+    .share-actions {
+      grid-auto-flow: row;
+    }
+
+
     body {
       padding: 62px 10px 40px;
     }
@@ -3850,6 +4378,10 @@
 
     /* A fixed height would clip on a narrow screen, where the same copy runs
        much taller. The footer is not shared across a fold here anyway. */
+    .setup-card--info {
+      height: auto;
+    }
+
     .setup-card--info .setup-body {
       height: auto;
       min-height: 0;
@@ -4159,6 +4691,9 @@
     .results-visuals {
       padding-right: 0;
       margin-top: 36px;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
     }
 
     /* Same treatment for the offers row, which now sits above the scene and
@@ -4250,20 +4785,22 @@
       width: 100%;
     }
 
-    .radar-scroll .results-chart-svg {
-      min-width: 560px;
+    /* No room for two columns: the detail card drops under the web. */
+    .radar-wrap {
+      flex-direction: column;
+      gap: 16px;
+      padding: 14px;
+    }
+
+    .radar-scroll {
+      width: 100%;
+      max-width: 320px;
     }
 
     .results-chart-legend {
       flex-wrap: wrap;
       gap: 6px 14px;
       font-size: 9px;
-    }
-
-    /* The hover card would overflow a phone screen at its desk width. */
-    .chip-card {
-      width: 240px;
-      padding: 10px 12px;
     }
 
     .reflect-words {
@@ -4635,6 +5172,24 @@
 
   /* Reading list inside the Learn More panel: one row per resource, the
      site's own icon beside its title and domain. */
+  /* Divides the scenario's own reading from the general EJIT list below it. */
+  .learn-section-head {
+    margin: 22px 0 12px;
+    padding-top: 16px;
+    border-top: 1.5px solid rgba(124, 250, 107, 0.22);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green);
+  }
+
+  /* No rule above it when the scenario has nothing of its own to sit under. */
+  .learn-empty + .learn-section-head {
+    border-top: none;
+    padding-top: 0;
+  }
+
   .learn-list {
     list-style: none;
     margin: 0;

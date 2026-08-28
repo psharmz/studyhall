@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-08-27T10:00:00Z",
+  "all": [
+    { "text": "extraction", "count": 91 },
+    { "text": "water", "count": 74 },
+    { "text": "consent", "count": 66 },
+    { "text": "labor", "count": 58 },
+    { "text": "land", "count": 41 },
+    { "text": "e-waste", "count": 33 },
+    { "text": "repair", "count": 22 },
+    { "text": "sovereignty", "count": 14 },
+    { "text": "grid", "count": 7 }
+  ],
+  "by_country": {
+    "Brazil": [
+      { "text": "land", "count": 30 },
+      { "text": "water", "count": 24 },
+      { "text": "extraction", "count": 19 },
+      { "text": "sovereignty", "count": 11 },
+      { "text": "harm", "count": 6 }
+    ],
+    "Kenya": [
+      { "text": "e-waste", "count": 21 },
+      { "text": "labor", "count": 17 },
+      { "text": "health", "count": 12 },
+      { "text": "access", "count": 8 },
+      { "text": "repair", "count": 5 }
+    ],
+    "TooSparse": [
+      { "text": "only", "count": 2 },
+      { "text": "two", "count": 1 }
+    ]
+  }
+}

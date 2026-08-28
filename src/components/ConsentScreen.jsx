@@ -1,16 +1,34 @@
 import { InfoScreen } from './InfoScreen.jsx';
-import { PixelClock, PixelCursor, PixelForm, PixelGlobe, PixelLock } from '../pixels.jsx';
+import {
+  PhoneIcon,
+  PixelClock,
+  PixelCursor,
+  PixelForm,
+  PixelGlobe,
+  PixelLock,
+} from '../pixels.jsx';
 
+// Same cells as the Study Mode list. Reading and answering time share one
+// line so the clock appears once; the advisors' line uses the same phone
+// glyph as the call buttons themselves.
 const CONSENT_PARAGRAPHS = [
   'During this experience, we collect the following data with the goal of providing you with the results of the simulation and of making this and future EJIT learning experiences better:',
-  '• Country (to display local definitions of EJIT)',
-  '• Answers to each question (for scoring)',
-  '• Features used during the game (i.e., advisors\' call)',
-  '• Time spent reading each scenario (to improve accessibility and readability)',
-  '• Time to answer each question (to improve readability and difficulty)',
-  '• Additional telemetry on clicks and devices used (to improve overall design and accessibility to more than one type of device and OS).',
+  { icon: PixelGlobe, text: 'Country (to display local definitions of EJIT)' },
+  { icon: PixelForm, text: 'Answers to each question (for scoring)' },
+  { icon: PhoneIcon, text: "Features used during the game (i.e., advisors' call)" },
+  {
+    icon: PixelClock,
+    text: 'Time spent reading and answering each scenario (to improve readability, accessibility, and difficulty)',
+  },
+  {
+    icon: PixelCursor,
+    text: 'Additional telemetry on clicks and devices used (to improve overall design and accessibility to more than one type of device and OS).',
+  },
   'We DO NOT collect and/or store:',
-  '• Any personal or contact information (e.g., email, specific address beyond country)',
+  {
+    icon: PixelLock,
+    text: 'Any personal or contact information (e.g., email, specific address beyond country)',
+  },
 ];
 
 // Study Mode is untimed and scoreless, so what is collected differs: feedback
@@ -35,12 +53,16 @@ const STUDY_CONSENT_PARAGRAPHS = [
   },
 ];
 
+// scrollBody: this list outgrows the card's fixed height, and with the body
+// centred the overflow pushed the heading up out of view. Scrolling the cells
+// keeps the heading put.
 export function ConsentScreen({ study = false, onBack, onNext }) {
   return (
     <InfoScreen
       label="S.03. CONSENT & TRANSPARENCY"
       heading={['CONSENT &', 'TRANSPARENCY']}
       paragraphs={study ? STUDY_CONSENT_PARAGRAPHS : CONSENT_PARAGRAPHS}
+      scrollBody
       onBack={onBack}
       onNext={onNext}
     />

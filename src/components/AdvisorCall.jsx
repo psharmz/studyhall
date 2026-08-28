@@ -1,14 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { playRingTone, RING_TOTAL_MS } from '../ringtone.js';
 import { SHOW_ADVISOR_ROLE, ADVISOR_PROFILES } from '../scenarios.js';
-
-function PhoneIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path fill="currentColor" d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.57 3.58a1 1 0 0 1-.25 1.01l-2.2 2.2z" />
-    </svg>
-  );
-}
+import { PhoneIcon } from '../pixels.jsx';
 
 // Three advisor calls per game, spendable on any card. Tapping an unused
 // phone rings it (only that icon animates); after the two rings the bubble

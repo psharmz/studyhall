@@ -1,5 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { captureResultsShared, captureScoreBreakdownViewed } from '../telemetry.js';
+import { useState } from 'react';
+import {
+  captureResultsShared,
+  captureScoreBreakdownViewed,
+  captureSharePreviewOpened,
+} from '../telemetry.js';
 import { Gauge } from './Gauge.jsx';
 import {
   MiniHamster,
@@ -13,7 +17,10 @@ import {
   WheelHamster,
 } from '../pixels.jsx';
 import { ResultsCharts, ScoreBreakdown } from './ResultsCharts.jsx';
-import { ALIGN_LABELS, SUPPORT_URL } from '../scenarios.js';
+import { EndingArt } from './EndingArt.jsx';
+import { ENDING_ALIGN, ENDING_CAPTIONS, endingFor } from '../endings.js';
+import { ShareSheet } from './ShareSheet.jsx';
+import { ALIGN_LABELS, SCORE_MAX, SUPPORT_URL } from '../scenarios.js';
 
 export function CompleteScreen({
   gaugeAngle,
@@ -24,24 +31,15 @@ export function CompleteScreen({
   onRestart,
   onStartStudy,
 }) {
-  // The dial sweeps -75deg (fully aligned) to +75deg (non-aligned) in four
-  // equal bands; the ending art follows whichever one the needle lands in.
-  const aligned = gaugeAngle <= -37.5;
-  const partial = gaugeAngle > -37.5 && gaugeAngle <= 0;
-  const sipping = gaugeAngle > 0 && gaugeAngle <= 37.5;
-  // Which quarter of the dial the needle landed in, as a chip. The dial has
-  // four bands but only three real categories -- the middle two are both
-  // partially aligned -- so the chip follows the category, not the band.
-  const band = aligned
-    ? { align: 'full', label: ALIGN_LABELS.full }
-    : partial || sipping
-      ? { align: 'partial', label: ALIGN_LABELS.partial }
-      : { align: 'non', label: ALIGN_LABELS.non };
+  // Which of the four endings the needle earned. One derivation, shared with
+  // the share preview so the two can never disagree.
+  const ending = endingFor(gaugeAngle);
+  const band = { align: ENDING_ALIGN[ending], label: ALIGN_LABELS[ENDING_ALIGN[ending]] };
+  // Real play only ever sums integers; the debug band jump parks the needle on
+  // a fraction, so round before it is shown or shared.
+  const shownScore = Math.round(totalScore);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
-  const [shareLabel, setShareLabel] = useState('Share');
-  const shareTimer = useRef(null);
-
-  useEffect(() => () => clearTimeout(shareTimer.current), []);
+  const [shareOpen, setShareOpen] = useState(false);
 
   // The breakdown opens underneath the button rather than sitting further
   // down the page. Only the open is reported -- closing it again is not a
@@ -53,24 +51,12 @@ export function CompleteScreen({
     });
   }
 
-  // Native share sheet where there is one; otherwise copy the link and say
-  // so on the button itself. A dismissed sheet or a blocked clipboard is a
-  // non-event, so nothing is reported.
-  async function handleShare() {
-    const url = window.location.href;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Study Hall', url });
-        captureResultsShared({ method: 'native_share' });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      captureResultsShared({ method: 'clipboard' });
-      setShareLabel('Link copied');
-      shareTimer.current = setTimeout(() => setShareLabel('Share'), 2000);
-    } catch {
-      /* dismissed or denied -- leave the button as it was */
-    }
+  // Share opens a preview rather than firing straight into a share sheet:
+  // the result is the thing being sent, so it is worth seeing first. Opening
+  // is reported separately from sending, so the two can be compared.
+  function openShare() {
+    captureSharePreviewOpened({ ending });
+    setShareOpen(true);
   }
 
   return (
@@ -100,54 +86,19 @@ export function CompleteScreen({
                   earned. */}
               {simulation ? (
                 <>
-                  {aligned && (
-                    <div className="hamster-showcase-box">
-                      <MiniHamster className="mini-hamster-big" />
-                      <MiniHamster className="mini-hamster-big mini-hamster-big--2" />
-                      <MiniHamster className="mini-hamster-big mini-hamster-big--3" />
-                    </div>
-                  )}
-                  {/* Partially aligned: off the wheel and stopped, but only
-                      just -- one hamster stands beside it, thinking it over. */}
-                  {partial && (
-                    <div className="hamster-showcase-box hamster-showcase-box--pause">
-                      <div className="rat-wheel rat-wheel--still">
-                        <WheelHamster />
-                      </div>
-                      <div className="thought-hamster">
-                        <ThoughtBubble className="thought-bubble" aria-hidden="true" />
-                        <MiniHamster className="mini-hamster-big" />
-                      </div>
-                    </div>
-                  )}
-                  {/* Third band: out of the wheel, but sat down with a drink
-                      and sunglasses on while it drains. */}
-                  {sipping && (
-                    <div className="hamster-showcase-box hamster-showcase-box--sip">
-                      <SippingHamster className="sip-hamster" />
-                      <SodaCup className="drink-cup" />
-                    </div>
-                  )}
-                  {!aligned && !partial && !sipping && (
-                    <div className="rat-wheel">
-                      <WheelHamster />
-                    </div>
-                  )}
+                  {/* One fixed-height stage for all four endings. Their art is
+                      different sizes, so without it the chip and caption below
+                      sat at a different height on every result. */}
+                  <div className="results-art">
+                    <EndingArt ending={ending} />
+                  </div>
                   <div className="results-score">
                     <div className="chip" data-align={band.align}>
                       {band.label}{' '}
-                      {/* Real play only ever sums integers; the debug band
-                          jump parks the needle on a fraction, so round. */}
-                      <b className="chip-score">{Math.round(totalScore)}</b>
+                      <b className="chip-score">{shownScore}</b>
                     </div>
                   </div>
-                  <div className="rat-caption">
-                    {aligned &&
-                      'Your freedom is a direct result of just and inclusive relationships with others'}
-                    {partial && "Good job, you're starting to come out of it. Keep going"}
-                    {sipping && 'Looks like you are drinking the cool aide'}
-                    {!aligned && !partial && !sipping && 'You are trapped in the capitalism rat race'}
-                  </div>
+                  <div className="rat-caption">{ENDING_CAPTIONS[ending]}</div>
                 </>
               ) : (
                 <div className="ending-strip">
@@ -202,8 +153,8 @@ export function CompleteScreen({
                   Study Mode ends on the scene alone. */}
               {simulation && (
                 <div className="scene-actions">
-                  <button type="button" className="btn" onClick={handleShare}>
-                    {shareLabel}
+                  <button type="button" className="btn" onClick={openShare}>
+                    Share
                   </button>
                   <button
                     type="button"
@@ -246,6 +197,16 @@ export function CompleteScreen({
               the facilitator panel beside it to match its height, and was
               capped at the scene's column width. */}
           {breakdownOpen && <ScoreBreakdown answers={answers} />}
+
+          {shareOpen && (
+            <ShareSheet
+              ending={ending}
+              score={shownScore}
+              max={SCORE_MAX}
+              onClose={() => setShareOpen(false)}
+              onShared={(method) => captureResultsShared({ method })}
+            />
+          )}
 
           {/* Restarting and supporting both step back into the corner as a
               stacked pair of square tiles, clear of the ending art. */}

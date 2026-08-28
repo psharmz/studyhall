@@ -5,7 +5,7 @@ import {
   captureScenarioFeedbackSubmitted,
 } from '../telemetry.js';
 import { LETTERS, ALIGN_LABELS, LEARN_BEYOND_URL } from '../scenarios.js';
-import { SCENARIO_RESOURCES } from '../resources.js';
+import { GENERAL_RESOURCES, SCENARIO_RESOURCES } from '../resources.js';
 import { AdvisorCall } from './AdvisorCall.jsx';
 import { Gauge } from './Gauge.jsx';
 import { PixelStudyHamsters } from '../pixels.jsx';
@@ -185,32 +185,42 @@ export function OptionsScreen({
     setLearnBeyondOpen(true);
   }
 
-  // A panel listing one link is a pointless extra click, so a lone resource
-  // opens straight from the control. It renders as a real anchor rather than
-  // calling window.open: a popup blocker can swallow window.open silently,
-  // leaving the button looking broken. Two or more still open the panel.
   const learnResources = SCENARIO_RESOURCES[scenario.code] ?? [];
-  const soleResource = learnResources.length === 1 ? learnResources[0] : null;
 
+  // Always the panel, whatever the scenario has of its own: the general EJIT
+  // reading is listed underneath, so there is never a lone link that would be
+  // better opened directly.
   function learnMoreControl(className, tabIndex) {
-    if (soleResource) {
-      return (
-        <a
-          className={className}
-          href={soleResource.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          tabIndex={tabIndex}
-          onClick={trackLearnMore}
-        >
-          Learn More
-        </a>
-      );
-    }
     return (
       <button type="button" className={className} onClick={openLearnBeyond} tabIndex={tabIndex}>
         Learn More
       </button>
+    );
+  }
+
+  // One resource, rendered the same way in either section of the panel.
+  function learnItem(r) {
+    return (
+      <li key={r.url}>
+        <a className="learn-item" href={r.url} target="_blank" rel="noopener noreferrer">
+          {/* The site's own icon. It can 404, so it is hidden on error
+              rather than left as a broken image. */}
+          <img
+            className="learn-item-icon"
+            src={`https://${r.domain}/favicon.ico`}
+            alt=""
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.style.visibility = 'hidden';
+            }}
+          />
+          <span className="learn-item-text">
+            <span className="learn-item-title">{r.title}</span>
+            {r.blurb && <span className="learn-item-blurb">{r.blurb}</span>}
+            <span className="learn-item-domain">{r.domain}</span>
+          </span>
+        </a>
+      </li>
     );
   }
 
@@ -583,41 +593,16 @@ export function OptionsScreen({
               </button>
             </div>
             <div className="learn-beyond-content">
-              {(SCENARIO_RESOURCES[scenario.code] ?? []).length === 0 ? (
+              {learnResources.length === 0 ? (
                 <p className="learn-empty">
                   Reading for this scenario is still being gathered.
                 </p>
               ) : (
-                <ul className="learn-list">
-                  {SCENARIO_RESOURCES[scenario.code].map((r) => (
-                    <li key={r.url}>
-                      <a
-                        className="learn-item"
-                        href={r.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {/* The site's own icon. It can 404, so it is hidden
-                            on error rather than left as a broken image. */}
-                        <img
-                          className="learn-item-icon"
-                          src={`https://${r.domain}/favicon.ico`}
-                          alt=""
-                          loading="lazy"
-                          onError={(e) => {
-                            e.currentTarget.style.visibility = 'hidden';
-                          }}
-                        />
-                        <span className="learn-item-text">
-                          <span className="learn-item-title">{r.title}</span>
-                          {r.blurb && <span className="learn-item-blurb">{r.blurb}</span>}
-                          <span className="learn-item-domain">{r.domain}</span>
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                <ul className="learn-list">{learnResources.map(learnItem)}</ul>
               )}
+
+              <h3 className="learn-section-head">General resources about EJIT</h3>
+              <ul className="learn-list">{GENERAL_RESOURCES.map(learnItem)}</ul>
             </div>
           </div>
         </div>

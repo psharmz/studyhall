@@ -1,101 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import cloud from 'd3-cloud';
-import { SCENARIOS, LETTERS, ALIGN_LABELS } from '../scenarios.js';
-
-// PLACEHOLDER DATA -- both charts are wired to stand-in values until the real
-// per-player aggregates exist. Swap these two consts out, nothing else.
-const WORDS = [
-  { text: 'extraction', size: 44 },
-  { text: 'water', size: 38 },
-  { text: 'consent', size: 34 },
-  { text: 'labor', size: 32 },
-  { text: 'emissions', size: 30 },
-  { text: 'land', size: 28 },
-  { text: 'e-waste', size: 26 },
-  { text: 'community', size: 25 },
-  { text: 'datacenter', size: 24 },
-  { text: 'cobalt', size: 22 },
-  { text: 'offset', size: 21 },
-  { text: 'refusal', size: 20 },
-  { text: 'sovereignty', size: 19 },
-  { text: 'cooling', size: 18 },
-  { text: 'repair', size: 18 },
-  { text: 'lithium', size: 17 },
-  { text: 'audit', size: 16 },
-  { text: 'grid', size: 16 },
-  { text: 'disclosure', size: 15 },
-  { text: 'moratorium', size: 14 },
-  { text: 'accountability', size: 14 },
-  { text: 'stewardship', size: 13 },
-  { text: 'harm', size: 13 },
-  { text: 'scale', size: 12 },
-];
-
-// PLACEHOLDER DATA -- per-country breakdowns behind the cloud's scope picker.
-// "All" above is the aggregate; these are what each country said on its own.
-const COUNTRY_WORDS = {
-  USA: [
-    { text: 'extraction', size: 40 },
-    { text: 'labor', size: 36 },
-    { text: 'consent', size: 32 },
-    { text: 'datacenter', size: 28 },
-    { text: 'emissions', size: 26 },
-    { text: 'cobalt', size: 24 },
-    { text: 'accountability', size: 22 },
-    { text: 'refusal', size: 18 },
-  ],
-  India: [
-    { text: 'water', size: 42 },
-    { text: 'land', size: 38 },
-    { text: 'community', size: 34 },
-    { text: 'sovereignty', size: 30 },
-    { text: 'consent', size: 26 },
-    { text: 'emissions', size: 24 },
-    { text: 'repair', size: 20 },
-    { text: 'access', size: 18 },
-  ],
-  Brazil: [
-    { text: 'extraction', size: 44 },
-    { text: 'water', size: 40 },
-    { text: 'land', size: 38 },
-    { text: 'stewardship', size: 32 },
-    { text: 'harm', size: 26 },
-    { text: 'sovereignty', size: 24 },
-    { text: 'scale', size: 20 },
-    { text: 'justice', size: 18 },
-  ],
-  Kenya: [
-    { text: 'labor', size: 38 },
-    { text: 'e-waste', size: 36 },
-    { text: 'health', size: 32 },
-    { text: 'community', size: 30 },
-    { text: 'access', size: 26 },
-    { text: 'toxicity', size: 24 },
-    { text: 'refusal', size: 20 },
-    { text: 'reparative', size: 18 },
-  ],
-  Philippines: [
-    { text: 'mining', size: 40 },
-    { text: 'water', size: 38 },
-    { text: 'emissions', size: 34 },
-    { text: 'labor', size: 32 },
-    { text: 'community', size: 28 },
-    { text: 'consent', size: 24 },
-    { text: 'accountability', size: 20 },
-    { text: 'repair', size: 18 },
-  ],
-  Germany: [
-    { text: 'circular', size: 38 },
-    { text: 'energy', size: 36 },
-    { text: 'accountability', size: 32 },
-    { text: 'transparency', size: 30 },
-    { text: 'design', size: 26 },
-    { text: 'compliance', size: 24 },
-    { text: 'disclosure', size: 20 },
-    { text: 'standards', size: 18 },
-  ],
-};
+import { fetchWordCloud, fetchQuadrantAverages } from '../aggregates.js';
+import quadrantMap from '../../quadrants.json';
+import { SCENARIOS, ALIGN_LABELS } from '../scenarios.js';
+import { DEV_MODE } from '../env.js';
+import { DEV_STUB_ANSWERS, DEV_STUB_AVERAGES } from '../devStub.js';
 
 const CLOUD_ALL = 'All';
 
@@ -104,43 +14,114 @@ const CLOUD_ALL = 'All';
 // telemetry uses for this theme's column (category_<slug>_score) -- it does not
 // change when the wording of a title does. Not to be confused with RADAR_SERIES'
 // `key`, which names the field a series reads off each axis.
-export const RADAR_AXES = [
+//
+// Which scenarios feed each quadrant, and therefore its max, come from
+// quadrants.json -- the same file the Modal aggregation reads, so the game and
+// the averages it plots can never disagree about what a quadrant contains.
+// Titles and suggestion copy stay here; only the map is shared.
+const SCENARIOS_BY_SLUG = Object.fromEntries(
+  quadrantMap.quadrants.map((q) => [q.slug, q.scenarios])
+);
+
+// A fully aligned answer is worth 5, so a quadrant's ceiling is 5 per card.
+const POINTS_PER_CARD = 5;
+
+const RADAR_AXES_BASE = [
   {
     slug: 'power_positionality',
     title: ['Designing with Power and Positionality in Mind'],
-    scenarios: [1, 3, 4],
-    you: 5,
-    avg: 15,
-  },
-  {
-    slug: 'collective_flourishing',
-    title: ['Restructuring Innovation for', 'Collective Flourishing'],
-    scenarios: [2, 6, 11, 13],
-    you: 22,
-    avg: 13,
-  },
-  {
-    slug: 'technology_nature',
-    title: ['Reorienting the Relationship Between Technology and Nature'],
-    scenarios: [7, 8, 14, 16],
-    you: 24,
-    avg: 11,
+    suggestions: [
+      {
+        max: 11,
+        label: 'Learning with others',
+        text: 'Look around you. What technologies do people around you use daily and which ones are not accessible to them? Who made these technologies? Do you know how they serve your community and how they serve those that built it? Whose interests are really at the center of the development and usage of these tools? Here you can also map assumptions, observations and understandings about race, colonialism, and power as they relate to the history of the people that use and build the tools.',
+      },
+      {
+        max: 23,
+        label: 'Mapping the systems',
+        text: 'Have you ever considered applying your knowledge to build a table comparing community-owned/open source and mainstream/commercial alternatives to the tech used by you and those in your community? How do they compare beyond available features and aesthetics? For example, are there power asymmetries that can further reinforce the position of those with already a lot of power? How do these asymmetries are embedded in the tech lifecycle from early development to usage, and disposal or composting? How these asymmetries are reinforced or hindered by the interaction between the different technologies in your community?',
+      },
+      {
+        max: 35,
+        label: 'Helping others',
+        text: 'Your critical perspective is valuable! Have you ever considered using your knowledge to draft a public policy proposal or design process that can support power distribution and how technical decisions can be rejected by communities in cases of disagreement? Think about how you can use that to guide all stakeholders, but specially the most vulnerable ones, to move beyond consultation and into actual decision-making power for acceptance, development, modification, and stoppage.',
+      },
+    ],
   },
   {
     slug: 'access_accountability',
     title: ['Embedding Access, Accountability,', 'and Reparative Practice'],
-    scenarios: [5, 9, 10, 12],
-    you: 20,
-    avg: 9,
+    suggestions: [
+      {
+        max: 8,
+        label: 'Learning with others',
+        text: 'Look around you. What technologies do people around you use daily and which ones are not accessible to them? Talk to people and ask if they understand the trade offs of the technologies that are accessible to them - for example, do free tools require collection of personal information? Start a simple map with the information you gather from others and try to understand how their life story relates to how they use, understand, talk about technology.',
+      },
+      {
+        max: 16,
+        label: 'Mapping the systems',
+        text: 'Have you ever considered using the knowledge you have to a create comparative table of relevant technologies to your community? You can help moving towards a more just future with technology by comparing aspects such as documentations access, repairability, modification rights, who benefits, who might be harmed (humans and non-humans) and how harms can be handle if they happen. You can also take a step further and look at such aspects of comparison within the lifecycle of the technology to understand more about the impact of its creation (e.g., resource extraction), usage (including in its interaction with other technologies), and disposal.',
+      },
+      {
+        max: 25,
+        label: 'Helping others',
+        text: 'You seem to have some strong understanding on the topic! Have you ever considered using your knowledge to draft a public policy proposal or a designing a process to measure and enable equitable accessibility, accountability (including reparation from harms), and safety (preventive and reactive)? Finally, how can you draft these documents through a participatory process with others from your community?',
+      },
+    ],
+  },
+  {
+    slug: 'collective_flourishing',
+    title: ['Restructuring Innovation for', 'Collective Flourishing'],
+    suggestions: [
+      {
+        max: 6,
+        label: 'Learning with others',
+        text: 'Have you taken some time to notice the examples of innovation around you? Which ones often appear in the news, workplaces, and other environments that are part of your reality and that of your community? What makes those technologies innovative? Who defines what is innovative? What types of knowledge are centered and which ones are ignored in these technologies? What is their main impact and purpose - speed, novelty, capital and wealth? Historically, have they enable collective flourishing or individual competition?',
+      },
+      {
+        max: 13,
+        label: 'Mapping the systems',
+        text: 'Have you consider using your knowledge to compare venture-capital/market-driven innovations with community-led/mutual aid innovation? What forms of legal structures are present in each? What incentives and barriers facilitate or difficult their development? Which of them has historically shown a relative higher rate of harms and unintended consequences? How do market-driven innovations interact within themselves? What about community-led innovations? Finally, how do market-driven and community-led innovations interact with each other - do they collaborate or compete? Who often loses? Why?',
+      },
+      {
+        max: 20,
+        label: 'Helping others',
+        text: 'Your critical perspective can help others! Have you ever considered using your knowledge to draft a public policy proposal or innovation process centered in collective well-being instead of speed and individual wealth accumulation? What methods and criteria can be used as indicators of shared benefit, distributed decision-making power, plurality of knowledge and participation? What criteria can be used to build a systems of incentive that reinforce this collective well-being? How can community reviews, participatory budgeting, harm prevention plan, reparation plans, and public and transparent document of harms and learnings can lead to a more just innovation process?',
+      },
+    ],
+  },
+  {
+    slug: 'technology_nature',
+    title: ['Reorienting the Relationship Between Technology and Nature'],
+    suggestions: [
+      {
+        max: 6,
+        label: 'Learning with others',
+        text: 'Take some time to notice the type of technology most used in your community. What materials are used in this technology? Where do these materials come from? What type of energy (e.g., hydro, coal, gas, solar, wind...) supplies these technologies and your community? How is the infrastructure that supports these technologies exploit versus care about nature? How do people in your community talk about and relate to non-human life? What practices do they have that show alignment or dealignment with the technologies used? How has technology historically influenced the changes in these practices of relationship with nature in your community?',
+      },
+      {
+        max: 13,
+        label: 'Mapping the systems',
+        text: 'Have you consider using your knowledge to compare the extractive technologies with regenerative alternatives? How do they relate and learn from nature? How do they support people\'s relationship with other forms of life and their supporting environment? What forms of energy they use? What are their ecosystem impacts, who bears the harms, and how restoration responds to the harms cause by each of them? Finally, can you map these aspects in each stage of the technology lifecycle and in their interactions with other technologies that are involved in the creation, usage, and disposal of restorative versus regenerative tech?',
+      },
+      {
+        max: 20,
+        label: 'Helping others',
+        text: 'Your knowledge can support a more just future! Consider writing a public policy draft or a design process that supports technologies that restore instead of exploit life on Earth. How should work relationship be set in such a restorative perspective? What is the value of life beyond its transformation into products and materials? What indicators of regeneration, local ecological limits, and harm should be considered? How can the participation of peoples with different forms of knowledge, such as indigenous peoples and traditional communities, be essential in such a transformation? How may historical harms be taken into account, linking technology development to restoration and reconciliation funds and actions? Embed lessons into the document to model scientific, ecological, and political humility and accountability.',
+      },
+    ],
   },
 ];
 
-export const RADAR_MAX = 30;
+export const RADAR_AXES = RADAR_AXES_BASE.map((axis) => {
+  const scenarios = SCENARIOS_BY_SLUG[axis.slug];
+  return { ...axis, scenarios, max: scenarios.length * POINTS_PER_CARD };
+});
 
-// `you` above is still hardcoded placeholder data, so the totals reported to
-// telemetry are tagged with is_placeholder_scores. Flip this to false in the
-// same commit that wires RADAR_AXES to the player's actual answers.
-export const RADAR_SCORES_ARE_PLACEHOLDER = true;
+// Both series are real now: the player's own totals come from their answers via
+// axisScore, and the comparison series is fetched from the aggregation. Nothing
+// on this chart is placeholder data any more.
+export const RADAR_SCORES_ARE_PLACEHOLDER = false;
 const RADAR_SERIES = [
   { key: 'you', name: 'Your score', stroke: '#A9E9E4', fill: 'rgba(124, 186, 186, 0.42)' },
   {
@@ -153,44 +134,31 @@ const RADAR_SERIES = [
 
 const CLOUD_W = 400;
 const CLOUD_H = 300;
-// Wide box: the axis labels need far more room than the web itself.
-const RADAR_W = 960;
-const RADAR_H = 620;
-const RADAR_CX = 480;
-const RADAR_CY = 310;
-const RADAR_R = 185;
+// A diamond, with all four quadrants named around it and their scores beneath.
+// The canvas is mostly margin: the web itself is small relative to the room the
+// four headers need above, below and either side of it.
+const RADAR_W = 760;
+const RADAR_H = 560;
+const RADAR_CX = 380;
+const RADAR_CY = 280;
+const RADAR_R = 148;
 const RADAR_RINGS = 4;
-const LABEL_LINE = 17;
-const CHIP_H = 20;
-const CHIP_ROW = 26;
-const CHIP_PER_ROW = 3;
-const CHIP_GAP = 8;
-const CHIP_PAD = 9;
-// Mono font, so a character's width is a fixed fraction of its size.
-const CHIP_CHAR = 6.7;
-const CALLOUT_W = 300;
-const CALLOUT_H = 58;
-// Top-left of the callout for each axis, relative to the centre.
-const CALLOUT_OFFSET = [
-  [175, -215],
-  [150, 62],
-  [-455, 118],
-  [-400, 62],
-];
-const CARD_W = 340;
-// Clearance between a chip and its hover card, so the card never sits on top
-// of the chip that opened it.
-const CARD_GAP = 12;
+// Where a header sits relative to its vertex, and how wide it may run before
+// wrapping (mono, so a character is a predictable fraction of the size).
+const LABEL_GAP = 18;
+const LABEL_SIZE = 15;
+const LABEL_LINE = 18;
+const LABEL_WRAP = 20;
 const MONO = "'JetBrains Mono', monospace";
 
-// Chips run to scenario 16 while only a handful of scenarios are written, so
-// they wrap around the deck for now. Drop the modulo once the deck is full.
-function scenarioFor(n) {
-  return SCENARIOS[(n - 1) % SCENARIOS.length];
-}
 
 function WordCloud({ words, scope }) {
   const ref = useRef(null);
+  const wrapRef = useRef(null);
+  // Which word the cursor is over, and where to put the readout. Kept in state
+  // rather than drawn by d3 so the layout is not recomputed on every hover --
+  // d3-cloud's placement is expensive and would reshuffle the whole cloud.
+  const [hover, setHover] = useState(null);
 
   useEffect(() => {
     const svg = d3.select(ref.current);
@@ -213,13 +181,26 @@ function WordCloud({ words, scope }) {
           .selectAll('text')
           .data(laidOut)
           .join('text')
+          .attr('class', 'cloud-word')
           .attr('font-family', MONO)
           .attr('font-weight', 700)
           .attr('font-size', (d) => `${d.size}px`)
           .attr('fill', (d, i) => color(i))
           .attr('text-anchor', 'middle')
           .attr('transform', (d) => `translate(${d.x},${d.y}) rotate(${d.rotate})`)
-          .text((d) => d.text);
+          .text((d) => d.text)
+          // Placed against the panel, not the SVG: the SVG is scaled by its
+          // viewBox, so its internal coordinates are not screen pixels.
+          .on('mousemove', (event, d) => {
+            const box = wrapRef.current.getBoundingClientRect();
+            setHover({
+              text: d.text,
+              count: d.count,
+              x: event.clientX - box.left,
+              y: event.clientY - box.top,
+            });
+          })
+          .on('mouseleave', () => setHover(null));
       });
 
     layout.start();
@@ -227,61 +208,227 @@ function WordCloud({ words, scope }) {
     return () => {
       layout.stop();
       svg.selectAll('*').remove();
+      setHover(null);
     };
   }, [words]);
 
   return (
-    <svg
-      ref={ref}
-      className="results-chart-svg"
-      viewBox={`0 0 ${CLOUD_W} ${CLOUD_H}`}
-      role="img"
-      aria-label={`Word cloud of themes for ${scope} (placeholder data)`}
-    />
+    <div className="cloud-wrap" ref={wrapRef} onMouseLeave={() => setHover(null)}>
+      <svg
+        ref={ref}
+        className="results-chart-svg"
+        viewBox={`0 0 ${CLOUD_W} ${CLOUD_H}`}
+        role="img"
+        aria-label={`Word cloud of what players picked, for ${scope}`}
+      />
+      {hover && (
+        <div
+          className="cloud-tip"
+          style={{ left: hover.x, top: hover.y }}
+          role="status"
+          aria-live="polite"
+        >
+          <span className="cloud-tip-word">{hover.text}</span>
+          <span className="cloud-tip-count">
+            {hover.count} {hover.count === 1 ? 'pick' : 'picks'}
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 
-function RadarChart({ answers }) {
+
+// What the player scored on the cards feeding this quadrant. Scenario 17 sits
+// in two quadrants, so its score counts towards both. Cards that were never
+// dealt -- a short deck, or one not written yet -- contribute nothing.
+export function axisScore(axis, answers) {
+  return axis.scenarios.reduce((total, n) => {
+    const answer = answers?.[`S.${String(n).padStart(2, '0')}`];
+    return total + (answer?.score ?? 0);
+  }, 0);
+}
+
+// Which of an axis's three bands a score falls in. Each axis carries its own
+// thresholds, scaled to its own max -- a 15 is the top band on a 20-point
+// quadrant but the middle band on a 30-point one.
+function wrapLabel(title, maxChars) {
+  const lines = [];
+  let line = '';
+  for (const word of title.split(' ')) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (candidate.length > maxChars && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = candidate;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function suggestionFor(axis) {
+  const bands = axis.suggestions;
+  return bands.find((b) => axis.you <= b.max) ?? bands[bands.length - 1];
+}
+
+
+// How this player answered scenario `n`, as a chip alignment. The axes run to
+// scenario 16 while only a handful of cards are written, so most of them have
+// no answer to read -- those fall back to 'unanswered', which is styled green.
+function alignFor(answers, n) {
+  const code = `S.${String(n).padStart(2, '0')}`;
+  return answers?.[code]?.align ?? 'unanswered';
+}
+
+const scenarioByCode = Object.fromEntries(SCENARIOS.map((sc) => [sc.code, sc]));
+
+function scenarioFor(n) {
+  return scenarioByCode[`S.${String(n).padStart(2, '0')}`] ?? null;
+}
+
+// What one scenario chip opens: what they answered, what the aligned answer
+// was, the scenario itself, and why that answer is the aligned one. Replaces
+// the suggestion block rather than sitting under it, so the card stays one
+// screenful.
+function ScenarioDetail({ n, answers }) {
+  const scenario = scenarioFor(n);
+  if (!scenario) {
+    return (
+      <div className="scenario-detail">
+        <div className="scenario-detail-head">
+          <h4 className="scenario-detail-title">Scenario {n}</h4>
+        </div>
+        <p className="scenario-detail-note">This card has not been written yet.</p>
+      </div>
+    );
+  }
+
+  const picked = answers?.[scenario.code] ?? null;
+  // Some cards have more than one fully aligned answer.
+  const aligned = scenario.options.filter((o) => o.align === 'full');
+  const pickedWasAligned = picked?.align === 'full';
+
+  return (
+    <div className="scenario-detail">
+      <div className="scenario-detail-head">
+        <h4 className="scenario-detail-title">
+          Scenario {n}: {scenario.titleLines.join(' ')}
+        </h4>
+        {/* Signed only when there is something to sign -- "+0" reads oddly. */}
+        <span className="chip" data-align={picked ? picked.align : 'unanswered'}>
+          {picked && picked.score > 0 ? `+${picked.score}` : (picked?.score ?? 0)}
+        </span>
+      </div>
+
+      <h5 className="scenario-detail-label">Your answer</h5>
+      {picked ? (
+        <p className="scenario-detail-answer" data-align={picked.align}>
+          {picked.text}
+          <span className="scenario-detail-align">{ALIGN_LABELS[picked.align]}</span>
+        </p>
+      ) : (
+        <p className="scenario-detail-note">You did not play this scenario.</p>
+      )}
+
+      {/* Only worth showing when it is not the one they already picked. */}
+      {!pickedWasAligned && aligned.length > 0 && (
+        <>
+          <h5 className="scenario-detail-label">Fully aligned answer</h5>
+          {aligned.map((o) => (
+            <p key={o.text} className="scenario-detail-answer" data-align="full">
+              {o.text}
+            </p>
+          ))}
+        </>
+      )}
+
+      <h5 className="scenario-detail-label">The scenario</h5>
+      {scenario.paragraphs.map((para) => (
+        <p key={para.slice(0, 40)} className="scenario-detail-prompt">
+          {para}
+        </p>
+      ))}
+
+      <h5 className="scenario-detail-label">Why</h5>
+      {aligned.map((o) => (
+        <p key={o.text} className="scenario-detail-why">
+          {o.explanation}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+// The web on its own -- no titles, no chips, no callout. Everything about the
+// selected vertex is read off the card beside it instead, which is why the
+// box is only as wide as the chart now.
+function RadarChart({ answers: realAnswers }) {
+  // A dev build with nothing played falls back to stub answers, so the chart,
+  // the chips and the per-scenario detail can all be looked at without playing
+  // nineteen cards first. Never in a production build.
+  const answers =
+    DEV_MODE && !Object.keys(realAnswers ?? {}).length ? DEV_STUB_ANSWERS : realAnswers;
+
+  // Which scenario chip is open, if any. Null shows the suggestions instead.
+  const [openScenario, setOpenScenario] = useState(null);
+
+  // Cross-player averages, or null while loading / when unavailable. The
+  // comparison series is simply not drawn in that case rather than shown
+  // against invented numbers.
+  const [averages, setAverages] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchQuadrantAverages().then((data) => {
+      if (controller.signal.aborted) return;
+      setAverages(data ?? (DEV_MODE ? DEV_STUB_AVERAGES : null));
+    });
+    return () => controller.abort();
+  }, []);
+
   const ref = useRef(null);
-  const wrapRef = useRef(null);
-  // Which vertex the score callout points at; hovering an axis moves it.
+  // Selections for the marks that change with the selection, kept so the
+  // highlight effect can restyle them without redrawing the chart. Redrawing
+  // on hover used to tear the vertex out from under the cursor mid-click.
+  const marks = useRef({ aura: null, sel: null, dot: null, labels: null });
   const [active, setActive] = useState(0);
-  // The vertex actually under the cursor, if any -- it goes solid red.
   const [hovered, setHovered] = useState(null);
-  // Scenario chip under the cursor: { n, left, top, above }, in wrapper
-  // coordinates. `above` flips the card to sit on top of the chip instead.
-  const [chipCard, setChipCard] = useState(null);
+
+  // The axes as drawn: static definitions, this player's own totals, and the
+  // fetched average where there is one.
+  const axes = useMemo(
+    () =>
+      RADAR_AXES.map((axis) => ({
+        ...axis,
+        you: axisScore(axis, answers),
+        avg: averages?.[axis.slug]?.avg ?? null,
+      })),
+    [answers, averages]
+  );
+
+  // Drawn series: the average one only once its data is in.
+  const series = useMemo(
+    () => (averages ? RADAR_SERIES : RADAR_SERIES.filter((s) => s.key !== 'avg')),
+    [averages]
+  );
 
   useEffect(() => {
     const svg = d3.select(ref.current);
     const g = svg.append('g').attr('transform', `translate(${RADAR_CX},${RADAR_CY})`);
 
-    // Park the card clear of the chip: below it in the top half of the chart,
-    // above it in the bottom half, clamped to the wrapper on the x axis.
-    function openChipCard(node, n) {
-      const wrap = wrapRef.current.getBoundingClientRect();
-      const chip = node.getBoundingClientRect();
-      const above = chip.top - wrap.top > wrap.height / 2;
-      const left = Math.min(
-        Math.max(chip.left + chip.width / 2 - wrap.left - CARD_W / 2, 8),
-        Math.max(wrap.width - CARD_W - 8, 8)
-      );
-      setChipCard({
-        n,
-        left,
-        top: above ? chip.top - wrap.top - CARD_GAP : chip.bottom - wrap.top + CARD_GAP,
-        above,
-      });
-    }
-
-    const r = d3.scaleLinear().domain([0, RADAR_MAX]).range([0, RADAR_R]);
-    const angle = (i) => (i * 2 * Math.PI) / RADAR_AXES.length;
+    // Quadrants hold different numbers of cards, so a spoke is plotted as a
+    // fraction of its own max -- otherwise the 30-point quadrant would always
+    // dwarf the 20-point ones and the shape would say nothing about how the
+    // player actually did.
+    const r = (value, i) => (value / axes[i].max) * RADAR_R;
+    const angle = (i) => (i * 2 * Math.PI) / axes.length;
     const px = (radius, i) => radius * Math.sin(angle(i));
     const py = (radius, i) => -radius * Math.cos(angle(i));
-    const ring = (radius) => RADAR_AXES.map((_, i) => `${px(radius, i)},${py(radius, i)}`).join(' ');
+    const ring = (radius) => axes.map((_, i) => `${px(radius, i)},${py(radius, i)}`).join(' ');
 
-    // Web: nested diamonds -- each ring is the axis polygon itself rather
-    // than a circle -- plus a spoke out to every vertex.
+    // Web: nested polygons on the axes themselves, plus a spoke to each vertex.
     g.selectAll('.radar-ring')
       .data(d3.range(1, RADAR_RINGS + 1).map((i) => (i / RADAR_RINGS) * RADAR_R))
       .join('polygon')
@@ -292,7 +439,7 @@ function RadarChart({ answers }) {
       .attr('stroke-opacity', (_, i) => (i === RADAR_RINGS - 1 ? 0.85 : 0.3));
 
     g.selectAll('.radar-spoke')
-      .data(RADAR_AXES)
+      .data(axes)
       .join('line')
       .attr('class', 'radar-spoke')
       .attr('x1', 0)
@@ -302,241 +449,160 @@ function RadarChart({ answers }) {
       .attr('stroke', '#FFFFFF')
       .attr('stroke-opacity', 0.3);
 
-    // Axis labels: bold theme name, an "average of" line, then one chip per
-    // scenario. Top and bottom sit close to their vertex; the side labels
-    // need more clearance.
-    const groups = g
-      .selectAll('.radar-axis-label')
-      .data(RADAR_AXES)
-      .join('g')
-      .attr('class', 'radar-axis-label')
-      .attr(
-        'transform',
-        (_, i) =>
-          `translate(${px(RADAR_R + (i % 2 === 0 ? 62 : 150), i)},${py(
-            RADAR_R + (i % 2 === 0 ? 62 : 150),
-            i
-          )})`
-      );
-
-    groups.each(function (d) {
-      const gg = d3.select(this);
-      const lines = [...d.title, 'comprised by'];
-      // Chips wrap at three per row, balanced -- four scenarios read better
-      // as 2 + 2 than as 3 + 1.
-      const rowCount = Math.ceil(d.scenarios.length / CHIP_PER_ROW);
-      const perRow = Math.ceil(d.scenarios.length / rowCount);
-      const rows = d3.range(rowCount).map((i) => d.scenarios.slice(i * perRow, (i + 1) * perRow));
-      // The whole block (title lines + caption + chip rows) is centred on the
-      // label anchor, so it grows symmetrically away from the vertex.
-      const height = (lines.length - 1) * LABEL_LINE + LABEL_LINE + rowCount * CHIP_ROW;
-      const top = -height / 2;
-
-      const text = gg
-        .append('text')
-        .attr('text-anchor', 'middle')
-        .attr('font-family', MONO)
-        .attr('fill', 'var(--green)')
-        .attr('y', top + 11);
-
-      lines.forEach((str, i) => {
-        text
-          .append('tspan')
-          .attr('x', 0)
-          .attr('dy', i === 0 ? 0 : LABEL_LINE)
-          .attr('font-size', i === lines.length - 1 ? '12px' : '13.5px')
-          .attr('font-weight', i === lines.length - 1 ? 400 : 700)
-          .attr('fill-opacity', i === lines.length - 1 ? 0.75 : 1)
-          .text(str);
-      });
-
-      // Chips: mono, so widths come straight off the character count. Each
-      // row is centred on the anchor independently.
-      const chipW = (n) => `scenario ${n}`.length * CHIP_CHAR + CHIP_PAD * 2;
-      const placed = [];
-      rows.forEach((row, rowIndex) => {
-        const rowW = d3.sum(row, chipW) + CHIP_GAP * (row.length - 1);
-        let x = -rowW / 2;
-        row.forEach((n) => {
-          placed.push({ n, x, y: top + lines.length * LABEL_LINE + 6 + rowIndex * CHIP_ROW });
-          x += chipW(n) + CHIP_GAP;
-        });
-      });
-
-      const chips = gg
-        .selectAll('.radar-chip')
-        .data(placed)
-        .join('g')
-        .attr('class', 'radar-chip')
-        .attr('transform', (c) => `translate(${c.x},${c.y})`)
-        .style('cursor', 'pointer')
-        .on('mouseenter', function (_, c) {
-          openChipCard(this, c.n);
-        })
-        .on('mouseleave', () => setChipCard(null));
-
-      chips
-        .append('rect')
-        .attr('width', (c) => chipW(c.n))
-        .attr('height', CHIP_H)
-        .attr('rx', 2)
-        .attr('fill', 'rgba(124, 250, 107, 0.08)')
-        .attr('stroke', 'var(--green)')
-        .attr('stroke-opacity', 0.45);
-
-      chips
-        .append('text')
-        .attr('x', (c) => chipW(c.n) / 2)
-        .attr('y', CHIP_H / 2 + 4)
-        .attr('text-anchor', 'middle')
-        .attr('font-family', MONO)
-        .attr('font-size', '11px')
-        .attr('fill', 'var(--green)')
-        .text((c) => `scenario ${c.n}`);
-    });
-
     const line = d3
       .lineRadial()
-      .radius((d) => r(d))
+      .radius((d, i) => r(d, i))
       .angle((_, i) => angle(i))
       .curve(d3.curveLinearClosed);
 
     g.selectAll('.radar-area')
-      .data(RADAR_SERIES)
+      .data(series)
       .join('path')
       .attr('class', 'radar-area')
-      .attr('d', (s) => line(RADAR_AXES.map((a) => a[s.key])))
+      .attr('d', (s) => line(axes.map((a) => a[s.key])))
       .attr('fill', (s) => s.fill)
       .attr('stroke', (s) => s.stroke)
       .attr('stroke-width', 2);
 
-    RADAR_SERIES.forEach((s) => {
+    series.forEach((s) => {
       const dots = g.append('g');
+      const at = (fn) => (d, i) => fn(r(d[s.key], i), i);
 
-      // The "your score" vertices are the hoverable ones, so they get a soft
-      // halo and a slow breath to draw the eye. Staggered per axis. The one
-      // under the cursor drops the halo and settles into a bigger red dot.
+      // Only the "your score" vertices are selectable, so only they get the
+      // breathing halo that marks them as live targets.
       if (s.key === 'you') {
-        dots
+        marks.current.aura = dots
           .selectAll('.radar-dot-aura')
-          .data(RADAR_AXES.map((a) => a[s.key]))
+          .data(axes)
           .join('circle')
           .attr('class', 'radar-dot-aura')
-          .attr('cx', (d, i) => px(r(d), i))
-          .attr('cy', (d, i) => py(r(d), i))
+          .attr('cx', at(px))
+          .attr('cy', at(py))
           .attr('r', 9)
           .attr('fill', s.stroke)
-          .attr('display', (_, i) => (i === hovered ? 'none' : null))
           .style('animation-delay', (_, i) => `${i * 0.45}s`);
+
+        // The selection mark: a red disc appended before the dots so it sits
+        // behind the vertex still pulsing on top of it. Only ever shown on
+        // the active/hovered vertex.
+        marks.current.sel = dots
+          .selectAll('.radar-dot-selected')
+          .data(axes)
+          .join('circle')
+          .attr('class', 'radar-dot-selected')
+          .attr('cx', at(px))
+          .attr('cy', at(py))
+          .attr('r', 12)
+          .attr('fill', 'var(--red)')
+          .attr('display', 'none');
       }
 
-      dots
+      const dot = dots
         .selectAll('.radar-dot')
-        .data(RADAR_AXES.map((a) => a[s.key]))
+        .data(axes)
         .join('circle')
-        .attr('class', (_, i) => {
-          if (s.key !== 'you') return 'radar-dot';
-          return i === hovered ? 'radar-dot radar-dot--hovered' : 'radar-dot radar-dot--you';
-        })
-        .attr('cx', (d, i) => px(r(d), i))
-        .attr('cy', (d, i) => py(r(d), i))
-        .attr('r', (_, i) => (s.key === 'you' && i === hovered ? 6 : 3))
-        .attr('fill', (_, i) => (s.key === 'you' && i === hovered ? 'var(--red)' : s.stroke))
+        .attr('class', s.key === 'you' ? 'radar-dot radar-dot--you' : 'radar-dot')
+        .attr('cx', at(px))
+        .attr('cy', at(py))
+        .attr('r', 3)
+        .attr('fill', s.stroke)
         .style('animation-delay', (_, i) => `${i * 0.45}s`);
+
+      if (s.key === 'you') marks.current.dot = dot;
     });
 
-    // Callout, pointing at the active vertex of the "your score" ring.
-    const axis = RADAR_AXES[active];
-    const [bx, by] = CALLOUT_OFFSET[active];
-    const vx = px(r(axis.you), active);
-    const vy = py(r(axis.you), active);
-    const box = g.append('g').attr('class', 'radar-callout');
+    // Every quadrant is named, all the time. The selected one is simply the
+    // one at full strength -- see the highlight effect.
+    marks.current.labels = g
+      .append('g')
+      .selectAll('g')
+      .data(axes)
+      .join('g')
+      .attr('class', 'radar-axis-label')
+      .style('cursor', 'pointer')
+      // The header is a second way in, alongside the dot itself.
+      .on('click', (_, d) => {
+        setActive(axes.indexOf(d));
+        setOpenScenario(null);
+      });
 
-    // The arrow leaves whichever side of the box faces the vertex, and stops
-    // a little short of it.
-    const fromX = vx < bx ? bx - 6 : bx + CALLOUT_W + 6;
-    const fromY = by + CALLOUT_H / 2;
-    const dx = vx - fromX;
-    const dy = vy - fromY;
-    const len = Math.hypot(dx, dy) || 1;
-    const tipX = vx - (dx / len) * 12;
-    const tipY = vy - (dy / len) * 12;
+    marks.current.labels.each(function (d, i) {
+      const group = d3.select(this);
+      const [x, y] = [px(RADAR_R + LABEL_GAP, i), py(RADAR_R + LABEL_GAP, i)];
+      const lines = wrapLabel(d.title.join(' '), LABEL_WRAP);
+      // Top and bottom read centred over their point; the sides read outward.
+      const anchor = i === 0 || i === 2 ? 'middle' : i === 1 ? 'start' : 'end';
+      // The block hangs above the top vertex, below the bottom one, and is
+      // centred on the two at the sides. +1 line for the score underneath.
+      const total = lines.length + 1;
+      const firstY =
+        i === 0 ? y - (total - 1) * LABEL_LINE : i === 2 ? y + LABEL_LINE : y - ((total - 1) * LABEL_LINE) / 2;
 
-    box
-      .append('line')
-      .attr('x1', fromX)
-      .attr('y1', fromY)
-      .attr('x2', tipX)
-      .attr('y2', tipY)
-      .attr('stroke', 'var(--blue)')
-      .attr('stroke-width', 4);
+      lines.forEach((line, n) => {
+        group
+          .append('text')
+          .attr('class', 'radar-axis-title')
+          .attr('x', x)
+          .attr('y', firstY + n * LABEL_LINE)
+          .attr('text-anchor', anchor)
+          .attr('font-size', LABEL_SIZE)
+          .attr('font-weight', 700)
+          .text(line);
+      });
 
-    box
-      .append('polygon')
-      .attr('points', '0,-7 12,0 0,7')
-      .attr('fill', 'var(--blue)')
-      .attr(
-        'transform',
-        `translate(${tipX},${tipY}) rotate(${(Math.atan2(dy, dx) * 180) / Math.PI})`
-      );
+      // Score sits under its own quadrant's name rather than in the card.
+      group
+        .append('text')
+        .attr('class', 'radar-axis-score')
+        .attr('x', x)
+        .attr('y', firstY + lines.length * LABEL_LINE)
+        .attr('text-anchor', anchor)
+        .attr('font-size', LABEL_SIZE)
+        .attr('font-weight', 700)
+        .text(`${d.you}/${d.max}`);
+    });
 
-    box
-      .append('rect')
-      .attr('x', bx)
-      .attr('y', by)
-      .attr('width', CALLOUT_W)
-      .attr('height', CALLOUT_H)
-      .attr('fill', 'var(--black)')
-      .attr('stroke', '#FFFFFF')
-      .attr('stroke-width', 2.5);
-
-    const callout = box
-      .append('text')
-      .attr('x', bx + 14)
-      .attr('y', by + 23)
-      .attr('font-family', MONO)
-      .attr('font-size', '12.5px')
-      .attr('font-weight', 700)
-      .attr('fill', 'var(--green)');
-    callout.append('tspan').attr('x', bx + 14).text(`Your score (sum): ${axis.you}/${RADAR_MAX}`);
-    callout
-      .append('tspan')
-      .attr('x', bx + 14)
-      .attr('dy', 20)
-      .text(`Avg. score of all participants: ${axis.avg}/${RADAR_MAX}`);
-
-    // Generous invisible hit targets on each vertex drive the callout.
+    // Generous invisible hit targets on each vertex drive the detail card.
     g.append('g')
       .selectAll('circle')
-      .data(RADAR_AXES)
+      .data(axes)
       .join('circle')
-      .attr('cx', (d, i) => px(r(d.you), i))
-      .attr('cy', (d, i) => py(r(d.you), i))
+      .attr('cx', (d, i) => px(r(d.you, i), i))
+      .attr('cy', (d, i) => py(r(d.you, i), i))
       .attr('r', 20)
       .attr('fill', 'transparent')
       .style('cursor', 'pointer')
-      .on('mouseenter', (_, d) => {
-        const i = RADAR_AXES.indexOf(d);
-        setActive(i);
-        setHovered(i);
-      })
-      .on('mouseleave', () => setHovered(null));
+      .on('mouseenter', (_, d) => setHovered(axes.indexOf(d)))
+      .on('mouseleave', () => setHovered(null))
+      .on('click', (_, d) => {
+        setActive(axes.indexOf(d));
+        setOpenScenario(null);
+      });
 
     return () => {
       svg.selectAll('*').remove();
-      setChipCard(null);
+      marks.current = { aura: null, sel: null, dot: null, labels: null };
     };
-  }, [active, hovered]);
+  }, [axes, series]);
 
-  const card = chipCard && scenarioFor(chipCard.n);
-  // No answer on record (or the chart was opened without playing) falls back
-  // to option A.
-  const picked = card && (answers?.[card.code] ?? card.options[0]);
+  // Highlight only -- no redraw, so the marks stay put under the pointer.
+  // The vertex itself is left alone: it keeps its colour and keeps pulsing,
+  // and the green disc appears behind it. The breathing halo steps aside so
+  // it does not wash the disc out.
+  useEffect(() => {
+    const lit = (_, i) => i === active || i === hovered;
+    marks.current.aura?.attr('display', (d, i) => (lit(d, i) ? 'none' : null));
+    marks.current.sel?.attr('display', (d, i) => (lit(d, i) ? null : 'none'));
+
+    // All four stay legible; the selected one is the one at full strength.
+    marks.current.labels?.classed('is-selected', (_, i) => i === (hovered ?? active));
+  }, [active, hovered, axes]);
+
+  const axis = axes[active];
+  const suggestion = suggestionFor(axis);
 
   return (
-    <div className="radar-wrap" ref={wrapRef}>
-      {/* Only the chart itself scrolls sideways on narrow screens; the
-          title, legend and note stay put. */}
+    <div className="radar-wrap">
       <div className="radar-scroll">
         <svg
           ref={ref}
@@ -545,31 +611,52 @@ function RadarChart({ answers }) {
           role="img"
           aria-label="Spider chart of scores by theme (placeholder data)"
         />
-      </div>
-      {card && (
-        <div
-          className={chipCard.above ? 'chip-card chip-card--above' : 'chip-card'}
-          style={{ left: `${chipCard.left}px`, top: `${chipCard.top}px` }}
-        >
-          <div className="chip-card-head">
-            Scenario {chipCard.n} &middot; {card.titleLines.join(' ')}
-          </div>
-          <div className="chip-card-label">Your answer</div>
-          <p className="chip-card-answer">
-            <b>{LETTERS[card.options.indexOf(picked)]}.</b> {picked.text}
-          </p>
-          {picked.align && (
-            <div className={`chip-card-alignment alignment--${picked.align}`}>
-              {ALIGN_LABELS[picked.align]}
-              <span className="alignment-score">
-                {picked.align === 'full' ? '(+3)' : picked.align === 'partial' ? '(+1)' : '(-2)'}
-              </span>
-            </div>
+        {/* Lists only what was drawn -- the comparison series is absent until
+            its data arrives. */}
+        <div className="results-chart-legend">
+          {series.map((s) => (
+            <span key={s.name}>
+              <i style={{ background: s.stroke }} />
+              {s.name}
+            </span>
+          ))}
+          {/* Only when it is a real sample -- the dev stub reports zero runs. */}
+          {averages?.[axis.slug]?.runs > 0 && (
+            <span className="radar-legend-n">from {averages[axis.slug].runs} players</span>
           )}
-          <div className="chip-card-label">Why</div>
-          <p className="chip-card-why">{picked.explanation}</p>
         </div>
-      )}
+      </div>
+      {/* Only the selected point's detail, beside the chart. The quadrant is
+          named on the chart itself now, against its own vertex. */}
+      <div className="radar-detail">
+        {/* The score lives on the chart now, under its own quadrant's name. */}
+        <h4 className="radar-detail-suggest">
+          Suggestions for Taking Action
+          <span className="radar-detail-range">{suggestion.label}</span>
+        </h4>
+        <p className="radar-detail-text">{suggestion.text}</p>
+
+        {/* Under the suggestion: the cards this quadrant is made of. Clicking
+            one opens it below; clicking it again closes it, so there is no
+            separate dismiss control. */}
+        <p className="radar-detail-comprised">
+          comprised by
+          {axis.scenarios.map((n) => (
+            <button
+              key={n}
+              type="button"
+              className="radar-chip"
+              data-align={alignFor(answers, n)}
+              aria-pressed={openScenario === n}
+              onClick={() => setOpenScenario(openScenario === n ? null : n)}
+            >
+              Scenario {n}
+            </button>
+          ))}
+        </p>
+
+        {openScenario && <ScenarioDetail n={openScenario} answers={answers} />}
+      </div>
     </div>
   );
 }
@@ -582,14 +669,6 @@ export function ScoreBreakdown({ answers }) {
   return (
     <div className="score-breakdown" id="score-breakdown">
       <RadarChart answers={answers} />
-      <div className="results-chart-legend">
-        {RADAR_SERIES.map((s) => (
-          <span key={s.name}>
-            <i style={{ background: s.stroke }} />
-            {s.name}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }
@@ -597,7 +676,34 @@ export function ScoreBreakdown({ answers }) {
 export function ResultsCharts({ answers }) {
   // Which slice of the cloud is on show: the aggregate, or one country.
   const [cloudScope, setCloudScope] = useState(CLOUD_ALL);
-  const cloudWords = cloudScope === CLOUD_ALL ? WORDS : COUNTRY_WORDS[cloudScope];
+  // Real tallies out of PostHog. `loading` is tracked apart from "no data" so
+  // the panel does not flash an empty state before the fetch lands.
+  const [live, setLive] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchWordCloud(controller.signal).then((data) => {
+      if (controller.signal.aborted) return;
+      setLive(data);
+      setLoading(false);
+    });
+    return () => controller.abort();
+  }, []);
+
+  // Alphabetical, so the picker does not reorder itself when the counts shift
+  // and one country overtakes another.
+  const countries = live ? Object.keys(live.byCountry).sort() : [];
+  const cloudWords = live
+    ? cloudScope === CLOUD_ALL
+      ? live.all
+      : live.byCountry[cloudScope] ?? live.all
+    : [];
+
+  // A country can drop out of the data between refreshes.
+  useEffect(() => {
+    if (cloudScope !== CLOUD_ALL && !countries.includes(cloudScope)) setCloudScope(CLOUD_ALL);
+  }, [cloudScope, countries]);
 
   return (
     <div className="results-charts">
@@ -606,25 +712,37 @@ export function ResultsCharts({ answers }) {
           <h2 className="results-chart-title">
             What others think about environmental justice in technology
           </h2>
-          <label className="cloud-scope">
-            <span className="sr-only">Filter word cloud by country</span>
-            <select
-              className="cloud-scope-select"
-              value={cloudScope}
-              onChange={(e) => setCloudScope(e.target.value)}
-            >
-              <option value={CLOUD_ALL}>All</option>
-              {Object.keys(COUNTRY_WORDS).map((country) => (
-                <option key={country} value={country}>
-                  {country}
-                </option>
-              ))}
-            </select>
-          </label>
+          {/* Nothing to filter until there are country slices to pick. */}
+          {countries.length > 0 && (
+            <label className="cloud-scope">
+              <span className="sr-only">Filter word cloud by country</span>
+              <select
+                className="cloud-scope-select"
+                value={cloudScope}
+                onChange={(e) => setCloudScope(e.target.value)}
+              >
+                <option value={CLOUD_ALL}>All</option>
+                {countries.map((country) => (
+                  <option key={country} value={country}>
+                    {country}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
-        <WordCloud words={cloudWords} scope={cloudScope} />
+        {live ? (
+          <WordCloud words={cloudWords} scope={cloudScope} />
+        ) : (
+          // Still fetching, or there are no counts yet. Saying so beats
+          // showing words nobody picked. Blank while loading, so the message
+          // does not appear and then vanish.
+          <p className="word-cloud-empty">{loading ? '' : 'Not enough data'}</p>
+        )}
       </div>
-      <p className="results-chart-note">Placeholder data &mdash; not yet wired to your answers.</p>
+      {live && (
+        <p className="results-chart-note">What players picked on the goals screen.</p>
+      )}
     </div>
   );
 }

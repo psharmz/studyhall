@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "bundle": "vite build && node scripts/bundle.mjs",
+    "build:dev": "VITE_DEV_MODE=true vite build --mode development",
+    "bundle": "VITE_DEV_MODE=false vite build && node scripts/bundle.mjs index.html",
+    "bundle:dev": "VITE_DEV_MODE=true VITE_POSTHOG_KEY= VITE_POSTHOG_HOST= vite build --mode development && node scripts/bundle.mjs index.dev.html",
     "preview": "vite preview"
   },
   "dependencies": {

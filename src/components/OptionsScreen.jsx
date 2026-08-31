@@ -3,6 +3,7 @@ import {
   captureClarityRated,
   captureLearnBeyondOpened,
   captureScenarioFeedbackSubmitted,
+  CLARITY_SCALE,
 } from '../telemetry.js';
 import { LETTERS, ALIGN_LABELS, LEARN_BEYOND_URL } from '../scenarios.js';
 import { GENERAL_RESOURCES, SCENARIO_RESOURCES } from '../resources.js';
@@ -254,13 +255,38 @@ export function OptionsScreen({
 
   // The three faces replace the old five stars, so the scale runs 1-3:
   // 1 = confusing, 2 = unsure, 3 = clear.
+  // A five-point scale rather than three: an odd-numbered Likert with two
+  // steps either side of neutral is what makes the responses worth analysing,
+  // where three points collapsed most of the signal.
   const CLARITY_FACES = [
-    { value: 1, face: '\u{1F615}', label: 'Disagree', prompt: 'Disagree? Tell us more' },
-    { value: 2, face: '\u{1F937}', label: 'Not sure', prompt: 'Confused? Tell us more' },
+    {
+      value: 1,
+      face: '\u{1F616}',
+      label: CLARITY_SCALE[1],
+      prompt: 'What was confusing? Tell us more',
+    },
+    {
+      value: 2,
+      face: '\u{1F615}',
+      label: CLARITY_SCALE[2],
+      prompt: 'What was confusing? Tell us more',
+    },
     {
       value: 3,
-      face: '\u{1F44D}',
-      label: 'Clear',
+      face: '\u{1F610}',
+      label: CLARITY_SCALE[3],
+      prompt: 'What would make it clearer?',
+    },
+    {
+      value: 4,
+      face: '\u{1F642}',
+      label: CLARITY_SCALE[4],
+      prompt: "Anything else you'd like to share?",
+    },
+    {
+      value: 5,
+      face: '\u{1F604}',
+      label: CLARITY_SCALE[5],
       prompt: "Anything else you'd like to share?",
     },
   ];
@@ -313,7 +339,8 @@ export function OptionsScreen({
             aria-label={label}
             aria-pressed={clarity === value}
           >
-            {face}
+            <span className="study-face-emoji">{face}</span>
+            <span className="study-face-label">{label}</span>
           </button>
         ))}
       </div>

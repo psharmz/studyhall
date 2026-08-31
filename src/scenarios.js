@@ -6,6 +6,8 @@ export const LETTERS = ['A', 'B', 'C', 'D', 'E'];
 // until they get one, those buttons render inert.
 export const FEEDBACK_FORM_URL = 'https://docs.google.com/forms/u/0/';
 export const LEARN_BEYOND_URL = null;
+export const FACILITATOR_FORM_URL =
+  'https://docs.google.com/forms/d/e/1FAIpQLSct92R0RfomYZMXI32iA9jYQCbD-zJQLvWk_vL1rLkAg5bXEw/viewform?usp=header';
 export const SUPPORT_URL = null;
 
 export const ALIGN_LABELS = { full: 'Fully aligned', partial: 'Partially aligned', non: 'Non-aligned' };

@@ -598,12 +598,22 @@ function RadarChart({ answers: realAnswers }) {
     marks.current.labels?.classed('is-selected', (_, i) => i === (hovered ?? active));
   }, [active, hovered, axes]);
 
+  // On a phone the chart is wider than the screen and scrolls sideways; open
+  // it centred rather than against the left edge, so the diamond is the first
+  // thing seen rather than one corner of it.
+  useEffect(() => {
+    const box = scrollRef.current;
+    if (!box) return;
+    const overflow = box.scrollWidth - box.clientWidth;
+    if (overflow > 0) box.scrollLeft = overflow / 2;
+  }, [axes]);
+
   const axis = axes[active];
   const suggestion = suggestionFor(axis);
 
   return (
     <div className="radar-wrap">
-      <div className="radar-scroll">
+      <div className="radar-scroll" ref={scrollRef}>
         <svg
           ref={ref}
           className="results-chart-svg"

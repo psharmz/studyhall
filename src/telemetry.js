@@ -265,11 +265,29 @@ export function captureResultsShared({ method }) {
 
 // --- study mode feedback ---------------------------------------------------
 
+// The scale's wording, sent alongside the number so a dashboard reads without
+// a lookup table, and so a rating is still interpretable if the scale is ever
+// reworded again.
+export const CLARITY_SCALE = {
+  1: 'Very confusing',
+  2: 'Somewhat confusing',
+  3: 'Neutral',
+  4: 'Clear',
+  5: 'Very clear',
+};
+
+// How many points the scale had when this row was written. It ran 1-3 before
+// 2026-08-28; without this, a mean across the change is meaningless, because a
+// 3 used to be the top of the scale and is now the middle.
+export const CLARITY_SCALE_MAX = 5;
+
 export function captureClarityRated({ scenarioCode, questionNumber, rating }) {
   capture('clarity_rated', {
     scenario_code: scenarioCode,
     question_number: questionNumber,
     clarity_rating: rating,
+    clarity_label: CLARITY_SCALE[rating] ?? null,
+    clarity_scale_max: CLARITY_SCALE_MAX,
   });
 }
 
@@ -293,6 +311,8 @@ export function captureScenarioFeedbackSubmitted({
     scenario_code: scenarioCode,
     question_number: questionNumber,
     clarity_rating: rating,
+    clarity_label: CLARITY_SCALE[rating] ?? null,
+    clarity_scale_max: CLARITY_SCALE_MAX,
     feedback_text: text,
     feedback_char_count: text.length,
   });

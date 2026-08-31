@@ -20,7 +20,7 @@ import { ResultsCharts, ScoreBreakdown } from './ResultsCharts.jsx';
 import { EndingArt } from './EndingArt.jsx';
 import { ENDING_ALIGN, ENDING_CAPTIONS, endingFor } from '../endings.js';
 import { ShareSheet } from './ShareSheet.jsx';
-import { ALIGN_LABELS, SCORE_MAX, SUPPORT_URL } from '../scenarios.js';
+import { ALIGN_LABELS, FACILITATOR_FORM_URL, SCORE_MAX, SUPPORT_URL } from '../scenarios.js';
 
 export function CompleteScreen({
   gaugeAngle,
@@ -72,10 +72,17 @@ export function CompleteScreen({
                 <PixelCardsGuide className="study-offer-art" />
                 <span className="study-offer-label">Cards &amp; Guide</span>
               </button>
-              <button type="button" className="study-offer">
+              {/* A real anchor rather than window.open: a popup blocker can
+                  swallow window.open silently, leaving the card looking dead. */}
+              <a
+                className="study-offer"
+                href={FACILITATOR_FORM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <PixelClassroom className="study-offer-art" />
                 <span className="study-offer-label">Become a Facilitator</span>
-              </button>
+              </a>
             </div>
           )}
           <div className="results-visuals">

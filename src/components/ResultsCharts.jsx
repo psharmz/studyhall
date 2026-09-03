@@ -389,6 +389,9 @@ function RadarChart({ answers: realAnswers }) {
   }, []);
 
   const ref = useRef(null);
+  // The sideways-scrolling box the chart sits in on a phone; the effect below
+  // centres it on open.
+  const scrollRef = useRef(null);
   // Selections for the marks that change with the selection, kept so the
   // highlight effect can restyle them without redrawing the chart. Redrawing
   // on hover used to tear the vertex out from under the cursor mid-click.

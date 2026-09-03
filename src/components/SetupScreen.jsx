@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DEV_DECK } from '../scenarios.js';
 import { TitleBar } from './TitleBar.jsx';
 
 function SetupBtn({ selected, onClick, children }) {
@@ -57,10 +58,15 @@ const STRINGS = {
 
 // `initial` restores the previous picks when the player comes back from the
 // rules screen, so Back never wipes what they already chose.
-export function SetupScreen({ onStart, initial }) {
+//
+// `dev` is Dev Mode: the deck is fixed at four cards there, so the only count
+// on offer is that one, already chosen -- there is nothing to decide, and it
+// keeps the run from starting on a promise of ten cards it will not deal.
+export function SetupScreen({ onStart, initial, dev = false }) {
+  const cardChoices = dev ? [DEV_DECK.length] : [10, 20];
   const [language, setLanguage] = useState(initial?.language ?? null);
   const [mode, setMode] = useState(initial?.mode ?? null);
-  const [cards, setCards] = useState(initial?.cards ?? null);
+  const [cards, setCards] = useState(initial?.cards ?? (dev ? DEV_DECK.length : null));
   // Sound defaults to on, so it never blocks Start Game
   const [sound, setSound] = useState(initial?.sound ?? true);
   const ready = language !== null && mode !== null && cards !== null;
@@ -69,7 +75,7 @@ export function SetupScreen({ onStart, initial }) {
   return (
     <div className="setup-screen">
       <div className="setup-card">
-        <TitleBar label={t.titleBar} />
+        <TitleBar label={dev ? `${t.titleBar} [DEV]` : t.titleBar} />
         <div className="setup-body">
           <div className="setup-inner">
             <h1 className="pixel">{t.welcome[0]}<br />{t.welcome[1]}</h1>
@@ -124,7 +130,7 @@ export function SetupScreen({ onStart, initial }) {
             <div className="setup-question">
               <div className="setup-label">{t.cardsLabel}</div>
               <div className="setup-choices">
-                {[10, 20].map((n) => (
+                {cardChoices.map((n) => (
                   <SetupBtn key={n} selected={cards === n} onClick={() => setCards(n)}>
                     {n}
                   </SetupBtn>

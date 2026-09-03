@@ -20,12 +20,14 @@ import { ResultsCharts, ScoreBreakdown } from './ResultsCharts.jsx';
 import { EndingArt } from './EndingArt.jsx';
 import { ENDING_ALIGN, ENDING_CAPTIONS, endingFor } from '../endings.js';
 import { ShareSheet } from './ShareSheet.jsx';
-import { ALIGN_LABELS, FACILITATOR_FORM_URL, SCORE_MAX, SUPPORT_URL } from '../scenarios.js';
+import { ALIGN_LABELS, FACILITATOR_FORM_URL, SUPPORT_URL } from '../scenarios.js';
 
 export function CompleteScreen({
   gaugeAngle,
   needleColor,
   totalScore,
+  scoreMax,
+  vision,
   simulation,
   answers,
   onRestart,
@@ -203,13 +205,24 @@ export function CompleteScreen({
           {/* Below the row rather than inside the scene: in there it stretched
               the facilitator panel beside it to match its height, and was
               capped at the scene's column width. */}
+          {/* What they wrote on the closing card, shown in both modes. Kept
+              out of the simulation-only block on purpose: a Study Mode run
+              started in the same session opens on the same vision. Absent when
+              nothing was written -- the card is optional. */}
+          {vision?.trim() && (
+            <section className="vision-recap">
+              <h2 className="vision-recap-title">Your vision for the future</h2>
+              <blockquote className="vision-recap-text">{vision}</blockquote>
+            </section>
+          )}
+
           {breakdownOpen && <ScoreBreakdown answers={answers} />}
 
           {shareOpen && (
             <ShareSheet
               ending={ending}
               score={shownScore}
-              max={SCORE_MAX}
+              max={scoreMax}
               onClose={() => setShareOpen(false)}
               onShared={(method) => captureResultsShared({ method })}
             />

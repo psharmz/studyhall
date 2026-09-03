@@ -11,8 +11,19 @@ import {
   startRun,
 } from './telemetry.js';
 import { RADAR_AXES, RADAR_SCORES_ARE_PLACEHOLDER, axisScore } from './components/ResultsCharts.jsx';
-import { SCENARIOS, SCORE_MIN, SCORE_MAX, LETTERS, ADVISOR_PROFILES } from './scenarios.js';
+import {
+  SCENARIOS,
+  VISION_CARD,
+  DEV_DECK,
+  SCORE_MIN,
+  SCORE_MAX,
+  SCORE_PER_CARD_MIN,
+  SCORE_PER_CARD_MAX,
+  LETTERS,
+  ADVISOR_PROFILES,
+} from './scenarios.js';
 import { DEV_MODE } from './env.js';
+import { loadVision, saveVision } from './vision.js';
 import { SetupScreen } from './components/SetupScreen.jsx';
 import { RulesScreen } from './components/RulesScreen.jsx';
 import { GoalsScreen } from './components/GoalsScreen.jsx';
@@ -24,6 +35,7 @@ import { PromptTransition } from './components/PromptTransition.jsx';
 import { PromptScreen } from './components/PromptScreen.jsx';
 import { OptionsScreen } from './components/OptionsScreen.jsx';
 import { CompleteScreen } from './components/CompleteScreen.jsx';
+import { VisionScreen } from './components/VisionScreen.jsx';
 
 // The needle reads blue on every gauge, whatever the answer's alignment --
 // the arc's own bands carry the good/bad signal.
@@ -34,8 +46,11 @@ const NEEDLE_COLOR = 'var(--blue)';
 const NEEDLE_SWEEP = 75;
 
 // Letting the clock run out with no answer picked swings the needle an
-// eighth of the dial's full travel towards non-aligned.
-const TIMEOUT_PENALTY = (SCORE_MAX - SCORE_MIN) / 8;
+// eighth of the dial's full travel towards non-aligned. An eighth of *this
+// deck's* travel, so the penalty stays proportionate on Dev Mode's short one.
+function timeoutPenaltyFor(scoreMin, scoreMax) {
+  return (scoreMax - scoreMin) / 8;
+}
 
 // Shortcut menu on the results button: each band parks the needle in the
 // middle of that stretch of the dial. Fractions run 0 = non-aligned (red,
@@ -52,10 +67,10 @@ const RESULT_BANDS = [
 // the scenario they were spent on; the rest carry null.
 const SCENARIO_PHASES = new Set(['transition', 'prompt', 'options']);
 
-function scoreToAngle(score) {
-  // Clamped: repeated timeouts can push the total past SCORE_MIN, and the
+function scoreToAngle(score, scoreMin, scoreMax) {
+  // Clamped: repeated timeouts can push the total past the floor, and the
   // needle should stop at the end of the dial rather than swing off it.
-  const raw = (score - SCORE_MIN) / (SCORE_MAX - SCORE_MIN);
+  const raw = (score - scoreMin) / (scoreMax - scoreMin);
   const fraction = Math.min(1, Math.max(0, raw));
   return NEEDLE_SWEEP - fraction * (NEEDLE_SWEEP * 2);
 }
@@ -76,6 +91,9 @@ export default function App() {
   const [answers, setAnswers] = useState({});
   // Track which answers were chosen in simulation mode, to tag them in study mode
   const [simulationAnswers, setSimulationAnswers] = useState({});
+  // The closing free-text card. Seeded from sessionStorage so a Study Mode run
+  // started right after the simulation opens on what was written then.
+  const [vision, setVision] = useState(() => loadVision());
   // Band picker under the results shortcut.
   const [bandsOpen, setBandsOpen] = useState(false);
   const bandsRef = useRef(null);
@@ -109,10 +127,20 @@ export default function App() {
     };
   }, [bandsOpen]);
 
-  // Only 5 scenarios exist so far; picking 10 or 20 cards plays all of them.
-  const deck = settings ? SCENARIOS.slice(0, settings.cards) : SCENARIOS;
+  // Dev Mode always plays its own four-card deck, whatever the setup screen
+  // says; otherwise the card count picked there decides.
+  const deck = DEV_MODE ? DEV_DECK : settings ? SCENARIOS.slice(0, settings.cards) : SCENARIOS;
   const scenario = deck[Math.min(index, deck.length - 1)];
   const questionNumber = index + 1;
+
+  // What the dial spans. A real run is always scored against the full deck's
+  // ceiling, the same for every player. Four cards could never clear the red
+  // on that scale, so Dev Mode -- and only Dev Mode -- is scored against what
+  // its own deck can actually earn, which is what makes the shortcut useful
+  // for looking at endings.
+  const scoreMin = DEV_MODE ? deck.length * SCORE_PER_CARD_MIN : SCORE_MIN;
+  const scoreMax = DEV_MODE ? deck.length * SCORE_PER_CARD_MAX : SCORE_MAX;
+  const timeoutPenalty = timeoutPenaltyFor(scoreMin, scoreMax);
 
   // One screen_exited row per screen visit, emitted on the way out with how
   // long it was open. Comparing against the ref rather than using an effect
@@ -172,29 +200,38 @@ export default function App() {
       setIndex(index + 1);
       setPhase('transition');
     } else {
-      captureRunCompleted({
-        deckSize: deck.length,
-        questionsAnsweredCount: answeredCountRef.current,
-        timeoutCount: timeoutCountRef.current,
-        advisorCallCount: runCallCountRef.current,
-        totalScore,
-        scoreMin: SCORE_MIN,
-        scoreMax: SCORE_MAX,
-        durationMs: Math.round(performance.now() - runStartRef.current),
-      });
-      captureCategoryScores({
-        categories: RADAR_AXES.map((axis) => ({
-          slug: axis.slug,
-          score: axisScore(axis, answers),
-          max: axis.max,
-        })),
-        totalScore,
-        scoreMin: SCORE_MIN,
-        scoreMax: SCORE_MAX,
-        isPlaceholder: RADAR_SCORES_ARE_PLACEHOLDER,
-      });
-      setPhase('complete');
+      // The vision card closes every game -- the run is not over until it is.
+      setPhase('vision');
     }
+  }
+
+  // Leaving the vision card ends the run. The text is kept in sessionStorage
+  // only; it is free text, so none of it goes to telemetry.
+  function finishVision(text) {
+    saveVision(text);
+    setVision(text);
+    captureRunCompleted({
+      deckSize: deck.length,
+      questionsAnsweredCount: answeredCountRef.current,
+      timeoutCount: timeoutCountRef.current,
+      advisorCallCount: runCallCountRef.current,
+      totalScore,
+      scoreMin,
+      scoreMax,
+      durationMs: Math.round(performance.now() - runStartRef.current),
+    });
+    captureCategoryScores({
+      categories: RADAR_AXES.map((axis) => ({
+        slug: axis.slug,
+        score: axisScore(axis, answers),
+        max: axis.max,
+      })),
+      totalScore,
+      scoreMin,
+      scoreMax,
+      isPlaceholder: RADAR_SCORES_ARE_PLACEHOLDER,
+    });
+    setPhase('complete');
   }
 
   // Scoring happens at reveal so the needle can swing while the answer is
@@ -231,14 +268,14 @@ export default function App() {
       optionAlignment: null,
       optionScore: null,
       isTimeout: true,
-      pointsApplied: -TIMEOUT_PENALTY,
+      pointsApplied: -timeoutPenalty,
       timeToAnswerMs: Math.round(performance.now() - questionStartRef.current),
-      totalScoreAfter: totalScore - TIMEOUT_PENALTY,
+      totalScoreAfter: totalScore - timeoutPenalty,
       advisorCallCount: questionCallsRef.current.length,
       advisorRoles: questionCallsRef.current.map((call) => call.role),
     });
     questionCallsRef.current = [];
-    setTotalScore((t) => t - TIMEOUT_PENALTY);
+    setTotalScore((t) => t - timeoutPenalty);
   }
 
   function handleNext() {
@@ -257,22 +294,22 @@ export default function App() {
       bandFraction: band?.fraction ?? null,
       fromScreen: phase,
     });
-    if (band) setTotalScore(SCORE_MIN + band.fraction * (SCORE_MAX - SCORE_MIN));
+    if (band) setTotalScore(scoreMin + band.fraction * (scoreMax - scoreMin));
     setBandsOpen(false);
     setPhase('complete');
   }
 
   // A phone was picked up on the card currently open. Counted at the ring, so a
   // call that was rung and then abandoned still counts as a call that was made.
-  function handleAdvisorCall(advisorIndex, advisor) {
+  function handleAdvisorCall(advisorIndex, advisor, cardCode = scenario.code, cardNumber = questionNumber) {
     questionCallsRef.current = [
       ...questionCallsRef.current,
       { index: advisorIndex, role: advisor?.role ?? null },
     ];
     runCallCountRef.current += 1;
     captureAdvisorCalled({
-      scenarioCode: scenario.code,
-      questionNumber,
+      scenarioCode: cardCode,
+      questionNumber: cardNumber,
       advisorIndex,
       advisorRole: advisor?.role,
       advisorTone: ADVISOR_PROFILES[advisor?.role]?.tone,
@@ -306,7 +343,7 @@ export default function App() {
       {
         language: settings?.language ?? 'english',
         mode: 'study',
-        cards: settings?.cards ?? SCENARIOS.length,
+        cards: settings?.cards ?? deck.length,
         sound: settings?.sound !== false,
       },
       { isStudyFollowUp: true, simulationAnswerCount }
@@ -320,7 +357,7 @@ export default function App() {
 
   let screen;
   if (phase === 'setup') {
-    screen = <SetupScreen onStart={handleStart} initial={settings} />;
+    screen = <SetupScreen onStart={handleStart} initial={settings} dev={DEV_MODE} />;
   } else if (phase === 'rules') {
     screen = <RulesScreen onBack={() => setPhase('setup')} onNext={() => setPhase('goals')} />;
   } else if (phase === 'goals') {
@@ -361,12 +398,29 @@ export default function App() {
     );
   } else if (phase === 'transition') {
     screen = <PromptTransition key={index} onDone={() => setPhase('prompt')} />;
+  } else if (phase === 'vision') {
+    screen = (
+      <VisionScreen
+        initial={vision}
+        timed={settings?.mode !== 'study'}
+        study={isStudy}
+        gaugeAngle={scoreToAngle(totalScore, scoreMin, scoreMax)}
+        needleColor={NEEDLE_COLOR}
+        sound={settings?.sound !== false}
+        usedCalls={usedCalls}
+        onUseCall={(i) => setUsedCalls((prev) => prev.map((u, j) => (j === i ? true : u)))}
+        onAdvisorCall={(i, advisor) => handleAdvisorCall(i, advisor, VISION_CARD.code, null)}
+        onFinish={finishVision}
+      />
+    );
   } else if (phase === 'complete') {
     screen = (
       <CompleteScreen
-        gaugeAngle={scoreToAngle(totalScore)}
+        gaugeAngle={scoreToAngle(totalScore, scoreMin, scoreMax)}
         needleColor={NEEDLE_COLOR}
         totalScore={totalScore}
+        scoreMax={scoreMax}
+        vision={vision}
         simulation={settings?.mode !== 'study'}
         answers={answers}
         onRestart={() => setPhase('setup')}
@@ -374,14 +428,15 @@ export default function App() {
       />
     );
   } else if (phase === 'options') {
+    // No isLast: the vision card always follows, so no scenario card is ever
+    // the last screen, and every one of them reads "Next Question".
     screen = (
       <OptionsScreen
         key={scenario.code}
         scenario={scenario}
         timed={settings?.mode !== 'study'}
         study={settings?.mode === 'study'}
-        isLast={index === deck.length - 1}
-        gaugeAngle={scoreToAngle(totalScore)}
+        gaugeAngle={scoreToAngle(totalScore, scoreMin, scoreMax)}
         needleColor={NEEDLE_COLOR}
         sound={settings?.sound !== false}
         usedCalls={usedCalls}
@@ -415,18 +470,17 @@ export default function App() {
         <div className="crt-scan" />
         <div className="crt-roll" />
       </div>
-      {phase !== 'setup' && (
+      {/* Dev Mode only -- both of these skip past the game, so neither must
+          reach players. Study Mode's results screen shows every ending at
+          once, so the band picker has nothing left to pick and the button
+          goes straight there. Simulation Mode still chooses where the
+          needle lands. */}
+      {DEV_MODE && phase !== 'setup' && (
         <div className="float-actions">
           <button type="button" className="restart-float" onClick={handleRestart}>
             Restart
           </button>
-          {/* Dev builds only -- it skips the whole game, so it must never
-              reach players. Study Mode's results screen shows every ending at
-              once, so the band picker has nothing left to pick and the button
-              goes straight there. Simulation Mode still chooses where the
-              needle lands. */}
-          {DEV_MODE &&
-            (settings?.mode === 'study' ? (
+          {settings?.mode === 'study' ? (
             <button
               type="button"
               className="restart-float"
@@ -462,7 +516,7 @@ export default function App() {
                 </div>
               )}
             </div>
-            ))}
+          )}
         </div>
       )}
       {screen}

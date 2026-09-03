@@ -1,3 +1,5 @@
+import quadrantMap from '../quadrants.json';
+
 // Alignment sourced from the EJIT debrief sheets for each
 // scenario; the score each alignment is worth: full = 5, partial = 2, non = 0.
 export const LETTERS = ['A', 'B', 'C', 'D', 'E'];
@@ -33,14 +35,6 @@ export const ADVISOR_PROFILES = {
     tone: 'full',
   },
 };
-
-// Each scenario has three advisors, one per phone icon. Roles are optional
-// (see SHOW_ADVISOR_ROLE); quotes are what the bubble types out.
-const PLACEHOLDER_ADVISORS = [
-  { role: 'Advisor 1', quote: 'placeholder text' },
-  { role: 'Advisor 2', quote: 'placeholder text' },
-  { role: 'Advisor 3', quote: 'placeholder text' },
-];
 
 export const SCENARIOS = [
   {
@@ -196,8 +190,20 @@ export const SCENARIOS = [
     paragraphs: [
       'Portland\'s community-centered approach becomes a model that attracts national attention. However, this success brings new challenges. TechFlow\'s investors are pressuring for rapid expansion and higher profit margins. \'We need to scale fast and maximize returns,\' insists lead investor Jeff Muskenberg. \'This community engagement stuff is slowing us down and eating into profits.\' The CEO asks you to find a middle ground. How do you advocate for TechFlow\'s future direction?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'It is time to promote alternatives for the now outdated behaviors that forged our industrial development. The system is not structurally broken as many like to state; it just needs some new painting and, maybe, furniture.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'People like to say that we are naive, idealistic, romantics...that’s their politically correct way to avoid calling us stupid. But we understand the harsh reality of this system much more than anyone because we experience them every day. So, yes, in this world you need money still but the question is: how can we build a world where the tools are not for infinite accumulation but for contentment and distribution?'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'Corporate health dictates societal health. Taxes, jobs, innovation...all of that and more comes from allowing companies to do their thing. But the few people that can drive real innovation will only do so under real incentive. Sure, some will go too far sometimes but that’s the price to pay in a world where doers are a rarity and braggers and critics are cheap commodities.'
+      }
+    ],
     options: [
       { text: 'Explore, at short-term, models focused on impact more than profit while finding ways to transition away from extractive investor models towards shared ownership and equitable profit sharing with the communities.', score: 5, align: 'full', explanation: 'Environmental justice requires moving beyond extractive capitalist models toward truly equitable economic structures.' },
       { text: 'Explore alternative structures like B-Corp status to focus more on impact than profit.', score: 2, align: 'partial', explanation: 'B-Corp structures help but can still operate within extractive economic systems.' },
@@ -213,8 +219,20 @@ export const SCENARIOS = [
     paragraphs: [
       'Your alternative economic models gain traction, and TechFlow considers for the first time a transition to a different structure with community stakeholders. But this transition, if it happens, will take time. Meanwhile, TechFlow is facing rapid growth in demand. The technical team reports that current servers are at capacity. \'We need a massive data center,\' explains CTO Marcus Rodriguez. \'I\'m talking about at least 3GW with cutting-edge cooling systems. It\'ll cost us billions but it handle our growth for the next decade or so without the need of third-party servers.\' The engineering team has identified three potential locations but your team is concerned with the impact this mega data center will have on the communities. What\'s your recommendation?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'We should not stop progress but we can definitely do it in a better, safer and more ethical way without the need to reinvent the wheel.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'We heard innumerous times that something was inevitable. But inevitability is just a fancy term used to state that we have no actual power in influencing or determining our future. But that is not inevitable, that is just domination. And domination can be overcome.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'Progress is inevitable. But progress is also impacted by the law of supply and demand. Thus, make sure you find the places where demand for progress is strong because these will be the places of lowest resistance.'
+      }
+    ],
     options: [
       { text: 'Approve the data center but ensure it uses 100% renewable energy and the most efficient cooling systems.', score: 2, align: 'partial', explanation: 'Renewable energy is better than fossil fuels, but this doesn\'t question whether such massive infrastructure is necessary at all.' },
       { text: 'Build the facility but offset all environmental impacts through verified carbon credit programs.', score: 0, align: 'non', explanation: 'Offsetting often fails to address local environmental damage and can be a form of greenwashing that avoids real responsibility.' },
@@ -231,8 +249,20 @@ export const SCENARIOS = [
       'A current push for distributed infrastructure leads to an innovative \'Community Cloud\' network that becomes TechFlow\'s signature offering. As you design the next generation of this technology, you face a fundamental question about how it should relate to the natural environment.',
       'The engineering team presents different philosophical approaches. Software architect Dr. Sarah Kim asks: \'How might our technology interact with the natural world?\' What philosophy should guide our decision?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'Science has all the answers we need to increase our efficiency and reduce our impact without stopping economic progress. Some of these answers, in fact, come directly from the natural world.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'Our obsession with more high tech gadgets and tools is a symptom of our excluding society. We forgot that non-humans play a very important role. “Playing God” is, therefore, not necessarily the attempt to create life in a laboratory. To “play God” is to believe and act as if one form of life could build all the sufficient conditions to survive and thrive without responsible relationship to the rest of life.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'Good things are simple by nature. Humans are good at building human things. To believe that we know what is best for other species is of an absurd level of arrogance. We are different and that is a great thing.'
+      }
+    ],
     options: [
       { text: 'Design technology systems that remain completely separate from natural environments to prevent interference on ecosystems.', score: 0, align: 'non', explanation: 'Separation continues the harmful divide between technology and nature that underlies many environmental problems.' },
       { text: 'Focus on advanced implementation of biomimicry, designing systems that copy and learn from natural processes in the most efficient way possible.', score: 2, align: 'partial', explanation: 'Biomimicry is positive but doesn\'t necessarily create true synergistic relationships with living systems if used only to further exploit nature in a more efficient way.' },
@@ -248,8 +278,20 @@ export const SCENARIOS = [
     paragraphs: [
       'Your synergistic design philosophy leads to a novel network technology that integrates communities with local ecosystems, the team calls it \'Living Network\'. However, a controversial situation emerges: some environmental groups want to use TechFlow\'s platform to create \'digital boundaries\' around sensitive wilderness areas, restricting human access to protect ecosystems. Meanwhile, Indigenous rights advocates argue this continues colonial patterns of land exclusion. You\'re caught in the middle of this debate at a heated community meeting. How do you navigate this tension?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'To fight for democracy is to understand that rarely, if ever, people will find consensus. Sometimes, we can create ways that do not need to touch these conflicts. Other times, we do need to take difficult decisions to protect the valuable resources that determine the prosperity and sovereignty of our nation.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'The view that humans are not part of nature is the basis for many harmful projects and policies led by ecologist and conservationist organizations. To say that human activity is causing environmental problems is to equally distribute the responsibility for the harms across all cultures, which by the way is the only thing that the elite is good at distributing. But not every culture in this world is the same. Not everyone sees the world in the same way.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'This world is filled with critics and there is nothing you will do that will not be condemned, including your attempts to do good. Just make sure you play within the fuzzy boundaries of the system and if you decide to leave your comfort zone, make sure the reward truly pays off the risk.'
+      }
+    ],
     options: [
       { text: 'Support the environmental groups\' position that some sensitive areas need protection from human access.', score: 2, align: 'partial', explanation: 'While ecosystem protection is important, this approach might continue patterns of restricting people\'s access to land.' },
       { text: 'Advocate for access to equitable and sustainable tech for all while directly supporting the indigenous and local communities in their roles as stewards of the sensitive areas within their localities.', score: 5, align: 'full', explanation: 'Environmental justice opposes using technology to exclude people from parts of the Earth, seeking instead equitable access.' },
@@ -265,8 +307,20 @@ export const SCENARIOS = [
     paragraphs: [
       'TechFlow\'s Living Network technology is attracting attention from major corporations. Legal advisor Janet Morrison presents two paths: \'We could patent everything and license it for significant revenue, or...\' She pauses, knowing your principles. \'We could open-source it all.\' The debate within the company and among the community users is fierce. TechFlow\'s worker Maria argues for patents: \'We need revenue to sustain our work and support progress in our career otherwise many will leave.\' Early community representative David Wakyoalla counters: \'Knowledge should be free and if you decide to make money out of it, there has to be equal distribution of it because we helped you build the tech.\' The decision comes down to your recommendation. What do you propose?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'There is no such a thing as free lunch for all, unfortunately. Some people will have to pay for others to have access to certain benefits. This is the beauty of living in a free society that understands the value of our entrepreneurs because it is through their leadership that we can use capital for the good.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'Everything we do has both a destructive and constructive impact. So here is a simple rule for a better society: if you truly believe that what you created helps more than harms the creation of a more just and fair society, then make it available and accessible to all.  But remember, you can only share what is yours.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'Fully open source technology only happens when the tech is horrible or useless or when it is a little marketing stunt to get people to buy your main product. Keep what is valuable under your control so you can decide how it is used and by whom.'
+      }
+    ],
     options: [
       { text: 'Publish the details of the technology and release all of it as open source - blueprints, code, repair manuals, and development processes freely available to everyone.', score: 5, align: 'full', explanation: 'Open source principles ensure everyone can make, repair, modify, and develop technology for maximum collective benefit.' },
       { text: 'Keep some core components proprietary to ensure the profit can be redirected to the communities to further sustain its community-focused development work.', score: 0, align: 'non', explanation: 'Proprietary restrictions prevent equal access to technology development and repair capabilities, limiting innovation.' },
@@ -282,8 +336,20 @@ export const SCENARIOS = [
     paragraphs: [
       'Your open-source decision transforms TechFlow into a global movement, with communities worldwide adapting your Living Network technology. However, a troubling pattern becomes explicit in the data: urban areas using the technology are thriving with new economic opportunities and improved services. But rural regions hosting the network\'s server are being exploited by investors that learn about the community\'s vulnerabilities while also experiencing increased energy consumption and electronic waste. Environmental justice advocate Dr. Rosa Martinez confronts you at a conference: \'Your technology is making the issues explicit but it is also reproducing the same old patterns of exploitation.\' How do you address this crisis?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'Not every consequence can be foreseen even by the smartest scientists alive. Thus, we need to find ways to address and minimize the harms that will happen. Additionally, we need to start seeing our challenges as opportunities for growth.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'We all know that until nowadays some people still believe to be superior to others and, therefore, they believe the spaces they inhabit should also reflect this superiority. All of this is often done by exploiting both the spaces and lives considered “inferior”. But, at this point, there is no place in this world that hasn’t been exploited. So, either these wannabe Gods leave permanently this planet in their space ships or they stay here and learn how to share.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'Look, when people talk about trickle down effect what they are saying is that some places and people are just more efficient at driving progress than others. Sure, you don’t need to concentrate all the energy in those places and people, you can shift some of it to others. But, in general, this is how we can get things done.'
+      }
+    ],
     options: [
       { text: 'Promise to establish a fund to compensate rural communities for hosting network infrastructure.', score: 2, align: 'partial', explanation: 'Compensation acknowledges the problem but doesn\'t address the fundamental inequity of unequal burden distribution.' },
       { text: 'Immediately halt expansion until you can redesign the system so benefits and burdens are equally shared among all communities while protecting the most vulnerable ones from being further exploited.', score: 5, align: 'full', explanation: 'Environmental justice demands that both the benefits and burdens of technology be equally distributed across all communities.' },
@@ -299,8 +365,20 @@ export const SCENARIOS = [
     paragraphs: [
       'While redesigning for equitable distribution, your team\'s investigation reveals a disturbing truth about TechFlow\'s supply chain. Despite your ethical intentions, the technology relies on rare earth minerals extracted through environmentally destructive mining in the Democratic Republic of Congo (DRC), causing displacement and health problems for local communities. Supply chain manager Kevin Chen presents the harsh reality: \'Almost all electronics depend on these materials. Even our \'ethical\' competitors use the same suppliers. Moreover, our global operation, however, is doing much better than the competition. I am not sure this single aspect is so concerning.\' How do you respond?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'Profit was never the problem. The real problem is dirty profit. It is time for us to invest in what I call “clean profit” which can only be achieved by adapting industrial activity to better environmental regulations and sustainable technologies.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'Every improvement to this system that does not intend to create structural change is nothing but a smaller step towards planetary breakdown. Slowing down through tech or policies will only give us additional time, but it does not solve the fundamental issues that brought us to this crisis.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'Progress often demands sacrifices but progress also creates ways to reduce these sacrifices without blocking further progress.'
+      }
+    ],
     options: [
       { text: 'Switch to suppliers that use renewable energy and improved waste reduction in their mining and manufacturing processes.', score: 2, align: 'partial', explanation: 'These improvements reduce harm but don\'t eliminate the fundamental burden of extractive production on communities.' },
       { text: 'Advocate for moving mining operations to less populated areas outside DRC to minimize direct human impact.', score: 0, align: 'non', explanation: 'This shifts environmental and social burdens rather than eliminating them, continuing extractive patterns.' },
@@ -316,8 +394,20 @@ export const SCENARIOS = [
     paragraphs: [
       'Your commitment to eliminating extractive processes leads to a revolutionary breakthrough: TechFlow develops the first truly regenerative manufacturing process using bioengineered materials. Now, governments and organizations worldwide want to deploy your system. Requests pour in from Silicon Valley, Lagos, Tokyo, Mumbai, and São Paulo. Each location offers different advantages - profit potential, existing infrastructure, political support. This situation has also led you to a new role with a larger team: congratulations, you are now Global Tech Deployment Director and responding directly to the CEO! But great power comes with great responsibilities and risks. How do you decide where and when to expand?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'It is true that some places and groups are more vulnerable, but there are moments where the best thing to do is to help those that can further facilitate change even if they are not in positions of vulnerability. Just like in airplanes, when the adult has to put the oxygen mask first before helping a child or older adult.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'When you go to someone’s house, the respectable thing to do is to first know if you are welcomed there. If yes, then you get to discuss with residents of the house about specific details such as time, date, and what they want you to bring. This simple rule applies well pretty much everywhere.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'The idea is simple: go where the energy is. That is, find not only the places where the demand for your product is high but also where the capital investments are low. The higher your return on investment, the better able you will be to do extra things of your choice such as helping others in need.'
+      }
+    ],
     options: [
       { text: 'Prioritize locations where deployment can generate the highest profits to fund further expansion.', score: 0, align: 'non', explanation: 'Profit-driven deployment often ignores community needs and can exacerbate existing inequalities.' },
       { text: 'Use market research to identify regions with the highest demand and concentrate efforts there first.', score: 0, align: 'non', explanation: 'Market research doesn\'t necessarily reflect what\'s most beneficial for communities or environmental justice.' },
@@ -333,8 +423,20 @@ export const SCENARIOS = [
     paragraphs: [
       'Five years after your regenerative breakthrough, TechFlow\'s old technology continues causing problems. An investigative report reveals that communities in three countries are still dealing with environmental harm that can be linked directly and indirectly to TechFlow\'s pre-regenerative systems. Activist journalist Maria Santos confronts you: \'You\'ve moved on to clean technology, but what about the mess you left behind? Didn\'t your company just use people to develop and be seen as Mr. Nice Guy?\' The TechFlow board - which has already a good amount of representatives from communities you work with - is divided on how to respond. What do you advocate?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'There is a hard truth that few like to hear, but one can only do so much to remediate past harms. Find out how much you can do and offer what you can. To go beyond your possibilities is to open yourself to have your vulnerabilities exploited by bad actors.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'In a proper apology you not only say that you are sorry and what you are sorry for, you also need to recognize the harm you caused and the actions you will take to remediate and prevent the behavior to repeat. Finally, you need to invite feedback from the harmed person. That’s hard work because it is mature work and demands opening up to the creation of trust.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'Mistakes happen. Don’t overthink. Learn from your mistakes and keep moving.'
+      }
+    ],
     options: [
       { text: 'Focus company resources on preventing future harm rather than addressing these past problems.', score: 0, align: 'non', explanation: 'Ignoring past harms perpetuates environmental injustice and fails to address the ongoing suffering of affected communities.' },
       { text: 'Take direct responsibility for comprehensive regeneration of nature and communities harmed by past operations while being transparent about how to avoid future harm.', score: 5, align: 'full', explanation: 'Environmental justice requires actively repairing the harm caused by past technological decisions, not just preventing future harm.' },
@@ -350,8 +452,20 @@ export const SCENARIOS = [
     paragraphs: [
       'Your comprehensive restoration efforts win praise globally, but they also attract criticism from unexpected sources that you thought were supporting you. During a restoration project in Mexico, Indigenous leader Carlos Mendoza challenges your approach: \'You\'re still doing this TO us, not WITH us. You only work with us to know our problems but you still have total control on what restoration looks like, you hire the contractors, you define success. This is the same colonial pattern with a green mask.\' His words sting because you recognize their truth but it feels hard to accept given all the effort you have done throughout the years to help them. How do you fundamentally change TechFlow\'s approach?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'Everyone is entitled to their opinions and we should always strive to listen to as many voices as we can. These voices can be the seeds to alternative solutions that can be further developed and lead to the economic flourishing of a whole nation.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'Sometimes, the hardest thing in the process of decolonizing oneself and a culture is not in gaining awareness of the harms of colonial way of living but in overcoming the fears embedded in it to start feeling and behaving in a different way.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'Often, criticism is only the consequence of a poorly understood argument. Facilitate comprehension to create agreement.'
+      }
+    ],
     options: [
       { text: 'Identify and remove colonial patterns from all operations and work on a process to transfer real power to support Indigenous sovereignty and land rights.', score: 5, align: 'full', explanation: 'Environmental justice demands actively dismantling colonial structures and supporting Indigenous sovereignty and community control.' },
       { text: 'Include more Indigenous voices and diverse perspectives in TechFlow\'s restoration and development teams.', score: 2, align: 'partial', explanation: 'Representation helps but doesn\'t address the systemic colonial structures embedded in how technology development operates.' },
@@ -367,8 +481,20 @@ export const SCENARIOS = [
     paragraphs: [
       'The process of transferring real power to communities transforms TechFlow so deeply that your CEO steps down and the board - now majoritarily composed by community members - decides that you right person for the job. Congrats, you are now TechFlow\'s CEO! But right in your first month as CEO, a news spread like wild fire in conservative media: \'Tension between communist TechFlow and terrorist Zapatista groups in Mexico amidst tech development spark Indian outrage\'. The board is agitated, even so called progressive partners are taking the bait. You talk to your team and they explain: \'The communities in Chiapas have been with us for a while now but they are threatening to build their own tech if we don\'t find a way to stop treating nature as a thing separate from us.\' How do you approach this situation?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'The path towards a better future is full of conflicts. Sometimes, instead of challenging your enemy, it is much better to ignore them or simply diverge away from the source of conflict.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'There are many fancy words used these days to represent a simple but powerful truth our communities knew for a long time: humans are part of nature. However, the ways with which we interact with other forms of life can also be very different from place to place. And, although there might be general guidelines that can help us, there is no fixed and specific set of universal rules in how to establish this relationship. This should be understood and protected.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'Be methodical with your strategy. Good intentions can drive people to take unnecessary risks with very little actual return.'
+      }
+    ],
     options: [
       { text: 'Implement a policy that blocks communities under control of paramilitary groups from using the technology, keeping the current systems as is while transitioning to work with non-indigenous communities only.', score: 0, align: 'non', explanation: 'Communities should not be judged by regional armed conflicts and separation continues the harmful divide between technology and nature that underlies many environmental and social problems.' },
       { text: 'Avoid the news and focus on advanced biomimicry, creating technology that copies and learns from natural processes and organisms.', score: 2, align: 'partial', explanation: 'Avoiding conservative traps might be useful but focusing on biomimicry only may not necessarily create the true synergistic relationships with living systems that communities need.' },
@@ -384,8 +510,20 @@ export const SCENARIOS = [
     paragraphs: [
       'Working with the communities in Chiapas creates technology that truly lives within natural systems, but it also reveals uncomfortable truths about TechFlow\'s global impact. Your community-controlled cooperatives are thriving in some places while still struggling in others. In Kenya, the technology empowers small farmers, but in Bangladesh, it\'s being captured by wealthy landowners who exclude poorer farmers. You thought this was over years ago but the problem keeps coming back and the complexity overwhelms you during a sleepless night in your Mexico City hotel. How do you address the reality that your technology may always help some while harming others?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'Local groups should not worry about global problems, abstractions, and generalizations. Focus on what is right in front of you. Give them support to start and education that is relevant to their local problems. Let the experts take care of the larger perspective.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'Think global but act local. The battle may be in your backyard but it is happening everywhere. So, remember, tools are always built to serve a purpose that aligns with one’s way of being in this world and reinforced by the systems of incentives and punishments in place. Every tool can be used in different ways and have multiple purposes, many of which can be hidden until it has developed enough to show its ‘true’ face. It’s important to tread carefully then.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'People are concerned? So, let them voice their concerns. They will feel better after that. Then promote the concerns that are aligned to your strategy and ignore the rest. You can’t do everything, anyways.'
+      }
+    ],
     options: [
       { text: 'Conduct comprehensive impact assessments before each new cooperative begins operating, making sure that all projects are following strict guidelines and adapting them to each local context.', score: 2, align: 'partial', explanation: 'Impact assessments are important but don\'t ensure ongoing, active attention to who benefits and who is harmed over time.' },
       { text: 'Provide regular training for all cooperative members on identifying and addressing potential negative impacts.', score: 2, align: 'partial', explanation: 'Training raises awareness but doesn\'t ensure systematic attention to harm nor actual support throughout all development and deployment processes.' },
@@ -401,8 +539,20 @@ export const SCENARIOS = [
     paragraphs: [
       'Your commitment to addressing systemic harm leads to a major reorganization of the global cooperative network. However, this creates a new challenge: the network has grown so large that decision-making is becoming unwieldy. Some cooperatives want centralized efficiency, others demand local autonomy. The tension comes to a head during a heated video conference with the cooperative representatives. Fatima from Detroit argues: \'We need faster decisions to compete with big tech.\' But James from Ghana counters: \'Speed kills democracy.\' As the leading figure and network\'s founding architect, everyone looks to you for guidance. What structure do you propose?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'There are times when standardization is necessary to overcome the overwhelming complexity of managing multiple perspectives. But the standardization itself should be done through actual collaboration with the multitude of views you are dealing with.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'True accountability is the result of the ability to make decisions along with the opportunity to learn and adapt with the consequences of these decisions.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'Human life is short and, thus, our decisions should be quick. It is naive to think that large scale collaboration can be efficient. Sure, it can bring some interesting ideas sometimes, but it is just too slow. So, listen to others but if that is taking too long, be a leader and decide yourself.'
+      }
+    ],
     options: [
       { text: 'Organize regular global assemblies where all representatives can discuss and debate network-wide decisions.', score: 0, align: 'non', explanation: 'Global assemblies are valuable but don\'t necessarily give each community real decision-making power over technology affecting them.' },
       { text: 'Ensure that each affected community maintains actual local power to make binding decisions about technology that impacts their lives independent of suggestions from global advisory councils.', score: 5, align: 'full', explanation: 'True democratic technology requires communities to have actual authority over their technological futures, not just input opportunities.' },
@@ -418,8 +568,20 @@ export const SCENARIOS = [
     paragraphs: [
       'The democratic restructuring works, but it surfaces a critical issue that\'s been simmering all this time: data sovereignty. The cooperative network has accumulated vast amounts of community data - agricultural patterns, health trends, economic flows, social relationships - they can access it but it is all in TechFlow\'s dataservers. Now governments, researchers, and corporations are demanding access. The European Union offers a trade deal contingent on data sharing. The UN wants health data for pandemic preparedness. Tech giants offer millions for purchasing patterns. Community leader Amara from Brazil cuts through the noise: \'This is our information, about our lives, our land, our children. We should decide what happens to it!\' What\'s your position?'
     ],
-    // No advisor quotes supplied for this card yet.
-    advisors: PLACEHOLDER_ADVISORS,
+    advisors: [
+      {
+        role: 'Public Policy Expert',
+        quote: 'Not everything can be tackled by simple frameworks. There are moments when decisions will demand a more complicated approach to deal with the complexity of multiple voices.'
+      },
+      {
+        role: 'Community Leader',
+        quote: 'The problem with taking the collaborative community-centered approach is that it is a road that takes you farther away from centralized control. But one can only move past centralized control when they overcome the traumas and fears created by the colonial culture.'
+      },
+      {
+        role: 'Tech Entrepreneur',
+        quote: 'Dealing with private data is very tricky and sometimes it is best to create a layer that distances you from any potential risk in dealing with the data. But risks also bring opportunities, some of which can help social and scientific development.'
+      }
+    ],
     options: [
       { text: 'Allow cooperatives to control data with strong privacy policies and security measures protecting community information.', score: 5, align: 'full', explanation: 'Cooperative control is better than corporate control, but it only ensures community sovereignty over their own information if the community finds itself represented by the cooperative.' },
       { text: 'Provide the data only to democratic governments to ensure data is used for legitimate public benefit and scientific research.', score: 0, align: 'non', explanation: 'While regulations and laws for data protection are important, government oversight doesn\'t ensure community self-determination over their data.' },
@@ -430,7 +592,68 @@ export const SCENARIOS = [
   }
 ];
 
+// The closing card. It is not a scenario: nothing is scored and there are no
+// options -- the player writes their own vision instead. It is deliberately
+// kept out of SCENARIOS so the score range, quadrants.json and the results
+// charts all stay keyed to the nineteen graded cards, and so it can be shown
+// at the end of every game whether ten cards were played or all nineteen.
+export const VISION_CHAR_LIMIT = 200;
+
+export const VISION_CARD = {
+  code: 'S.20',
+  titleLines: ['THE', 'VISION'],
+  paragraphs: [
+    '20 years have passed since you first walked into TechFlow.',
+    'Now, you stand before the largest assembly of technology cooperatives in the world, representing 10,000 communities worldwide. They want to be part of TechFlow\u2019s cooperative community of 8,000 communities world-wide. They believe TechFlow is an example of how technology can take a strong and radical stance to help communities and the planet.',
+    'However, they say that the Climate Crisis has created a tough context for the next generation of technology. Children who were born when you started your journey are now young adults asking what kind of technological world they\'ll inherit and how these technologies would bring actual hope to them. Your actions will guide the development of technology that could reach a billion people. As you look out at faces from every continent, you feel nervous, as if holding the weight of the world on your shoulders. All those years and here you are feeling like you never worked on this before, that you have no idea what you are doing\u2026feeling like a complete imposter. You breathe deep and realize this is your moment to embody everything you\'ve learned about environmental justice and technology.',
+    'What vision do you offer for the future?'
+  ],
+  advisors: [
+    {
+      role: 'Public Policy Expert',
+      quote: 'The present is not perfect but I am sure you now know a way to make it a bit better.'
+    },
+    {
+      role: 'Community Leader',
+      quote: 'We are with you on this one and proud of everything you have learned and will learn still. The future you chose will determine the relationships you have with everyone and everything around you.'
+    },
+    {
+      role: 'Tech Entrepreneur',
+      quote: 'The only future you can envision is your own future.'
+    }
+  ]
+};
+
 // Gauge is cumulative across every scenario: 0..+5 per question --
 // non-aligned 0, partially aligned 2, fully aligned 5.
-export const SCORE_MIN = SCENARIOS.length * 0;
-export const SCORE_MAX = SCENARIOS.length * 5;
+export const SCORE_PER_CARD_MIN = 0;
+export const SCORE_PER_CARD_MAX = 5;
+export const SCORE_MIN = SCENARIOS.length * SCORE_PER_CARD_MIN;
+export const SCORE_MAX = SCENARIOS.length * SCORE_PER_CARD_MAX;
+
+// Dev Mode's deck: four cards, one per quadrant of the results spider chart,
+// so a whole run reaches the results screen in a couple of minutes instead of
+// nineteen cards later.
+//
+// The pick for each quadrant is the card whose principle states that
+// quadrant's theme most plainly. Scenario 17 is deliberately unused -- it is
+// the one card listed under two quadrants, so it would stand for both at once.
+const DEV_DECK_PICKS = [
+  ['power_positionality', 1],     // S.01, DAY 1 AT TECH FLOW -- explicitly anti-racist
+  ['collective_flourishing', 2],  // S.02, INNOVATION CHALLENGE -- responsible innovation
+  ['access_accountability', 10],  // S.10, PATENTS AND THE PRESSURE FOR REVENUE -- open source
+  ['technology_nature', 16],      // S.16, THE LIVING TECHNOLOGY -- synergistic with nature
+];
+
+const SCENARIOS_BY_QUADRANT = Object.fromEntries(
+  quadrantMap.quadrants.map((quadrant) => [quadrant.slug, quadrant.scenarios])
+);
+
+export const DEV_DECK = DEV_DECK_PICKS.map(([slug, picked]) => {
+  // Derived from quadrants.json rather than hardcoded, so the deck cannot
+  // quietly stop covering all four quadrants: if the map ever drops the picked
+  // card from its quadrant, that quadrant's first card stands in instead.
+  const inQuadrant = SCENARIOS_BY_QUADRANT[slug] ?? [];
+  const number = inQuadrant.includes(picked) ? picked : inQuadrant[0];
+  return SCENARIOS[number - 1];
+}).filter(Boolean);

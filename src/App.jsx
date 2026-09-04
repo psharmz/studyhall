@@ -471,11 +471,12 @@ export default function App() {
         <div className="crt-roll" />
       </div>
       {/* Dev Mode only -- both of these skip past the game, so neither must
-          reach players. Study Mode's results screen shows every ending at
-          once, so the band picker has nothing left to pick and the button
-          goes straight there. Simulation Mode still chooses where the
-          needle lands. */}
-      {DEV_MODE && phase !== 'setup' && (
+          reach players. On every screen including setup: a shortcut that
+          disappears on the screen you happen to be looking at is no shortcut.
+          Study Mode's results screen shows every ending at once, so the band
+          picker has nothing left to pick and the button goes straight there.
+          Simulation Mode still chooses where the needle lands. */}
+      {DEV_MODE && (
         <div className="float-actions">
           <button type="button" className="restart-float" onClick={handleRestart}>
             Restart

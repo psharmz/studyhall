@@ -18,6 +18,9 @@
        so body text still reads at 12.5px. */
     --win-bg: #150E28;
     --win-edge: #6B48B8;
+    /* The two call-to-action buttons on the results screen (Share, Start Study
+       Mode) are held to one width so they read as a pair. */
+    --results-cta-w: 158px;
     --win-chrome-top: #3D2C68;
     --win-chrome-bottom: #2A1D48;
     /* Panel behind the ending illustration + its dial. */
@@ -449,6 +452,28 @@
 
   .option:hover {
     background: rgba(124, 250, 107, 0.08);
+  }
+
+  /* Hovering a live option inverts it: the phosphor green moves to the
+     background and the type goes dark, the way a highlighted line reads on a
+     real terminal. Scoped to :not(.locked) so it stops once an answer is in --
+     a locked row keeps its transparent background, and dark type on that
+     would disappear. (hover: hover) keeps the inversion off touch screens,
+     where :hover latches after a tap and would strand a card inverted. */
+  @media (hover: hover) {
+    .terminal:not(.locked) .option:hover {
+      background: var(--green);
+    }
+
+    .terminal:not(.locked) .option:hover .text {
+      color: var(--black);
+    }
+
+    /* A step lighter than the body copy, so the C:/ user_A$ label stays the
+       secondary thing it is at rest rather than competing with the answer. */
+    .terminal:not(.locked) .option:hover .prompt {
+      color: rgba(10, 10, 10, 0.72);
+    }
   }
 
   .option.selected {
@@ -952,7 +977,7 @@
     display: none;
   }
 
-  /* Share + scoring live inside the panel, under the caption. */
+  /* Share lives inside the panel, under the caption. */
   .scene-actions {
     display: flex;
     justify-content: center;
@@ -960,8 +985,13 @@
     margin-top: 16px;
   }
 
+  /* Sized to match Start Study Mode rather than stretching: it used to share
+     the row with a Scoring Details button and split it 50/50, so on its own it
+     ran the full width of the panel. Both read the same token so they cannot
+     drift apart. */
   .scene-actions .btn {
-    flex: 1 1 0;
+    flex: 0 0 auto;
+    width: var(--results-cta-w);
     padding: 10px 12px;
     font-size: 10px;
   }
@@ -1583,6 +1613,7 @@
 
   .facilitator-cta {
     align-self: center;
+    width: var(--results-cta-w);
     margin-top: 4px;
     border-color: var(--blue);
     color: var(--blue);
@@ -1676,6 +1707,20 @@
     overflow: visible;
   }
 
+  /* The rim is the fully-aligned end of the scale, so it glows green; the
+     zero ring halfway out is the baseline a shape is read against. */
+  .radar-ring--rim {
+    filter: drop-shadow(0 0 5px rgba(124, 250, 107, 0.75));
+  }
+
+  .radar-ring--zero {
+    stroke-dasharray: 5 4;
+  }
+
+  .radar-core {
+    filter: blur(3px);
+  }
+
   /* The hoverable "your score" vertices breathe, so they read as live
      targets rather than plot marks. */
   .radar-dot--you {
@@ -1745,10 +1790,11 @@
   /* ---- The web, and the detail card for the selected point ---- */
   .radar-wrap {
     display: flex;
-    /* Top-aligned, not centred: the text column changes height as quadrants
-       are switched and scenarios opened, and centring made both the chart and
-       the heading beside it slide up and down every time. */
-    align-items: flex-start;
+    /* Stretched, not centred: the left column carries the chart and the word
+       cloud stacked, and stretching makes that stack come out the same height
+       as the suggestions column beside it. (Centring was what used to make
+       both columns slide up and down when a quadrant changed.) */
+    align-items: stretch;
     gap: 26px;
     /* Wraps the chart and its reading together -- they are one panel, and the
        red matches the selected vertex. */
@@ -1758,11 +1804,72 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   }
 
-  .radar-scroll {
+  /* Left column: the chart, and the word cloud stacked under it. Together they
+     fill the height of the suggestions column on the right. */
+  .radar-media {
     flex: 0 0 auto;
     /* Close to the 760-unit viewBox, so the web is not scaled into
        illegibility -- most of that width is the four headers' room. */
     width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 42px;
+    min-height: 0;
+  }
+
+  .radar-scroll {
+    flex: 0 0 auto;
+  }
+
+  /* Sized by the cloud inside it rather than by leftover column space: the
+     cloud keeps its own 4:3 proportions at a fixed height instead of being
+     squeezed into whatever the chart leaves. */
+  .radar-cloud {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px 10px;
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 40%, rgba(124, 250, 107, 0.06), transparent 70%),
+      linear-gradient(180deg, #241640 0%, var(--cloud-bg) 100%);
+    border: 1.5px solid var(--cloud-edge);
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.55);
+  }
+
+  .radar-cloud .results-chart-title {
+    color: #C9AEF5;
+    font-size: 9.5px;
+  }
+
+  /* The cloud itself takes the panel's leftover height; the SVG scales to it
+     rather than to its own 400x300 box, which is what makes it smaller here. */
+  /* A definite height, so the SVG's height:100% has something to resolve
+     against -- left to size itself off the SVG, the pair collapses to nothing.
+     The viewBox is 4:3, so at 300 tall the cloud draws 400 wide and sits
+     centred in the column with a little room either side. */
+  .radar-cloud .cloud-wrap {
+    flex: 0 0 auto;
+    height: 300px;
+  }
+
+  .radar-cloud .cloud-wrap .results-chart-svg,
+  .radar-cloud .word-cloud-empty {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* Both are fixed furniture around the cloud. The note carries flex:1 0 100%
+     from the old full-width charts row, which inside this column made it grow
+     and starve the cloud of every pixel. */
+  .radar-cloud .results-chart-head {
+    flex: 0 0 auto;
+  }
+
+  .radar-cloud .results-chart-note {
+    flex: 0 0 auto;
+    margin: 6px 0 0;
+    font-size: 9px;
   }
 
   /* Inside the shared frame now, so it carries no border of its own. */
@@ -1782,47 +1889,63 @@
     color: var(--green);
   }
 
-  .radar-detail-comprised {
+  /* The scenarios feeding this quadrant, as a strip of tabs. They sit on a
+     rule that the open tab breaks through, so the tab and the card it opens
+     below read as one surface. */
+  .radar-tabs {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
+    align-items: flex-end;
+    gap: 4px;
     margin: 16px 0 0;
     padding-top: 14px;
-    border-top: 1.5px solid rgba(255, 255, 255, 0.12);
-    font-size: 10px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #9A9A9A;
+    border-bottom: 1.5px solid rgba(255, 255, 255, 0.18);
   }
 
-  /* One per scenario feeding this axis, carrying how the player answered it. */
+  /* One tab per scenario feeding this axis, carrying how the player answered
+     it. Square-bottomed and sitting on the strip's rule, so the open one can
+     join the card underneath. */
   .radar-chip {
     /* Wide enough for "Scenario 16" without wrapping mid-label. */
     white-space: nowrap;
-    padding: 3px 8px;
-    border-radius: 999px;
+    padding: 6px 11px 5px;
+    border: none;
+    border-radius: 4px 4px 0 0;
+    font-family: inherit;
     font-size: 9.5px;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-align: center;
-  }
-
-  /* Chips are buttons now -- each opens that scenario in the card below. */
-  .radar-chip {
-    border: none;
-    font-family: inherit;
     cursor: pointer;
-    transition: filter 0.12s ease;
+    /* Sits on the strip's rule; the open tab pushes down over it. */
+    position: relative;
+    bottom: -1.5px;
+    opacity: 0.62;
+    transition: opacity 0.12s ease, filter 0.12s ease, transform 0.12s ease;
   }
 
   .radar-chip:hover,
   .radar-chip:focus-visible {
-    filter: brightness(1.25);
+    opacity: 1;
+    filter: brightness(1.12);
   }
 
-  .radar-chip[aria-pressed='true'] {
-    box-shadow: 0 0 0 2px var(--black), 0 0 0 3px currentColor;
+  /* Set when the full labels would run to a second row: the strip keeps to one
+     line and the tabs read as bare numbers. */
+  .radar-tabs--compact .radar-chip-word {
+    display: none;
+  }
+
+  .radar-tabs--compact .radar-chip {
+    padding-left: 13px;
+    padding-right: 13px;
+  }
+
+  /* The open tab comes forward to full strength and grows a little taller, so
+     the strip reads as one selected surface rather than a row of equals. */
+  .radar-chip[aria-selected='true'] {
+    opacity: 1;
+    padding-top: 8px;
   }
 
   /* ---- One scenario, opened from its chip ---- */

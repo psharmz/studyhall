@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import cloud from 'd3-cloud';
 import { fetchWordCloud, fetchQuadrantAverages } from '../aggregates.js';
@@ -23,7 +23,9 @@ const SCENARIOS_BY_SLUG = Object.fromEntries(
   quadrantMap.quadrants.map((q) => [q.slug, q.scenarios])
 );
 
-// A fully aligned answer is worth 5, so a quadrant's ceiling is 5 per card.
+// A fully aligned answer is worth +5 and a non-aligned one -5, so a quadrant
+// runs from -5 to +5 per card and sits at zero when every answer is
+// non-aligned as often as it is aligned.
 const POINTS_PER_CARD = 5;
 
 const RADAR_AXES_BASE = [
@@ -115,7 +117,8 @@ const RADAR_AXES_BASE = [
 
 export const RADAR_AXES = RADAR_AXES_BASE.map((axis) => {
   const scenarios = SCENARIOS_BY_SLUG[axis.slug];
-  return { ...axis, scenarios, max: scenarios.length * POINTS_PER_CARD };
+  const span = scenarios.length * POINTS_PER_CARD;
+  return { ...axis, scenarios, max: span, min: -span };
 });
 
 // Both series are real now: the player's own totals come from their answers via
@@ -143,6 +146,12 @@ const RADAR_CX = 380;
 const RADAR_CY = 280;
 const RADAR_R = 148;
 const RADAR_RINGS = 4;
+// Zero sits halfway out, so with four rings it lands exactly on the second.
+const BASELINE_FRACTION = 0.5;
+// The scale's two ends: non-aligned at the centre, fully aligned at the rim.
+const RADAR_FLOOR_COLOR = '#E5484D';
+const RADAR_CEIL_COLOR = '#7CFA6B';
+const ringColor = d3.interpolateRgb(RADAR_FLOOR_COLOR, RADAR_CEIL_COLOR);
 // Where a header sits relative to its vertex, and how wide it may run before
 // wrapping (mono, so a character is a predictable fraction of the size).
 const LABEL_GAP = 18;
@@ -419,28 +428,81 @@ function RadarChart({ answers: realAnswers }) {
 
   useEffect(() => {
     const svg = d3.select(ref.current);
+    // Paint sources for the web: a red bloom at the centre and a spoke fade
+    // that carries the same red out to the rim's green.
+    const defs = svg.append('defs');
+
+    const core = defs
+      .append('radialGradient')
+      .attr('id', 'radar-core-glow');
+    core.append('stop').attr('offset', '0%').attr('stop-color', RADAR_FLOOR_COLOR).attr('stop-opacity', 0.55);
+    core.append('stop').attr('offset', '60%').attr('stop-color', RADAR_FLOOR_COLOR).attr('stop-opacity', 0.18);
+    core.append('stop').attr('offset', '100%').attr('stop-color', RADAR_FLOOR_COLOR).attr('stop-opacity', 0);
+
+    const spoke = defs
+      .append('linearGradient')
+      .attr('id', 'radar-spoke-fade')
+      .attr('gradientUnits', 'userSpaceOnUse')
+      .attr('x1', 0)
+      .attr('y1', 0)
+      .attr('x2', 0)
+      .attr('y2', -RADAR_R);
+    spoke.append('stop').attr('offset', '0%').attr('stop-color', RADAR_FLOOR_COLOR);
+    spoke.append('stop').attr('offset', String(BASELINE_FRACTION * 100) + '%').attr('stop-color', ringColor(BASELINE_FRACTION));
+    spoke.append('stop').attr('offset', '100%').attr('stop-color', RADAR_CEIL_COLOR);
+
     const g = svg.append('g').attr('transform', `translate(${RADAR_CX},${RADAR_CY})`);
 
     // Quadrants hold different numbers of cards, so a spoke is plotted as a
-    // fraction of its own max -- otherwise the 30-point quadrant would always
+    // fraction of its own range -- otherwise the 35-point quadrant would always
     // dwarf the 20-point ones and the shape would say nothing about how the
     // player actually did.
-    const r = (value, i) => (value / axes[i].max) * RADAR_R;
+    //
+    // The scale runs floor-to-ceiling, not zero-to-ceiling: every quadrant's
+    // -5-per-card floor sits at the centre, zero lands exactly on the middle
+    // ring, and the +5-per-card ceiling is the rim. A shape inside the middle
+    // ring is a quadrant answered worse than not at all.
+    const r = (value, i) => {
+      const { min, max } = axes[i];
+      const t = (value - min) / (max - min);
+      return Math.min(1, Math.max(0, t)) * RADAR_R;
+    };
     const angle = (i) => (i * 2 * Math.PI) / axes.length;
     const px = (radius, i) => radius * Math.sin(angle(i));
     const py = (radius, i) => -radius * Math.cos(angle(i));
     const ring = (radius) => axes.map((_, i) => `${px(radius, i)},${py(radius, i)}`).join(' ');
 
-    // Web: nested polygons on the axes themselves, plus a spoke to each vertex.
-    g.selectAll('.radar-ring')
-      .data(d3.range(1, RADAR_RINGS + 1).map((i) => (i / RADAR_RINGS) * RADAR_R))
-      .join('polygon')
-      .attr('class', 'radar-ring')
-      .attr('points', (d) => ring(d))
-      .attr('fill', 'none')
-      .attr('stroke', '#FFFFFF')
-      .attr('stroke-opacity', (_, i) => (i === RADAR_RINGS - 1 ? 0.85 : 0.3));
+    // The web reads as a scale rather than plain graph paper: the centre is
+    // where every answer went non-aligned, the rim is where every answer
+    // landed, and the ring halfway between the two is zero. Colour carries
+    // that -- red at the middle, green at the rim -- instead of white.
+    //
+    // A red wash at the centre and a green glow on the rim mark the two ends.
+    g.append('circle')
+      .attr('class', 'radar-core')
+      .attr('r', RADAR_R / RADAR_RINGS)
+      .attr('fill', 'url(#radar-core-glow)');
 
+    g.selectAll('.radar-ring')
+      .data(d3.range(1, RADAR_RINGS + 1).map((i) => i / RADAR_RINGS))
+      .join('polygon')
+      .attr('class', (fraction) =>
+        fraction === 1
+          ? 'radar-ring radar-ring--rim'
+          : fraction === BASELINE_FRACTION
+          ? 'radar-ring radar-ring--zero'
+          : 'radar-ring'
+      )
+      .attr('points', (fraction) => ring(fraction * RADAR_R))
+      .attr('fill', 'none')
+      .attr('stroke', (fraction) => ringColor(fraction))
+      .attr('stroke-width', (fraction) => (fraction === 1 || fraction === BASELINE_FRACTION ? 1.6 : 1))
+      .attr('stroke-opacity', (fraction) =>
+        fraction === 1 ? 0.95 : fraction === BASELINE_FRACTION ? 0.8 : 0.42
+      );
+
+    // Spokes fade out of the red centre into the green rim, so they read with
+    // the rings rather than cutting white lines across them.
     g.selectAll('.radar-spoke')
       .data(axes)
       .join('line')
@@ -449,8 +511,8 @@ function RadarChart({ answers: realAnswers }) {
       .attr('y1', 0)
       .attr('x2', (_, i) => px(RADAR_R, i))
       .attr('y2', (_, i) => py(RADAR_R, i))
-      .attr('stroke', '#FFFFFF')
-      .attr('stroke-opacity', 0.3);
+      .attr('stroke', 'url(#radar-spoke-fade)')
+      .attr('stroke-opacity', 0.5);
 
     const line = d3
       .lineRadial()
@@ -614,16 +676,50 @@ function RadarChart({ answers: realAnswers }) {
   const axis = axes[active];
   const suggestion = suggestionFor(axis);
 
+  // The tab strip is one line or it is nothing: if the full "Scenario 15"
+  // labels wrap onto a second row, the tabs drop the word and run as bare
+  // numbers instead. The measurement always happens with the full labels
+  // showing -- the class comes off before anything is read -- so the two
+  // states cannot chase each other. The observer watches the column's width,
+  // not the strip, since toggling the class changes the strip's own height.
+  const tabsRef = useRef(null);
+  useLayoutEffect(() => {
+    const strip = tabsRef.current;
+    if (!strip) return undefined;
+    const host = strip.parentElement;
+    const fit = () => {
+      strip.classList.remove('radar-tabs--compact');
+      const tabs = [...strip.children];
+      if (tabs.length < 2) return;
+      const firstRowTop = tabs[0].offsetTop;
+      if (tabs.some((tab) => tab.offsetTop > firstRowTop)) {
+        strip.classList.add('radar-tabs--compact');
+      }
+    };
+    fit();
+    if (!host || typeof ResizeObserver === 'undefined') return undefined;
+    let lastWidth = Math.round(host.getBoundingClientRect().width);
+    const observer = new ResizeObserver((entries) => {
+      const width = Math.round(entries[0].contentRect.width);
+      if (width === lastWidth) return;
+      lastWidth = width;
+      fit();
+    });
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [axis.slug]);
+
   return (
     <div className="radar-wrap">
-      <div className="radar-scroll" ref={scrollRef}>
-        <svg
-          ref={ref}
-          className="results-chart-svg"
-          viewBox={`0 0 ${RADAR_W} ${RADAR_H}`}
-          role="img"
-          aria-label="Spider chart of scores by theme (placeholder data)"
-        />
+      <div className="radar-media">
+        <div className="radar-scroll" ref={scrollRef}>
+          <svg
+            ref={ref}
+            className="results-chart-svg"
+            viewBox={`0 0 ${RADAR_W} ${RADAR_H}`}
+            role="img"
+            aria-label="Spider chart of scores by theme (placeholder data)"
+          />
         {/* Lists only what was drawn -- the comparison series is absent until
             its data arrives. */}
         <div className="results-chart-legend">
@@ -639,6 +735,10 @@ function RadarChart({ answers: realAnswers }) {
           )}
         </div>
       </div>
+        {/* Stacked under the chart, inside the same frame: the two together
+            fill the column beside the suggestions. */}
+        <WordCloudPanel />
+      </div>
       {/* Only the selected point's detail, beside the chart. The quadrant is
           named on the chart itself now, against its own vertex. */}
       <div className="radar-detail">
@@ -649,24 +749,30 @@ function RadarChart({ answers: realAnswers }) {
         </h4>
         <p className="radar-detail-text">{suggestion.text}</p>
 
-        {/* Under the suggestion: the cards this quadrant is made of. Clicking
-            one opens it below; clicking it again closes it, so there is no
-            separate dismiss control. */}
-        <p className="radar-detail-comprised">
-          comprised by
+        {/* Under the suggestion: the cards this quadrant is made of, as a row
+            of tabs. Clicking one opens it below; clicking it again closes it,
+            so there is no separate dismiss control. */}
+        <div
+          className="radar-tabs"
+          role="tablist"
+          aria-label="Scenarios in this quadrant"
+          ref={tabsRef}
+        >
           {axis.scenarios.map((n) => (
             <button
               key={n}
               type="button"
+              role="tab"
               className="radar-chip"
               data-align={alignFor(answers, n)}
-              aria-pressed={openScenario === n}
+              aria-selected={openScenario === n}
               onClick={() => setOpenScenario(openScenario === n ? null : n)}
             >
-              Scenario {n}
+              <span className="radar-chip-word">Scenario </span>
+              {n}
             </button>
           ))}
-        </p>
+        </div>
 
         {openScenario && <ScenarioDetail n={openScenario} answers={answers} />}
       </div>
@@ -686,7 +792,10 @@ export function ScoreBreakdown({ answers }) {
   );
 }
 
-export function ResultsCharts({ answers }) {
+// The cloud, self-contained: its own fetch and its own country picker, so it
+// can sit inside the radar's frame without the breakdown having to know
+// anything about where its words come from.
+function WordCloudPanel() {
   // Which slice of the cloud is on show: the aggregate, or one country.
   const [cloudScope, setCloudScope] = useState(CLOUD_ALL);
   // Real tallies out of PostHog. `loading` is tracked apart from "no data" so
@@ -719,43 +828,39 @@ export function ResultsCharts({ answers }) {
   }, [cloudScope, countries]);
 
   return (
-    <div className="results-charts">
-      <div className="results-chart results-chart--cloud">
-        <div className="results-chart-head">
-          <h2 className="results-chart-title">
-            What others think about environmental justice in technology
-          </h2>
-          {/* Nothing to filter until there are country slices to pick. */}
-          {countries.length > 0 && (
-            <label className="cloud-scope">
-              <span className="sr-only">Filter word cloud by country</span>
-              <select
-                className="cloud-scope-select"
-                value={cloudScope}
-                onChange={(e) => setCloudScope(e.target.value)}
-              >
-                <option value={CLOUD_ALL}>All</option>
-                {countries.map((country) => (
-                  <option key={country} value={country}>
-                    {country}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-        </div>
-        {live ? (
-          <WordCloud words={cloudWords} scope={cloudScope} />
-        ) : (
-          // Still fetching, or there are no counts yet. Saying so beats
-          // showing words nobody picked. Blank while loading, so the message
-          // does not appear and then vanish.
-          <p className="word-cloud-empty">{loading ? '' : 'Not enough data'}</p>
+    <div className="radar-cloud">
+      <div className="results-chart-head">
+        <h2 className="results-chart-title">
+          What others think about environmental justice in technology
+        </h2>
+        {/* Nothing to filter until there are country slices to pick. */}
+        {countries.length > 0 && (
+          <label className="cloud-scope">
+            <span className="sr-only">Filter word cloud by country</span>
+            <select
+              className="cloud-scope-select"
+              value={cloudScope}
+              onChange={(e) => setCloudScope(e.target.value)}
+            >
+              <option value={CLOUD_ALL}>All</option>
+              {countries.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
       </div>
-      {live && (
-        <p className="results-chart-note">What players picked on the goals screen.</p>
+      {live ? (
+        <WordCloud words={cloudWords} scope={cloudScope} />
+      ) : (
+        // Still fetching, or there are no counts yet. Saying so beats showing
+        // words nobody picked. Blank while loading, so the message does not
+        // appear and then vanish.
+        <p className="word-cloud-empty">{loading ? '' : 'Not enough data'}</p>
       )}
+      {live && <p className="results-chart-note">What players picked on the goals screen.</p>}
     </div>
   );
 }

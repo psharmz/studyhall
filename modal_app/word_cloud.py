@@ -63,8 +63,10 @@ MAX_WORDS_PER_COUNTRY = 25
 # the picker. Its picks still count towards "All" either way.
 MIN_WORDS_PER_COUNTRY = 5
 
-# A fully aligned answer is worth 5, so a quadrant's ceiling is 5 per card.
+# A fully aligned answer is worth +5 and a non-aligned one -5, so a quadrant
+# runs from -5 to +5 per card.
 POINTS_PER_CARD = 5
+NON_ALIGNED_POINTS = -POINTS_PER_CARD
 
 # Clean slate. Only events at or after this instant count towards the published
 # aggregates -- everything before it was build-and-test traffic, including runs
@@ -150,12 +152,12 @@ def _hogql(query: str):
 # Per-run points for every answered scenario.
 #
 # Scored from `option_alignment`, NOT the recorded `points_applied`. The scoring
-# scale changed (non/partial/full was -2/+1/+3, now 0/2/5) and the old rows are
-# still in the warehouse, so points_applied is not comparable across the change
-# -- averaging it raw produced a negative quadrant score. Alignment has always
-# meant the same thing, so re-scoring from it makes every run comparable on
-# today's scale. A timeout has no alignment and counts as 0, exactly as it does
-# in the player's own total.
+# scale has changed twice (non/partial/full was -2/+1/+3, then 0/+2/+5, now
+# -5/+2/+5) and every generation of rows is still in the warehouse, so
+# points_applied is not comparable across those changes. Alignment has always
+# meant the same thing, so re-scoring from it puts every run on today's scale.
+# A timeout has no alignment and counts as 0 -- not as a non-aligned answer --
+# which is the one case where this and the player's own total differ.
 #
 # Averaging happens in Python because a quadrant's average has to account for
 # partial decks -- see _quadrant_averages.
@@ -165,6 +167,7 @@ POINTS_QUERY = f"""
          avg(multiIf(
            toString(properties.option_alignment) = 'full', {POINTS_PER_CARD},
            toString(properties.option_alignment) = 'partial', 2,
+           toString(properties.option_alignment) = 'non', {NON_ALIGNED_POINTS},
            0
          )) AS pts
   FROM events
@@ -219,6 +222,7 @@ def _quadrant_averages(point_rows):
         averages[slug] = {
             "avg": round(sum(per_card) / len(per_card) * size, 1),
             "max": size * POINTS_PER_CARD,
+            "min": size * NON_ALIGNED_POINTS,
             "runs": len(per_card),
         }
     return averages

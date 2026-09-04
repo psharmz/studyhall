@@ -13,9 +13,11 @@ export const DEV_STUB_ANSWERS = Object.fromEntries(
 
 // A comparison series to draw against, for when the live averages are empty --
 // which they are on a fresh cutoff. Roughly mid-range on each quadrant.
+// On the -5..+5 scale zero is the middle ring, so a mid-range comparison line
+// sits a little above it rather than a little above the centre.
 export const DEV_STUB_AVERAGES = {
-  power_positionality: { avg: 16, max: 35, runs: 0 },
-  access_accountability: { avg: 11, max: 25, runs: 0 },
-  collective_flourishing: { avg: 9, max: 20, runs: 0 },
-  technology_nature: { avg: 7, max: 20, runs: 0 },
+  power_positionality: { avg: 9, max: 35, min: -35, runs: 0 },
+  access_accountability: { avg: 6, max: 25, min: -25, runs: 0 },
+  collective_flourishing: { avg: 4, max: 20, min: -20, runs: 0 },
+  technology_nature: { avg: 3, max: 20, min: -20, runs: 0 },
 };

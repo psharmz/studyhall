@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   captureResultsShared,
-  captureScoreBreakdownViewed,
   captureSharePreviewOpened,
 } from '../telemetry.js';
 import { Gauge } from './Gauge.jsx';
@@ -16,7 +15,7 @@ import {
   ThoughtBubble,
   WheelHamster,
 } from '../pixels.jsx';
-import { ResultsCharts, ScoreBreakdown } from './ResultsCharts.jsx';
+import { ScoreBreakdown } from './ResultsCharts.jsx';
 import { EndingArt } from './EndingArt.jsx';
 import { ENDING_ALIGN, ENDING_CAPTIONS, endingFor } from '../endings.js';
 import { ShareSheet } from './ShareSheet.jsx';
@@ -40,18 +39,7 @@ export function CompleteScreen({
   // Real play only ever sums integers; the debug band jump parks the needle on
   // a fraction, so round before it is shown or shared.
   const shownScore = Math.round(totalScore);
-  const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-
-  // The breakdown opens underneath the button rather than sitting further
-  // down the page. Only the open is reported -- closing it again is not a
-  // second viewing.
-  function toggleBreakdown() {
-    setBreakdownOpen((open) => {
-      if (!open) captureScoreBreakdownViewed();
-      return !open;
-    });
-  }
 
   // Share opens a preview rather than firing straight into a share sheet:
   // the result is the thing being sent, so it is worth seeing first. Opening
@@ -165,15 +153,6 @@ export function CompleteScreen({
                   <button type="button" className="btn" onClick={openShare}>
                     Share
                   </button>
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={toggleBreakdown}
-                    aria-expanded={breakdownOpen}
-                    aria-controls="score-breakdown"
-                  >
-                    {breakdownOpen ? 'Hide Scoring Details' : 'See Scoring Details'}
-                  </button>
                 </div>
               )}
 
@@ -202,9 +181,6 @@ export function CompleteScreen({
             )}
           </div>
 
-          {/* Below the row rather than inside the scene: in there it stretched
-              the facilitator panel beside it to match its height, and was
-              capped at the scene's column width. */}
           {/* What they wrote on the closing card, shown in both modes. Kept
               out of the simulation-only block on purpose: a Study Mode run
               started in the same session opens on the same vision. Absent when
@@ -216,7 +192,15 @@ export function CompleteScreen({
             </section>
           )}
 
-          {breakdownOpen && <ScoreBreakdown answers={answers} />}
+          {/* Below the row rather than inside the scene: in there it stretched
+              the facilitator panel beside it to match its height, and was
+              capped at the scene's column width.
+
+              Always open -- it used to sit behind a See/Hide toggle, but the
+              breakdown is the substance of the results, not an extra. Still
+              Simulation Mode only: Study Mode has no score to break down and
+              ends on the scene alone. */}
+          {simulation && <ScoreBreakdown answers={answers} />}
 
           {shareOpen && (
             <ShareSheet
@@ -253,7 +237,6 @@ export function CompleteScreen({
             )}
           </div>
 
-          {simulation && <ResultsCharts answers={answers} />}
         </div>
       </div>
     </div>

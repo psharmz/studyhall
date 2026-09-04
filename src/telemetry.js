@@ -249,10 +249,6 @@ export function captureCategoryScores({
   capture('category_scores_reported', properties);
 }
 
-export function captureScoreBreakdownViewed() {
-  capture('score_breakdown_viewed', {});
-}
-
 // Opening the preview, separately from actually sending -- the gap between
 // the two is the interesting number.
 export function captureSharePreviewOpened({ ending }) {

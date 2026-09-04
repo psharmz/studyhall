@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import cloud from 'd3-cloud';
 import { fetchWordCloud, fetchQuadrantAverages } from '../aggregates.js';
@@ -676,38 +676,6 @@ function RadarChart({ answers: realAnswers }) {
   const axis = axes[active];
   const suggestion = suggestionFor(axis);
 
-  // The tab strip is one line or it is nothing: if the full "Scenario 15"
-  // labels wrap onto a second row, the tabs drop the word and run as bare
-  // numbers instead. The measurement always happens with the full labels
-  // showing -- the class comes off before anything is read -- so the two
-  // states cannot chase each other. The observer watches the column's width,
-  // not the strip, since toggling the class changes the strip's own height.
-  const tabsRef = useRef(null);
-  useLayoutEffect(() => {
-    const strip = tabsRef.current;
-    if (!strip) return undefined;
-    const host = strip.parentElement;
-    const fit = () => {
-      strip.classList.remove('radar-tabs--compact');
-      const tabs = [...strip.children];
-      if (tabs.length < 2) return;
-      const firstRowTop = tabs[0].offsetTop;
-      if (tabs.some((tab) => tab.offsetTop > firstRowTop)) {
-        strip.classList.add('radar-tabs--compact');
-      }
-    };
-    fit();
-    if (!host || typeof ResizeObserver === 'undefined') return undefined;
-    let lastWidth = Math.round(host.getBoundingClientRect().width);
-    const observer = new ResizeObserver((entries) => {
-      const width = Math.round(entries[0].contentRect.width);
-      if (width === lastWidth) return;
-      lastWidth = width;
-      fit();
-    });
-    observer.observe(host);
-    return () => observer.disconnect();
-  }, [axis.slug]);
 
   return (
     <div className="radar-wrap">
@@ -752,26 +720,24 @@ function RadarChart({ answers: realAnswers }) {
         {/* Under the suggestion: the cards this quadrant is made of, as a row
             of tabs. Clicking one opens it below; clicking it again closes it,
             so there is no separate dismiss control. */}
-        <div
-          className="radar-tabs"
-          role="tablist"
-          aria-label="Scenarios in this quadrant"
-          ref={tabsRef}
-        >
-          {axis.scenarios.map((n) => (
-            <button
-              key={n}
-              type="button"
-              role="tab"
-              className="radar-chip"
-              data-align={alignFor(answers, n)}
-              aria-selected={openScenario === n}
-              onClick={() => setOpenScenario(openScenario === n ? null : n)}
-            >
-              <span className="radar-chip-word">Scenario </span>
-              {n}
-            </button>
-          ))}
+        <div className="radar-tabs">
+          <span className="radar-tabs-label">Scenarios</span>
+          <div className="radar-tabs-list" role="tablist" aria-label="Scenarios in this quadrant">
+            {axis.scenarios.map((n) => (
+              <button
+                key={n}
+                type="button"
+                role="tab"
+                className="radar-chip"
+                data-align={alignFor(answers, n)}
+                aria-selected={openScenario === n}
+                aria-label={`Scenario ${n}`}
+                onClick={() => setOpenScenario(openScenario === n ? null : n)}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
         </div>
 
         {openScenario && <ScenarioDetail n={openScenario} answers={answers} />}

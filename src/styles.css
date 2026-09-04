@@ -1889,26 +1889,50 @@
     color: var(--green);
   }
 
-  /* The scenarios feeding this quadrant, as a strip of tabs. They sit on a
-     rule that the open tab breaks through, so the tab and the card it opens
+  /* The scenarios feeding this quadrant: the word on the left, the numbered
+     tabs ranged right against it. One row, always -- nowrap, and the tabs are
+     bare numbers so there is nothing long enough to need a second. They sit on
+     a rule that the open tab breaks through, so the tab and the card it opens
      below read as one surface. */
   .radar-tabs {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: flex-end;
-    gap: 4px;
+    justify-content: space-between;
+    gap: 12px;
     margin: 16px 0 0;
     padding-top: 14px;
     border-bottom: 1.5px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .radar-tabs-label {
+    flex: 0 0 auto;
+    padding-bottom: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #9A9A9A;
+  }
+
+  .radar-tabs-list {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 4px;
+    /* Ranged right even if the row is wider than the tabs need. */
+    margin-left: auto;
   }
 
   /* One tab per scenario feeding this axis, carrying how the player answered
      it. Square-bottomed and sitting on the strip's rule, so the open one can
      join the card underneath. */
   .radar-chip {
-    /* Wide enough for "Scenario 16" without wrapping mid-label. */
     white-space: nowrap;
-    padding: 6px 11px 5px;
+    /* Bare numbers vary from one digit to two, so a floor keeps the tabs an
+       even size rather than letting "1" shrink next to "19". */
+    min-width: 30px;
+    padding: 6px 9px 5px;
     border: none;
     border-radius: 4px 4px 0 0;
     font-family: inherit;
@@ -1928,17 +1952,6 @@
   .radar-chip:focus-visible {
     opacity: 1;
     filter: brightness(1.12);
-  }
-
-  /* Set when the full labels would run to a second row: the strip keeps to one
-     line and the tabs read as bare numbers. */
-  .radar-tabs--compact .radar-chip-word {
-    display: none;
-  }
-
-  .radar-tabs--compact .radar-chip {
-    padding-left: 13px;
-    padding-right: 13px;
   }
 
   /* The open tab comes forward to full strength and grows a little taller, so
@@ -5527,9 +5540,10 @@
   }
 
   /* ---- The vision, played back on the results screen -------------------- */
+  /* Full width of the results card, like the panels above and below it --
+     it used to be a centred 680px column, which left it floating. */
   .vision-recap {
-    margin: 22px auto 0;
-    max-width: 680px;
+    margin: 22px 0 0;
     padding: 16px 20px;
     border: 1px solid var(--blue);
     border-radius: 3px;
@@ -5556,13 +5570,6 @@
        strings rather than letting them widen the panel. */
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-  }
-
-  @media (max-width: 700px) {
-    .vision-recap {
-      margin-left: 12px;
-      margin-right: 12px;
-    }
   }
 
   @media (max-width: 700px) {

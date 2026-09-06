@@ -5,12 +5,13 @@ import {
   captureScenarioFeedbackSubmitted,
   CLARITY_SCALE,
 } from '../telemetry.js';
-import { LETTERS, ALIGN_LABELS, LEARN_BEYOND_URL } from '../scenarios.js';
+import { LETTERS, ALIGN_LABELS } from '../scenarios.js';
 import { GENERAL_RESOURCES, SCENARIO_RESOURCES } from '../resources.js';
 import { AdvisorCall } from './AdvisorCall.jsx';
 import { Gauge } from './Gauge.jsx';
 import { PixelStudyHamsters } from '../pixels.jsx';
 import { useTypewriter } from '../useTypewriter.js';
+import { useIsPhone } from '../useIsPhone.js';
 
 function TimesUpOverlay() {
   const { visible, done } = useTypewriter('TIMES UP!', { speed: 90 });
@@ -43,6 +44,12 @@ export function OptionsScreen({
   usedCalls,
   simulationAnswers = {},
   questionNumber,
+  // Phone, Simulation Mode: the card opens as a reading screen and the deck is
+  // dealt in place when the player asks for it. False means the prompt is up
+  // but the answers are not -- no clock running, nothing to swipe. Every other
+  // layout arms immediately, which is the old behaviour.
+  armed = true,
+  onArm,
   onUseCall,
   onAdvisorCall,
   onReveal,
@@ -54,18 +61,7 @@ export function OptionsScreen({
   const [feedback, setFeedback] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [learnBeyondOpen, setLearnBeyondOpen] = useState(false);
-  // The phone layout is a different interaction, not just different CSS:
-  // the options become a swipeable deck with their own Select buttons.
-  const [isPhone, setIsPhone] = useState(
-    () => window.matchMedia?.('(max-width: 700px)').matches ?? false
-  );
-  useEffect(() => {
-    const mq = window.matchMedia?.('(max-width: 700px)');
-    if (!mq) return undefined;
-    const onChange = (e) => setIsPhone(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
+  const isPhone = useIsPhone();
 
   // Phone deck: cards stacked like a hand of cards, top one swipeable.
   const [order, setOrder] = useState(() => scenario.options.map((_, i) => i));
@@ -92,7 +88,7 @@ export function OptionsScreen({
   // Countdown. The updater stays pure -- side effects here would run twice
   // under StrictMode and double-charge the timeout penalty.
   useEffect(() => {
-    if (!timed) return undefined;
+    if (!timed || !armed) return undefined;
     const interval = setInterval(() => {
       if (revealingRef.current) {
         clearInterval(interval);
@@ -101,12 +97,12 @@ export function OptionsScreen({
       setTimeLeft((t) => (t <= 1 ? 0 : t - 1));
     }, 1000);
     return () => clearInterval(interval);
-  }, [scenario]);
+  }, [scenario, timed, armed]);
 
   // Hitting zero: hold on "TIMES UP!" long enough for it to type out and
   // flash, then run the same reveal as a normal submit.
   useEffect(() => {
-    if (!timed || timeLeft > 0 || timedOutRef.current) return;
+    if (!timed || !armed || timeLeft > 0 || timedOutRef.current) return;
     timedOutRef.current = true;
     setOutOfTime(true);
     revealTimer.current = setTimeout(() => beginReveal(selectedRef.current), 2600);
@@ -390,7 +386,7 @@ export function OptionsScreen({
                 </Fragment>
               ))}
             </h1>
-            {isPhone && timed && !revealing && (
+            {isPhone && timed && armed && !revealing && (
               <div className={timerClass}>{outOfTime ? '00:00' : formatTime(timeLeft)}</div>
             )}
             <div className="content-row">
@@ -409,7 +405,9 @@ export function OptionsScreen({
                 {study ? (
                   <PixelStudyHamsters className="study-hamsters" />
                 ) : (
-                  <Gauge angle={gaugeAngle} needleColor="var(--black)" />
+                  /* The needle keeps the game's blue here rather than going
+                     black against the green panel. */
+                  <Gauge angle={gaugeAngle} needleColor={needleColor} />
                 )}
               </div>
             )}
@@ -478,17 +476,31 @@ export function OptionsScreen({
               }
             >
               <div className="terminal-bar">-bash &mdash; 534 x 532</div>
+              {!armed ? (
+                /* The deck's own slot, holding the invitation to deal it. The
+                   panel above does not move when this swaps for the cards --
+                   same screen, same component, same DOM node. */
+                <div className="deal-slot">
+                  <button type="button" className="deal-btn" onClick={onArm}>
+                    Answer Question
+                  </button>
+                  <p className="deal-hint">The clock starts when you do</p>
+                </div>
+              ) : (
               <div className={isPhone ? 'options-row options-deck' : 'options-row'}>
                 {scenario.options.map((opt, i) => {
                   const depth = isPhone ? order.indexOf(i) : 0;
                   const top = depth === 0;
-                  const tilt = [0, -3.5, 3, -2.5, 2][depth] ?? 0;
+                  // Fanned hard rather than squared up: the cards behind the
+                  // top one lean alternately left and right, far enough that
+                  // each one is plainly visible under the card in hand.
+                  const tilt = [0, -11, 8.5, -6, 4][depth] ?? 0;
                   const deckStyle = isPhone
                     ? {
                         zIndex: scenario.options.length - depth,
-                        transform: `translate3d(${top ? drag.x : 0}px, ${depth * 7}px, 0) rotate(${
+                        transform: `translate3d(${top ? drag.x : 0}px, ${depth * 11}px, 0) rotate(${
                           top ? drag.x / 16 : tilt
-                        }deg) scale(${1 - depth * 0.035})`,
+                        }deg) scale(${1 - depth * 0.028})`,
                         transition: drag.active && top ? 'none' : 'transform .22s ease',
                         pointerEvents: top ? 'auto' : 'none',
                       }
@@ -549,6 +561,7 @@ export function OptionsScreen({
                   );
                 })}
               </div>
+              )}
             </div>
             {noAnswer && (
               <>
@@ -575,7 +588,7 @@ export function OptionsScreen({
           </div>
         </div>
       </div>
-      {isPhone && !noAnswer && (
+      {isPhone && armed && !noAnswer && (
         <div className="mobile-footer">
           <div className="mobile-footer-calls">
             <span className="mobile-footer-label">Call Adviser</span>

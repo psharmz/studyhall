@@ -1,8 +1,3 @@
-// The four endings the dial can land on, worst to best. Plain data, no React:
-// the results scene, the share preview and the share text all read from here
-// rather than each re-deriving the ending from the needle angle.
-export const ENDINGS = ['trapped', 'sipping', 'partial', 'aligned'];
-
 // Which quarter of the dial the needle landed in. It sweeps -75deg (fully
 // aligned) to +75deg (non-aligned) in four equal bands.
 export function endingFor(gaugeAngle) {

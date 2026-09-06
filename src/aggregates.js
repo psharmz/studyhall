@@ -107,4 +107,3 @@ export async function fetchQuadrantAverages() {
 // the picker; those words still count towards "All".
 const MIN_WORDS_PER_COUNTRY = 5;
 
-export const WORD_CLOUD_CONFIGURED = Boolean(WORD_CLOUD_URL);

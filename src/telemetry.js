@@ -314,12 +314,6 @@ export function captureScenarioFeedbackSubmitted({
   });
 }
 
-export function captureFeedbackFormOpened({ scenarioCode, questionNumber }) {
-  capture('feedback_form_opened', {
-    scenario_code: scenarioCode,
-    question_number: questionNumber,
-  });
-}
 
 function round3(n) {
   return Math.round(n * 1000) / 1000;

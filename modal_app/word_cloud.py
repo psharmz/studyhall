@@ -6,8 +6,8 @@ secret. This app holds that key and exposes one public, read-only endpoint.
 
 Two functions, deliberately split:
 
-  refresh()     runs on a schedule, queries PostHog, writes the result to a
-                modal.Dict. This is the only thing that touches PostHog.
+  refresh()     runs four times a day, queries PostHog, writes the result to
+                a modal.Dict. This is the only thing that touches PostHog.
   word_cloud()  the public endpoint. Reads the cached document and returns it.
                 No PostHog call on the request path, so a page load never waits
                 on a warehouse query and traffic spikes cost nothing extra.
@@ -63,10 +63,6 @@ MAX_WORDS_PER_COUNTRY = 25
 # the picker. Its picks still count towards "All" either way.
 MIN_WORDS_PER_COUNTRY = 5
 
-# A fully aligned answer is worth +5 and a non-aligned one -5, so a quadrant
-# runs from -5 to +5 per card.
-POINTS_PER_CARD = 5
-NON_ALIGNED_POINTS = -POINTS_PER_CARD
 
 # Clean slate. Only events at or after this instant count towards the published
 # aggregates -- everything before it was build-and-test traffic, including runs
@@ -161,13 +157,19 @@ def _hogql(query: str):
 #
 # Averaging happens in Python because a quadrant's average has to account for
 # partial decks -- see _quadrant_averages.
-POINTS_QUERY = f"""
+def _points_query():
+    """Built per call rather than at import: the alignment-to-points mapping
+    lives in quadrants.json, which is only readable inside the container."""
+    points = _load_points()
+    scored = "\n".join(
+        f"           toString(properties.option_alignment) = '{align}', {value},"
+        for align, value in points.items()
+    )
+    return f"""
   SELECT properties.run_id AS run,
          properties.scenario_code AS code,
          avg(multiIf(
-           toString(properties.option_alignment) = 'full', {POINTS_PER_CARD},
-           toString(properties.option_alignment) = 'partial', 2,
-           toString(properties.option_alignment) = 'non', {NON_ALIGNED_POINTS},
+{scored}
            0
          )) AS pts
   FROM events
@@ -178,11 +180,28 @@ POINTS_QUERY = f"""
 """
 
 
-def _load_quadrants():
+def _load_map():
+    """The shared quadrant map, read inside the container.
+
+    Deliberately not read at import time: the file only exists at
+    /root/quadrants.json inside the image, and this module is imported on the
+    deploying machine too.
+    """
     import json
 
     with open("/root/quadrants.json") as f:
-        return json.load(f)["quadrants"]
+        return json.load(f)
+
+
+def _load_quadrants():
+    return _load_map()["quadrants"]
+
+
+def _load_points():
+    """What each alignment scores. The same block the game scores its options
+    from, so a player's own total and this average cannot land on different
+    scales."""
+    return _load_map()["points"]
 
 
 def _quadrant_averages(point_rows):
@@ -195,6 +214,7 @@ def _quadrant_averages(point_rows):
     same footing.
     """
     quadrants = _load_quadrants()
+    points = _load_points()
     codes_for = {
         q["slug"]: {f"S.{n:02d}" for n in q["scenarios"]} for q in quadrants
     }
@@ -221,8 +241,8 @@ def _quadrant_averages(point_rows):
             continue
         averages[slug] = {
             "avg": round(sum(per_card) / len(per_card) * size, 1),
-            "max": size * POINTS_PER_CARD,
-            "min": size * NON_ALIGNED_POINTS,
+            "max": size * points["full"],
+            "min": size * points["non"],
             "runs": len(per_card),
         }
     return averages
@@ -248,11 +268,14 @@ def _build_document(all_rows, country_rows):
     }
 
 
-@app.function(image=image, secrets=[posthog], schedule=modal.Cron("0 6 * * *"))
+# Every six hours, on the hour, in UTC: 00:00, 06:00, 12:00, 18:00. The window
+# between refreshes is what decides how stale a player's comparison average can
+# be -- the endpoint only ever serves what this last wrote.
+@app.function(image=image, secrets=[posthog], schedule=modal.Cron("0 0,6,12,18 * * *"))
 def refresh():
     """Query PostHog and cache the result. The only function with the key."""
     doc = _build_document(_hogql(ALL_QUERY), _hogql(COUNTRY_QUERY))
-    doc["quadrant_averages"] = _quadrant_averages(_hogql(POINTS_QUERY))
+    doc["quadrant_averages"] = _quadrant_averages(_hogql(_points_query()))
 
     # An empty result is cached rather than rejected. It used to raise, back
     # when the results screen fell back to sample words and a blank cloud looked

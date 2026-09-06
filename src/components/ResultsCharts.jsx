@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import cloud from 'd3-cloud';
 import { fetchWordCloud, fetchQuadrantAverages } from '../aggregates.js';
 import quadrantMap from '../../quadrants.json';
-import { SCENARIOS, ALIGN_LABELS } from '../scenarios.js';
+import { SCENARIOS, ALIGN_LABELS, ALIGN_POINTS } from '../scenarios.js';
 import { DEV_MODE } from '../env.js';
 import { DEV_STUB_ANSWERS, DEV_STUB_AVERAGES } from '../devStub.js';
 
@@ -23,10 +23,10 @@ const SCENARIOS_BY_SLUG = Object.fromEntries(
   quadrantMap.quadrants.map((q) => [q.slug, q.scenarios])
 );
 
-// A fully aligned answer is worth +5 and a non-aligned one -5, so a quadrant
-// runs from -5 to +5 per card and sits at zero when every answer is
-// non-aligned as often as it is aligned.
-const POINTS_PER_CARD = 5;
+// What an answer is worth per card, from the same shared block the game scores
+// its options with and the Modal aggregation averages by. A quadrant therefore
+// runs from points.non to points.full per card, and sits at zero when answers
+// are non-aligned as often as they are aligned.
 
 const RADAR_AXES_BASE = [
   {
@@ -117,8 +117,12 @@ const RADAR_AXES_BASE = [
 
 export const RADAR_AXES = RADAR_AXES_BASE.map((axis) => {
   const scenarios = SCENARIOS_BY_SLUG[axis.slug];
-  const span = scenarios.length * POINTS_PER_CARD;
-  return { ...axis, scenarios, max: span, min: -span };
+  return {
+    ...axis,
+    scenarios,
+    max: scenarios.length * ALIGN_POINTS.full,
+    min: scenarios.length * ALIGN_POINTS.non,
+  };
 });
 
 // Both series are real now: the player's own totals come from their answers via
@@ -407,6 +411,9 @@ function RadarChart({ answers: realAnswers }) {
   const marks = useRef({ aura: null, sel: null, dot: null, labels: null });
   const [active, setActive] = useState(0);
   const [hovered, setHovered] = useState(null);
+  // Which average vertex the pointer is on, if any. Separate from `hovered`:
+  // that one drives the quadrant selection, this one only shows a readout.
+  const [hoveredAvg, setHoveredAvg] = useState(null);
 
   // The axes as drawn: static definitions, this player's own totals, and the
   // fetched average where there is one.
@@ -574,7 +581,35 @@ function RadarChart({ answers: realAnswers }) {
         .style('animation-delay', (_, i) => `${i * 0.45}s`);
 
       if (s.key === 'you') marks.current.dot = dot;
+      if (s.key === 'avg') marks.current.avgDot = dot;
+
+      // The average ring answers a question of its own -- "how did everyone
+      // else do here?" -- so its vertices get the same generous hit target
+      // the player's own do, and a readout on hover.
+      if (s.key === 'avg') {
+        dots
+          .append('g')
+          .selectAll('circle')
+          .data(axes)
+          .join('circle')
+          .attr('class', 'radar-avg-hit')
+          .attr('cx', at(px))
+          .attr('cy', at(py))
+          .attr('r', 16)
+          .attr('fill', 'transparent')
+          .style('cursor', 'pointer')
+          .on('mouseenter', (_, d) => setHoveredAvg(axes.indexOf(d)))
+          .on('mouseleave', () => setHoveredAvg(null));
+      }
     });
+
+    // The average readout, drawn once and moved into place on hover. Inside
+    // the SVG rather than floating over it, so it needs no coordinate maths
+    // and travels with the chart when it scrolls sideways on a phone.
+    const tip = g.append('g').attr('class', 'radar-avg-tip').attr('display', 'none');
+    tip.append('rect').attr('class', 'radar-avg-tip-box').attr('rx', 3);
+    tip.append('text').attr('class', 'radar-avg-tip-text').attr('text-anchor', 'middle');
+    marks.current.avgTip = tip;
 
     // Every quadrant is named, all the time. The selected one is simply the
     // one at full strength -- see the highlight effect.
@@ -615,16 +650,30 @@ function RadarChart({ answers: realAnswers }) {
           .text(line);
       });
 
-      // Score sits under its own quadrant's name rather than in the card.
-      group
+      // Scores sit under the quadrant's name rather than in the card: the
+      // player's own, then everyone's average beside it in the average
+      // series' own purple, so the number and the ring it belongs to are
+      // obviously the same thing. The average is absent until Modal answers.
+      const score = group
         .append('text')
         .attr('class', 'radar-axis-score')
         .attr('x', x)
         .attr('y', firstY + lines.length * LABEL_LINE)
         .attr('text-anchor', anchor)
         .attr('font-size', LABEL_SIZE)
-        .attr('font-weight', 700)
+        .attr('font-weight', 700);
+
+      score
+        .append('tspan')
+        .attr('class', 'radar-axis-score-you')
         .text(`${d.you}/${d.max}`);
+
+      if (d.avg !== null && d.avg !== undefined) {
+        score
+          .append('tspan')
+          .attr('class', 'radar-axis-score-avg')
+          .text(`  avg ${d.avg}`);
+      }
     });
 
     // Generous invisible hit targets on each vertex drive the detail card.
@@ -646,9 +695,42 @@ function RadarChart({ answers: realAnswers }) {
 
     return () => {
       svg.selectAll('*').remove();
-      marks.current = { aura: null, sel: null, dot: null, labels: null };
+      marks.current = { aura: null, sel: null, dot: null, labels: null, avgDot: null, avgTip: null };
     };
   }, [axes, series]);
+
+  // The average readout: positioned and filled here rather than in the draw
+  // effect, so hovering never redraws the chart out from under the pointer.
+  useEffect(() => {
+    const tip = marks.current.avgTip;
+    if (!tip) return;
+    const axis = hoveredAvg === null ? null : axes[hoveredAvg];
+    marks.current.avgDot?.attr('r', (_, i) => (i === hoveredAvg ? 5 : 3));
+    if (!axis || axis.avg === null || axis.avg === undefined) {
+      tip.attr('display', 'none');
+      return;
+    }
+    const angle = (hoveredAvg * 2 * Math.PI) / axes.length;
+    const span = axis.max - axis.min;
+    const radius = span === 0 ? 0 : ((axis.avg - axis.min) / span) * RADAR_R;
+    const x = radius * Math.sin(angle);
+    const y = -radius * Math.cos(angle);
+
+    const text = tip.select('.radar-avg-tip-text').text(`Everyone: ${axis.avg}/${axis.max}`);
+    const box = text.node().getBBox();
+    const padX = 7;
+    const padY = 4;
+    tip
+      .select('.radar-avg-tip-box')
+      .attr('x', box.x - padX)
+      .attr('y', box.y - padY)
+      .attr('width', box.width + padX * 2)
+      .attr('height', box.height + padY * 2);
+    // Above the vertex, except on the bottom one where that would sit on the
+    // chart -- there it drops below instead.
+    const lift = hoveredAvg === 2 ? 22 : -18;
+    tip.attr('display', null).attr('transform', `translate(${x},${y + lift})`);
+  }, [hoveredAvg, axes]);
 
   // Highlight only -- no redraw, so the marks stay put under the pointer.
   // The vertex itself is left alone: it keeps its colour and keeps pulsing,

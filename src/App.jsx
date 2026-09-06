@@ -24,6 +24,7 @@ import {
 } from './scenarios.js';
 import { DEV_MODE } from './env.js';
 import { loadVision, saveVision } from './vision.js';
+import { useIsPhone } from './useIsPhone.js';
 import { SetupScreen } from './components/SetupScreen.jsx';
 import { RulesScreen } from './components/RulesScreen.jsx';
 import { GoalsScreen } from './components/GoalsScreen.jsx';
@@ -94,6 +95,7 @@ export default function App() {
   // The closing free-text card. Seeded from sessionStorage so a Study Mode run
   // started right after the simulation opens on what was written then.
   const [vision, setVision] = useState(() => loadVision());
+  const isPhone = useIsPhone();
   // Band picker under the results shortcut.
   const [bandsOpen, setBandsOpen] = useState(false);
   const bandsRef = useRef(null);
@@ -354,6 +356,9 @@ export default function App() {
   // rules and goal screens for its own two -- so the numbering in the title
   // bars matches all the way through.
   const isStudy = settings?.mode === 'study';
+  // Phone + Simulation Mode reads the prompt and answers it on one screen.
+  // Study Mode keeps its own two-step flow, and so does every desktop layout.
+  const phoneSim = isPhone && !isStudy;
 
   let screen;
   if (phase === 'setup') {
@@ -427,9 +432,14 @@ export default function App() {
         onStartStudy={handleStartStudy}
       />
     );
-  } else if (phase === 'options') {
+  } else if (phase === 'options' || (phase === 'prompt' && phoneSim)) {
     // No isLast: the vision card always follows, so no scenario card is ever
     // the last screen, and every one of them reads "Next Question".
+    //
+    // On a phone in Simulation Mode this same component also stands in for the
+    // prompt screen, unarmed. Rendering the one component across both phases is
+    // what keeps the green panel still: React reconciles it in place instead of
+    // unmounting a prompt screen and mounting an options screen over the top.
     screen = (
       <OptionsScreen
         key={scenario.code}
@@ -444,6 +454,8 @@ export default function App() {
         onUseCall={(i) => setUsedCalls((prev) => prev.map((u, j) => (j === i ? true : u)))}
         onAdvisorCall={handleAdvisorCall}
         questionNumber={questionNumber}
+        armed={!phoneSim || phase === 'options'}
+        onArm={() => setPhase('options')}
         onReveal={handleReveal}
         onTimeoutPenalty={handleTimeoutPenalty}
         onNext={handleNext}

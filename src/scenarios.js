@@ -1,14 +1,12 @@
 import quadrantMap from '../quadrants.json';
 
-// Alignment sourced from the EJIT debrief sheets for each
-// scenario; the score each alignment is worth: full = +5, partial = +2,
-// non = -5.
+// Alignment sourced from the EJIT debrief sheets for each scenario. What each
+// alignment is worth comes from quadrants.json, the same file the Modal
+// aggregation reads -- so an option's score, the radar's range and the
+// cross-player average can never be computed on three different scales.
+export const ALIGN_POINTS = quadrantMap.points;
 export const LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
-// Where the secondary actions point. The nulls have no destination yet --
-// until they get one, those buttons render inert.
-export const FEEDBACK_FORM_URL = 'https://docs.google.com/forms/u/0/';
-export const LEARN_BEYOND_URL = null;
 export const FACILITATOR_FORM_URL =
   'https://docs.google.com/forms/d/e/1FAIpQLSct92R0RfomYZMXI32iA9jYQCbD-zJQLvWk_vL1rLkAg5bXEw/viewform?usp=header';
 export const SUPPORT_URL = null;
@@ -37,7 +35,7 @@ export const ADVISOR_PROFILES = {
   },
 };
 
-export const SCENARIOS = [
+const SCENARIO_DECK = [
   {
     code: 'S.01',
     titleLines: ['DAY 1 AT', 'TECH FLOW'],
@@ -60,11 +58,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Suggest focusing on removing bias from the existing datasets and algorithms.', score: 2, align: 'partial', explanation: 'A good start, but this approach treats symptoms rather than addressing the root systems that created these biases.' },
-      { text: 'Recommend centering anti-racist principles from the ground up and involving affected communities in the redesign.', score: 5, align: 'full', explanation: 'This approach recognizes that truly just technology must actively dismantle racist systems, not just minimize their effects.' },
-      { text: 'Propose making the AI completely colorblind by removing all demographic indicators.', score: -5, align: 'non', explanation: 'Colorblind approaches often perpetuate existing inequalities by ignoring the reality of already existing systemic discrimination. It artificially removes aspects that are relevant to the issue' },
-      { text: 'Recommend implementing quota systems to ensure equal hiring outcomes.', score: 2, align: 'partial', explanation: 'Quotas are relevant to address the symptoms but, by themselves, do not fix the biased processes and systemic issues that create unequal results in the first place.' },
-      { text: 'Suggest training the AI on data from the most successful companies in the industry.', score: -5, align: 'non', explanation: 'In systems of exploitation, historical success often reflects past discrimination, making this approach potentially harmful to marginalized communities.' }
+      { text: 'Suggest focusing on removing bias from the existing datasets and algorithms.', align: 'partial', explanation: 'A good start, but this approach treats symptoms rather than addressing the root systems that created these biases.' },
+      { text: 'Recommend centering anti-racist principles from the ground up and involving affected communities in the redesign.', align: 'full', explanation: 'This approach recognizes that truly just technology must actively dismantle racist systems, not just minimize their effects.' },
+      { text: 'Propose making the AI completely colorblind by removing all demographic indicators.', align: 'non', explanation: 'Colorblind approaches often perpetuate existing inequalities by ignoring the reality of already existing systemic discrimination. It artificially removes aspects that are relevant to the issue' },
+      { text: 'Recommend implementing quota systems to ensure equal hiring outcomes.', align: 'partial', explanation: 'Quotas are relevant to address the symptoms but, by themselves, do not fix the biased processes and systemic issues that create unequal results in the first place.' },
+      { text: 'Suggest training the AI on data from the most successful companies in the industry.', align: 'non', explanation: 'In systems of exploitation, historical success often reflects past discrimination, making this approach potentially harmful to marginalized communities.' }
     ]
   },
   {
@@ -90,11 +88,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Embrace the fast-paced culture and focus on rapid iteration to stay competitive.', score: -5, align: 'non', explanation: 'Prioritizing speed often means overlooking critical ethical considerations and community impacts that take time to understand.' },
-      { text: 'Recommend following established industry best practices and ensuring regulatory compliance.', score: -5, align: 'non', explanation: 'Compliance represents minimum standards that often don\'t address environmental justice concerns or community needs.' },
-      { text: 'Propose forming diverse review committees to evaluate products before launch.', score: 2, align: 'partial', explanation: 'Diversity in review helps, but it\'s insufficient without fundamental changes to how innovation processes work from the start.' },
-      { text: 'Suggest conducting thorough market research and user testing before any release.', score: 2, align: 'partial', explanation: 'Traditional research is useful but doesn\'t address deeper questions about who gets to innovate or broader systemic impacts.' },
-      { text: 'Advocate for providing resources for all to innovate, considering potential unintended consequences, and centering empathy in every decision.', score: 5, align: 'full', explanation: 'True responsible innovation requires considering broad access, unintended consequences, and human-centered design at every step.' }
+      { text: 'Embrace the fast-paced culture and focus on rapid iteration to stay competitive.', align: 'non', explanation: 'Prioritizing speed often means overlooking critical ethical considerations and community impacts that take time to understand.' },
+      { text: 'Recommend following established industry best practices and ensuring regulatory compliance.', align: 'non', explanation: 'Compliance represents minimum standards that often don\'t address environmental justice concerns or community needs.' },
+      { text: 'Propose forming diverse review committees to evaluate products before launch.', align: 'partial', explanation: 'Diversity in review helps, but it\'s insufficient without fundamental changes to how innovation processes work from the start.' },
+      { text: 'Suggest conducting thorough market research and user testing before any release.', align: 'partial', explanation: 'Traditional research is useful but doesn\'t address deeper questions about who gets to innovate or broader systemic impacts.' },
+      { text: 'Advocate for providing resources for all to innovate, considering potential unintended consequences, and centering empathy in every decision.', align: 'full', explanation: 'True responsible innovation requires considering broad access, unintended consequences, and human-centered design at every step.' }
     ]
   },
   {
@@ -119,11 +117,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Present more detailed information about the platform\'s benefits to help them make a fully informed decision.', score: -5, align: 'non', explanation: 'This assumes they lack information rather than respecting their autonomy to maintain their traditional way of life' },
-      { text: 'Suggest free comprehensive digital literacy training with TechFlow platform only as an option, so they can make a truly fully informed choice.', score: 2, align: 'partial', explanation: 'While education can be valuable, this still assumes technology adoption is inherently beneficial and desirable.' },
-      { text: 'Offer to provide only basic, essential digital services while avoiding advanced features.', score: -5, align: 'non', explanation: 'This still imposes technology on a community that has clearly expressed they don\'t want it.' },
-      { text: 'Respect their choice completely and advocate within TechFlow to protect their right to live without digital interference.', score: 5, align: 'full', explanation: 'Environmental justice demands preserving Indigenous and traditional ways of living without technological interference.' },
-      { text: 'Explain that digital integration is inevitable in the modern world and offer gradual transition support.', score: -5, align: 'non', explanation: 'This paternalistic approach assumes communities need to \'adapt\' rather than respecting their autonomous choices.' }
+      { text: 'Present more detailed information about the platform\'s benefits to help them make a fully informed decision.', align: 'non', explanation: 'This assumes they lack information rather than respecting their autonomy to maintain their traditional way of life' },
+      { text: 'Suggest free comprehensive digital literacy training with TechFlow platform only as an option, so they can make a truly fully informed choice.', align: 'partial', explanation: 'While education can be valuable, this still assumes technology adoption is inherently beneficial and desirable.' },
+      { text: 'Offer to provide only basic, essential digital services while avoiding advanced features.', align: 'non', explanation: 'This still imposes technology on a community that has clearly expressed they don\'t want it.' },
+      { text: 'Respect their choice completely and advocate within TechFlow to protect their right to live without digital interference.', align: 'full', explanation: 'Environmental justice demands preserving Indigenous and traditional ways of living without technological interference.' },
+      { text: 'Explain that digital integration is inevitable in the modern world and offer gradual transition support.', align: 'non', explanation: 'This paternalistic approach assumes communities need to \'adapt\' rather than respecting their autonomous choices.' }
     ]
   },
   {
@@ -148,11 +146,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Accept the contract since the civilian safety applications outweigh the military concerns.', score: -5, align: 'non', explanation: 'Environmental justice technology explicitly refuses to cooperate with systems of oppression, regardless of potential benefits.' },
-      { text: 'Negotiate to accept only if military applications are strictly limited to defensive purposes.', score: -5, align: 'non', explanation: 'The distinction between \'defensive\' and \'offensive\' use is often unclear and still supports systems of potential violence.' },
-      { text: 'Decline the entire project due to concerns with weaponization of intelligent systems and civilian monitoring as enablement of systems of oppression.', score: 5, align: 'full', explanation: 'True environmental justice demands that technology elevate all people, not enable surveillance, violence, or oppression.' },
-      { text: 'Accept the contract if it demonstrably helps prevent greater harm and violence.', score: -5, align: 'non', explanation: 'This utilitarian logic can be used to justify any harmful application and contradicts environmental justice values.' },
-      { text: 'Propose separating civilian and military applications, only developing the civilian safety components.', score: 2, align: 'partial', explanation: 'While better than full military cooperation, this still doesn\'t address broader concerns about surveillance systems.' }
+      { text: 'Accept the contract since the civilian safety applications outweigh the military concerns.', align: 'non', explanation: 'Environmental justice technology explicitly refuses to cooperate with systems of oppression, regardless of potential benefits.' },
+      { text: 'Negotiate to accept only if military applications are strictly limited to defensive purposes.', align: 'non', explanation: 'The distinction between \'defensive\' and \'offensive\' use is often unclear and still supports systems of potential violence.' },
+      { text: 'Decline the entire project due to concerns with weaponization of intelligent systems and civilian monitoring as enablement of systems of oppression.', align: 'full', explanation: 'True environmental justice demands that technology elevate all people, not enable surveillance, violence, or oppression.' },
+      { text: 'Accept the contract if it demonstrably helps prevent greater harm and violence.', align: 'non', explanation: 'This utilitarian logic can be used to justify any harmful application and contradicts environmental justice values.' },
+      { text: 'Propose separating civilian and military applications, only developing the civilian safety components.', align: 'partial', explanation: 'While better than full military cooperation, this still doesn\'t address broader concerns about surveillance systems.' }
     ]
   },
   {
@@ -177,11 +175,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Organize comprehensive community surveys, workshops and feedback sessions to gather input.', score: 2, align: 'partial', explanation: 'While community feedback is valuable, this doesn\'t give residents actual power in the decision-making process.' },
-      { text: 'Establish regular public meetings where community members can voice concerns and ask questions.', score: -5, align: 'non', explanation: 'Public comment opportunities without real decision power don\'t constitute meaningful democratic participation.' },
-      { text: 'Create transparent development processes with regular public updates and information sessions.', score: -5, align: 'non', explanation: 'Transparency is important but by itself doesn\'t give communities actual decision-making authority over their futures.' },
-      { text: 'Design a system where affected communities are informed and have real decision-making power over technologies that impact their neighborhoods.', score: 5, align: 'full', explanation: 'True democratic technology development requires communities to have actual authority, not just opportunities for consultation.' },
-      { text: 'Form community advisory boards with neighborhood representatives to guide implementation of all technologies and systems.', score: 2, align: 'partial', explanation: 'Advisory roles provide some influence but don\'t ensure community control over decisions that directly affect them.' }
+      { text: 'Organize comprehensive community surveys, workshops and feedback sessions to gather input.', align: 'partial', explanation: 'While community feedback is valuable, this doesn\'t give residents actual power in the decision-making process.' },
+      { text: 'Establish regular public meetings where community members can voice concerns and ask questions.', align: 'non', explanation: 'Public comment opportunities without real decision power don\'t constitute meaningful democratic participation.' },
+      { text: 'Create transparent development processes with regular public updates and information sessions.', align: 'non', explanation: 'Transparency is important but by itself doesn\'t give communities actual decision-making authority over their futures.' },
+      { text: 'Design a system where affected communities are informed and have real decision-making power over technologies that impact their neighborhoods.', align: 'full', explanation: 'True democratic technology development requires communities to have actual authority, not just opportunities for consultation.' },
+      { text: 'Form community advisory boards with neighborhood representatives to guide implementation of all technologies and systems.', align: 'partial', explanation: 'Advisory roles provide some influence but don\'t ensure community control over decisions that directly affect them.' }
     ]
   },
   {
@@ -206,11 +204,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Explore, at short-term, models focused on impact more than profit while finding ways to transition away from extractive investor models towards shared ownership and equitable profit sharing with the communities.', score: 5, align: 'full', explanation: 'Environmental justice requires moving beyond extractive capitalist models toward truly equitable economic structures.' },
-      { text: 'Explore alternative structures like B-Corp status to focus more on impact than profit.', score: 2, align: 'partial', explanation: 'B-Corp structures help but can still operate within extractive economic systems.' },
-      { text: 'Work within the current investor model to make TechFlow as ethical as possible while meeting growth expectations without questioning them.', score: -5, align: 'non', explanation: 'Ethical improvements within extractive systems are very unresponsive to investors interests and don\'t address fundamental issues.' },
-      { text: 'Push for stronger internal policies to constrain profit-maximizing behavior.', score: 2, align: 'partial', explanation: 'Policies and regulations can help limit harm but don\'t address the fundamental extractive nature of the system.' },
-      { text: 'Implement ESG metrics and impact investing frameworks to balance profit with social good.', score: -5, align: 'non', explanation: 'Market-based solutions often commodify social and environmental values rather than addressing root causes.' }
+      { text: 'Explore, at short-term, models focused on impact more than profit while finding ways to transition away from extractive investor models towards shared ownership and equitable profit sharing with the communities.', align: 'full', explanation: 'Environmental justice requires moving beyond extractive capitalist models toward truly equitable economic structures.' },
+      { text: 'Explore alternative structures like B-Corp status to focus more on impact than profit.', align: 'partial', explanation: 'B-Corp structures help but can still operate within extractive economic systems.' },
+      { text: 'Work within the current investor model to make TechFlow as ethical as possible while meeting growth expectations without questioning them.', align: 'non', explanation: 'Ethical improvements within extractive systems are very unresponsive to investors interests and don\'t address fundamental issues.' },
+      { text: 'Push for stronger internal policies to constrain profit-maximizing behavior.', align: 'partial', explanation: 'Policies and regulations can help limit harm but don\'t address the fundamental extractive nature of the system.' },
+      { text: 'Implement ESG metrics and impact investing frameworks to balance profit with social good.', align: 'non', explanation: 'Market-based solutions often commodify social and environmental values rather than addressing root causes.' }
     ]
   },
   {
@@ -235,11 +233,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Approve the data center but ensure it uses 100% renewable energy and the most efficient cooling systems.', score: 2, align: 'partial', explanation: 'Renewable energy is better than fossil fuels, but this doesn\'t question whether such massive infrastructure is necessary at all.' },
-      { text: 'Build the facility but offset all environmental impacts through verified carbon credit programs.', score: -5, align: 'non', explanation: 'Offsetting often fails to address local environmental damage and can be a form of greenwashing that avoids real responsibility.' },
-      { text: 'Question the assumptions, data, and projections for such a large project and the impact it can have on communities across time while providing alternatives such as distributed, community-owned server networks instead.', score: 5, align: 'full', explanation: 'True environmental preservation requires questioning the need for resource-intensive infrastructure before building it.' },
-      { text: 'Approve an underground facility to minimize visual impact and surface environmental disruption while making sure it is built in a place with abundance of water and energy.', score: -5, align: 'non', explanation: 'This addresses aesthetics but not the fundamental environmental and social impacts of massive infrastructure.' },
-      { text: 'Build using the highest environmental certification standards and green building practices available.', score: 2, align: 'partial', explanation: 'Green building standards help reduce impact but don\'t question whether the project should exist in the first place.' }
+      { text: 'Approve the data center but ensure it uses 100% renewable energy and the most efficient cooling systems.', align: 'partial', explanation: 'Renewable energy is better than fossil fuels, but this doesn\'t question whether such massive infrastructure is necessary at all.' },
+      { text: 'Build the facility but offset all environmental impacts through verified carbon credit programs.', align: 'non', explanation: 'Offsetting often fails to address local environmental damage and can be a form of greenwashing that avoids real responsibility.' },
+      { text: 'Question the assumptions, data, and projections for such a large project and the impact it can have on communities across time while providing alternatives such as distributed, community-owned server networks instead.', align: 'full', explanation: 'True environmental preservation requires questioning the need for resource-intensive infrastructure before building it.' },
+      { text: 'Approve an underground facility to minimize visual impact and surface environmental disruption while making sure it is built in a place with abundance of water and energy.', align: 'non', explanation: 'This addresses aesthetics but not the fundamental environmental and social impacts of massive infrastructure.' },
+      { text: 'Build using the highest environmental certification standards and green building practices available.', align: 'partial', explanation: 'Green building standards help reduce impact but don\'t question whether the project should exist in the first place.' }
     ]
   },
   {
@@ -265,11 +263,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Design technology systems that remain completely separate from natural environments to prevent interference on ecosystems.', score: -5, align: 'non', explanation: 'Separation continues the harmful divide between technology and nature that underlies many environmental problems.' },
-      { text: 'Focus on advanced implementation of biomimicry, designing systems that copy and learn from natural processes in the most efficient way possible.', score: 2, align: 'partial', explanation: 'Biomimicry is positive but doesn\'t necessarily create true synergistic relationships with living systems if used only to further exploit nature in a more efficient way.' },
-      { text: 'Build all technology exclusively from sustainable, recyclable, and renewable materials.', score: 2, align: 'partial', explanation: 'Sustainable materials are important but don\'t ensure synergistic relationships with living ecosystems and communities.' },
-      { text: 'Prioritize designing all systems to have the smallest possible environmental footprint.', score: 2, align: 'partial', explanation: 'Minimizing impact is good but doesn\'t create the positive, collaborative relationships that environmental justice requires.' },
-      { text: 'Create technology that works synergistically with natural systems, functioning as part of integrated ecological networks while aware of the traps of the current socio-economic system.', score: 5, align: 'full', explanation: 'Environmental justice sees technology as part of, not separate from, the web of natural relationships and living systems.' }
+      { text: 'Design technology systems that remain completely separate from natural environments to prevent interference on ecosystems.', align: 'non', explanation: 'Separation continues the harmful divide between technology and nature that underlies many environmental problems.' },
+      { text: 'Focus on advanced implementation of biomimicry, designing systems that copy and learn from natural processes in the most efficient way possible.', align: 'partial', explanation: 'Biomimicry is positive but doesn\'t necessarily create true synergistic relationships with living systems if used only to further exploit nature in a more efficient way.' },
+      { text: 'Build all technology exclusively from sustainable, recyclable, and renewable materials.', align: 'partial', explanation: 'Sustainable materials are important but don\'t ensure synergistic relationships with living ecosystems and communities.' },
+      { text: 'Prioritize designing all systems to have the smallest possible environmental footprint.', align: 'partial', explanation: 'Minimizing impact is good but doesn\'t create the positive, collaborative relationships that environmental justice requires.' },
+      { text: 'Create technology that works synergistically with natural systems, functioning as part of integrated ecological networks while aware of the traps of the current socio-economic system.', align: 'full', explanation: 'Environmental justice sees technology as part of, not separate from, the web of natural relationships and living systems.' }
     ]
   },
   {
@@ -294,11 +292,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Support the environmental groups\' position that some sensitive areas need protection from human access.', score: 2, align: 'partial', explanation: 'While ecosystem protection is important, this approach might continue patterns of restricting people\'s access to land.' },
-      { text: 'Advocate for access to equitable and sustainable tech for all while directly supporting the indigenous and local communities in their roles as stewards of the sensitive areas within their localities.', score: 5, align: 'full', explanation: 'Environmental justice opposes using technology to exclude people from parts of the Earth, seeking instead equitable access.' },
-      { text: 'Defer to existing legal frameworks and property rights to determine appropriate access policies.', score: -5, align: 'non', explanation: 'Current legal systems often reflect colonial and private property structures that can exclude people from accessing land.' },
-      { text: 'Focus on a neutral stance for TechFlow\'s technology, deciding to continue the project as is and not taking sides.', score: -5, align: 'non', explanation: 'Neutral stance is a myth and it only reinforces the status quo. Thus, if the status quo is already destructive, so it will be the supposedly neutral stance.' },
-      { text: 'Design technology that makes remote natural areas more accessible to all people without getting involved in the issue of ecosystem management.', score: 2, align: 'partial', explanation: 'Increased accessibility is positive, but this doesn\'t address fundamental questions about who controls access decisions.' }
+      { text: 'Support the environmental groups\' position that some sensitive areas need protection from human access.', align: 'partial', explanation: 'While ecosystem protection is important, this approach might continue patterns of restricting people\'s access to land.' },
+      { text: 'Advocate for access to equitable and sustainable tech for all while directly supporting the indigenous and local communities in their roles as stewards of the sensitive areas within their localities.', align: 'full', explanation: 'Environmental justice opposes using technology to exclude people from parts of the Earth, seeking instead equitable access.' },
+      { text: 'Defer to existing legal frameworks and property rights to determine appropriate access policies.', align: 'non', explanation: 'Current legal systems often reflect colonial and private property structures that can exclude people from accessing land.' },
+      { text: 'Focus on a neutral stance for TechFlow\'s technology, deciding to continue the project as is and not taking sides.', align: 'non', explanation: 'Neutral stance is a myth and it only reinforces the status quo. Thus, if the status quo is already destructive, so it will be the supposedly neutral stance.' },
+      { text: 'Design technology that makes remote natural areas more accessible to all people without getting involved in the issue of ecosystem management.', align: 'partial', explanation: 'Increased accessibility is positive, but this doesn\'t address fundamental questions about who controls access decisions.' }
     ]
   },
   {
@@ -323,11 +321,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Publish the details of the technology and release all of it as open source - blueprints, code, repair manuals, and development processes freely available to everyone.', score: 5, align: 'full', explanation: 'Open source principles ensure everyone can make, repair, modify, and develop technology for maximum collective benefit.' },
-      { text: 'Keep some core components proprietary to ensure the profit can be redirected to the communities to further sustain its community-focused development work.', score: -5, align: 'non', explanation: 'Proprietary restrictions prevent equal access to technology development and repair capabilities, limiting innovation.' },
-      { text: 'Patent the technology but allow free use for research, education, and community benefit projects.', score: 2, align: 'partial', explanation: 'Although interesting as a model, this approach still restrict access and don\'t align with environmental justice principles of universal access.' },
-      { text: 'Make the technology open source but keep certain critical elements proprietary for safety reasons.', score: -5, align: 'non', explanation: 'Security concerns are often used to justify restrictions that maintain power imbalances rather than truly protecting people.' },
-      { text: 'Patent the technology but allow the original communities to keep using it for free.', score: 2, align: 'partial', explanation: 'While that shows the appreciation for early users it limits access to other groups in similar situations.' }
+      { text: 'Publish the details of the technology and release all of it as open source - blueprints, code, repair manuals, and development processes freely available to everyone.', align: 'full', explanation: 'Open source principles ensure everyone can make, repair, modify, and develop technology for maximum collective benefit.' },
+      { text: 'Keep some core components proprietary to ensure the profit can be redirected to the communities to further sustain its community-focused development work.', align: 'non', explanation: 'Proprietary restrictions prevent equal access to technology development and repair capabilities, limiting innovation.' },
+      { text: 'Patent the technology but allow free use for research, education, and community benefit projects.', align: 'partial', explanation: 'Although interesting as a model, this approach still restrict access and don\'t align with environmental justice principles of universal access.' },
+      { text: 'Make the technology open source but keep certain critical elements proprietary for safety reasons.', align: 'non', explanation: 'Security concerns are often used to justify restrictions that maintain power imbalances rather than truly protecting people.' },
+      { text: 'Patent the technology but allow the original communities to keep using it for free.', align: 'partial', explanation: 'While that shows the appreciation for early users it limits access to other groups in similar situations.' }
     ]
   },
   {
@@ -352,11 +350,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Promise to establish a fund to compensate rural communities for hosting network infrastructure.', score: 2, align: 'partial', explanation: 'Compensation acknowledges the problem but doesn\'t address the fundamental inequity of unequal burden distribution.' },
-      { text: 'Immediately halt expansion until you can redesign the system so benefits and burdens are equally shared among all communities while protecting the most vulnerable ones from being further exploited.', score: 5, align: 'full', explanation: 'Environmental justice demands that both the benefits and burdens of technology be equally distributed across all communities.' },
-      { text: 'Continue expansion because the urban benefits serve the greater good and will eventually reach rural areas.', score: -5, align: 'non', explanation: '\'Greater good\' arguments often perpetuate environmental injustice by ignoring those who bear the costs of progress.' },
-      { text: 'Relocate server infrastructure to less populated areas to minimize the number of people experiencing negative impacts.', score: -5, align: 'non', explanation: 'This approach shifts burdens to fewer people rather than addressing the fundamental inequity of burden distribution.' },
-      { text: 'Tap into the situation by creating a marketplace where issues in cities and countryside are framed as opportunities for investment.', score: 2, align: 'partial', explanation: 'Marketplace is poorly distributed context enables and reinforces the exploitative dynamic that contributed and/or created the inequalities, where those with money will benefit the most.' }
+      { text: 'Promise to establish a fund to compensate rural communities for hosting network infrastructure.', align: 'partial', explanation: 'Compensation acknowledges the problem but doesn\'t address the fundamental inequity of unequal burden distribution.' },
+      { text: 'Immediately halt expansion until you can redesign the system so benefits and burdens are equally shared among all communities while protecting the most vulnerable ones from being further exploited.', align: 'full', explanation: 'Environmental justice demands that both the benefits and burdens of technology be equally distributed across all communities.' },
+      { text: 'Continue expansion because the urban benefits serve the greater good and will eventually reach rural areas.', align: 'non', explanation: '\'Greater good\' arguments often perpetuate environmental injustice by ignoring those who bear the costs of progress.' },
+      { text: 'Relocate server infrastructure to less populated areas to minimize the number of people experiencing negative impacts.', align: 'non', explanation: 'This approach shifts burdens to fewer people rather than addressing the fundamental inequity of burden distribution.' },
+      { text: 'Tap into the situation by creating a marketplace where issues in cities and countryside are framed as opportunities for investment.', align: 'partial', explanation: 'Marketplace is poorly distributed context enables and reinforces the exploitative dynamic that contributed and/or created the inequalities, where those with money will benefit the most.' }
     ]
   },
   {
@@ -381,11 +379,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Switch to suppliers that use renewable energy and improved waste reduction in their mining and manufacturing processes.', score: 2, align: 'partial', explanation: 'These improvements reduce harm but don\'t eliminate the fundamental burden of extractive production on communities.' },
-      { text: 'Advocate for moving mining operations to less populated areas outside DRC to minimize direct human impact.', score: -5, align: 'non', explanation: 'This shifts environmental and social burdens rather than eliminating them, continuing extractive patterns.' },
-      { text: 'Commit to fundamentally redesigning technology and supply chains to eliminate extractive and harmful processes entirely, including investing in research for better materials altogether.', score: 5, align: 'full', explanation: 'True environmental justice requires systemic and structural changes to how we create technology, not just improvements to existing systems.' },
-      { text: 'Increase automation in mining and manufacturing to reduce direct human exposure to these dangerous activities.', score: -5, align: 'non', explanation: 'This may protects some workers but it can also completely substitute humans and might even increase the broader environmental and social costs of extraction by increasing efficiency.' },
-      { text: 'Advocate for and comply with the strictest available environmental and labor regulations in all operations.', score: 2, align: 'partial', explanation: 'Stronger regulations can limit harm but don\'t eliminate the fundamental burdens of extractive production systems.' }
+      { text: 'Switch to suppliers that use renewable energy and improved waste reduction in their mining and manufacturing processes.', align: 'partial', explanation: 'These improvements reduce harm but don\'t eliminate the fundamental burden of extractive production on communities.' },
+      { text: 'Advocate for moving mining operations to less populated areas outside DRC to minimize direct human impact.', align: 'non', explanation: 'This shifts environmental and social burdens rather than eliminating them, continuing extractive patterns.' },
+      { text: 'Commit to fundamentally redesigning technology and supply chains to eliminate extractive and harmful processes entirely, including investing in research for better materials altogether.', align: 'full', explanation: 'True environmental justice requires systemic and structural changes to how we create technology, not just improvements to existing systems.' },
+      { text: 'Increase automation in mining and manufacturing to reduce direct human exposure to these dangerous activities.', align: 'non', explanation: 'This may protects some workers but it can also completely substitute humans and might even increase the broader environmental and social costs of extraction by increasing efficiency.' },
+      { text: 'Advocate for and comply with the strictest available environmental and labor regulations in all operations.', align: 'partial', explanation: 'Stronger regulations can limit harm but don\'t eliminate the fundamental burdens of extractive production systems.' }
     ]
   },
   {
@@ -410,11 +408,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Prioritize locations where deployment can generate the highest profits to fund further expansion.', score: -5, align: 'non', explanation: 'Profit-driven deployment often ignores community needs and can exacerbate existing inequalities.' },
-      { text: 'Use market research to identify regions with the highest demand and concentrate efforts there first.', score: -5, align: 'non', explanation: 'Market research doesn\'t necessarily reflect what\'s most beneficial for communities or environmental justice.' },
-      { text: 'Perform independent research and work with potential local partners to know if, where and when the technology is appropriate and beneficial to local communities before deciding to expand.', score: 5, align: 'full', explanation: 'Environmental justice prioritizes local community benefit and appropriateness over market considerations or profit potential.' },
-      { text: 'Focus deployment in locations where the technology can have the greatest positive impact on the largest number of people.', score: 2, align: 'partial', explanation: 'Utilitarian approaches can overlook minority communities and specific local contexts that matter for justice.' },
-      { text: 'Prioritize areas where existing infrastructure and resources already exist and can best support the technology deployment which will benefit the local communities.', score: -5, align: 'non', explanation: 'This approach can perpetuate existing inequalities in infrastructure and technological access across communities.' }
+      { text: 'Prioritize locations where deployment can generate the highest profits to fund further expansion.', align: 'non', explanation: 'Profit-driven deployment often ignores community needs and can exacerbate existing inequalities.' },
+      { text: 'Use market research to identify regions with the highest demand and concentrate efforts there first.', align: 'non', explanation: 'Market research doesn\'t necessarily reflect what\'s most beneficial for communities or environmental justice.' },
+      { text: 'Perform independent research and work with potential local partners to know if, where and when the technology is appropriate and beneficial to local communities before deciding to expand.', align: 'full', explanation: 'Environmental justice prioritizes local community benefit and appropriateness over market considerations or profit potential.' },
+      { text: 'Focus deployment in locations where the technology can have the greatest positive impact on the largest number of people.', align: 'partial', explanation: 'Utilitarian approaches can overlook minority communities and specific local contexts that matter for justice.' },
+      { text: 'Prioritize areas where existing infrastructure and resources already exist and can best support the technology deployment which will benefit the local communities.', align: 'non', explanation: 'This approach can perpetuate existing inequalities in infrastructure and technological access across communities.' }
     ]
   },
   {
@@ -439,11 +437,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Focus company resources on preventing future harm rather than addressing these past problems.', score: -5, align: 'non', explanation: 'Ignoring past harms perpetuates environmental injustice and fails to address the ongoing suffering of affected communities.' },
-      { text: 'Take direct responsibility for comprehensive regeneration of nature and communities harmed by past operations while being transparent about how to avoid future harm.', score: 5, align: 'full', explanation: 'Environmental justice requires actively repairing the harm caused by past technological decisions, not just preventing future harm.' },
-      { text: 'Provide significant financial support to government-led cleanup efforts in all affected regions.', score: 2, align: 'partial', explanation: 'Financial support is helpful but doesn\'t fulfill the company\'s full responsibility for direct restoration and community healing.' },
-      { text: 'Publicly acknowledge past harms and document them transparently in all company communications.', score: 2, align: 'partial', explanation: 'Acknowledging is important for accountability but insufficient without concrete restoration actions and community repair.' },
-      { text: 'Implement strict new policies to ensure future technology deployments never cause similar environmental or health impacts anywhere in the world.', score: 2, align: 'partial', explanation: 'Prevention policies are crucial but don\'t address the urgent need to repair existing damage and heal affected communities.' }
+      { text: 'Focus company resources on preventing future harm rather than addressing these past problems.', align: 'non', explanation: 'Ignoring past harms perpetuates environmental injustice and fails to address the ongoing suffering of affected communities.' },
+      { text: 'Take direct responsibility for comprehensive regeneration of nature and communities harmed by past operations while being transparent about how to avoid future harm.', align: 'full', explanation: 'Environmental justice requires actively repairing the harm caused by past technological decisions, not just preventing future harm.' },
+      { text: 'Provide significant financial support to government-led cleanup efforts in all affected regions.', align: 'partial', explanation: 'Financial support is helpful but doesn\'t fulfill the company\'s full responsibility for direct restoration and community healing.' },
+      { text: 'Publicly acknowledge past harms and document them transparently in all company communications.', align: 'partial', explanation: 'Acknowledging is important for accountability but insufficient without concrete restoration actions and community repair.' },
+      { text: 'Implement strict new policies to ensure future technology deployments never cause similar environmental or health impacts anywhere in the world.', align: 'partial', explanation: 'Prevention policies are crucial but don\'t address the urgent need to repair existing damage and heal affected communities.' }
     ]
   },
   {
@@ -468,11 +466,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Identify and remove colonial patterns from all operations and work on a process to transfer real power to support Indigenous sovereignty and land rights.', score: 5, align: 'full', explanation: 'Environmental justice demands actively dismantling colonial structures and supporting Indigenous sovereignty and community control.' },
-      { text: 'Include more Indigenous voices and diverse perspectives in TechFlow\'s restoration and development teams.', score: 2, align: 'partial', explanation: 'Representation helps but doesn\'t address the systemic colonial structures embedded in how technology development operates.' },
-      { text: 'Provide comprehensive technology training and education to Indigenous and affected communities.', score: -5, align: 'non', explanation: 'This can perpetuate colonial relationships by imposing external technological paradigms rather than respecting community knowledge.' },
-      { text: 'Establish formal partnerships with Indigenous organizations and communities for all technology and restoration projects.', score: 2, align: 'partial', explanation: 'Partnerships can be valuable but don\'t necessarily transfer real power or address underlying colonial structures in decision-making.' },
-      { text: 'Study and incorporate traditional ecological knowledge and practices into all technology design and restoration work.', score: 2, align: 'partial', explanation: 'Learning from traditional knowledge can be valuable but may be extractive if not done with proper respect, reciprocity, and community control.' }
+      { text: 'Identify and remove colonial patterns from all operations and work on a process to transfer real power to support Indigenous sovereignty and land rights.', align: 'full', explanation: 'Environmental justice demands actively dismantling colonial structures and supporting Indigenous sovereignty and community control.' },
+      { text: 'Include more Indigenous voices and diverse perspectives in TechFlow\'s restoration and development teams.', align: 'partial', explanation: 'Representation helps but doesn\'t address the systemic colonial structures embedded in how technology development operates.' },
+      { text: 'Provide comprehensive technology training and education to Indigenous and affected communities.', align: 'non', explanation: 'This can perpetuate colonial relationships by imposing external technological paradigms rather than respecting community knowledge.' },
+      { text: 'Establish formal partnerships with Indigenous organizations and communities for all technology and restoration projects.', align: 'partial', explanation: 'Partnerships can be valuable but don\'t necessarily transfer real power or address underlying colonial structures in decision-making.' },
+      { text: 'Study and incorporate traditional ecological knowledge and practices into all technology design and restoration work.', align: 'partial', explanation: 'Learning from traditional knowledge can be valuable but may be extractive if not done with proper respect, reciprocity, and community control.' }
     ]
   },
   {
@@ -497,11 +495,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Implement a policy that blocks communities under control of paramilitary groups from using the technology, keeping the current systems as is while transitioning to work with non-indigenous communities only.', score: -5, align: 'non', explanation: 'Communities should not be judged by regional armed conflicts and separation continues the harmful divide between technology and nature that underlies many environmental and social problems.' },
-      { text: 'Avoid the news and focus on advanced biomimicry, creating technology that copies and learns from natural processes and organisms.', score: 2, align: 'partial', explanation: 'Avoiding conservative traps might be useful but focusing on biomimicry only may not necessarily create the true synergistic relationships with living systems that communities need.' },
-      { text: 'Publicly defend the rights of indigenous communities all around the world while creating a team to focus on a transdisciplinary R&D process to pilot technologies that works according to the community\'s relationship with life.', score: 5, align: 'full', explanation: 'Environmental justice sees technology as part of, not separate from, the web of natural relationships and community life.' },
-      { text: 'Give a statement that does not address your commitment with indigenous peoples but aggressively attacks violent groups and promise to prioritize design all systems to have the smallest possible environmental impact.', score: 2, align: 'partial', explanation: 'Playing with ambiguity is risky and might support the status quo. Minimizing impact is good but doesn\'t create the positive, collaborative relationships with nature that the communities envision.' },
-      { text: 'Build all requested technology exclusively from local, sustainable, recyclable, and renewable materials.', score: 2, align: 'partial', explanation: 'Sustainable materials are important but don\'t ensure the synergistic relationships with living ecosystems and community life.' }
+      { text: 'Implement a policy that blocks communities under control of paramilitary groups from using the technology, keeping the current systems as is while transitioning to work with non-indigenous communities only.', align: 'non', explanation: 'Communities should not be judged by regional armed conflicts and separation continues the harmful divide between technology and nature that underlies many environmental and social problems.' },
+      { text: 'Avoid the news and focus on advanced biomimicry, creating technology that copies and learns from natural processes and organisms.', align: 'partial', explanation: 'Avoiding conservative traps might be useful but focusing on biomimicry only may not necessarily create the true synergistic relationships with living systems that communities need.' },
+      { text: 'Publicly defend the rights of indigenous communities all around the world while creating a team to focus on a transdisciplinary R&D process to pilot technologies that works according to the community\'s relationship with life.', align: 'full', explanation: 'Environmental justice sees technology as part of, not separate from, the web of natural relationships and community life.' },
+      { text: 'Give a statement that does not address your commitment with indigenous peoples but aggressively attacks violent groups and promise to prioritize design all systems to have the smallest possible environmental impact.', align: 'partial', explanation: 'Playing with ambiguity is risky and might support the status quo. Minimizing impact is good but doesn\'t create the positive, collaborative relationships with nature that the communities envision.' },
+      { text: 'Build all requested technology exclusively from local, sustainable, recyclable, and renewable materials.', align: 'partial', explanation: 'Sustainable materials are important but don\'t ensure the synergistic relationships with living ecosystems and community life.' }
     ]
   },
   {
@@ -526,11 +524,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Conduct comprehensive impact assessments before each new cooperative begins operating, making sure that all projects are following strict guidelines and adapting them to each local context.', score: 2, align: 'partial', explanation: 'Impact assessments are important but don\'t ensure ongoing, active attention to who benefits and who is harmed over time.' },
-      { text: 'Provide regular training for all cooperative members on identifying and addressing potential negative impacts.', score: 2, align: 'partial', explanation: 'Training raises awareness but doesn\'t ensure systematic attention to harm nor actual support throughout all development and deployment processes.' },
-      { text: 'Establish ethics committees and review boards with global experts to evaluate how the technology impacts the communities.', score: -5, align: 'non', explanation: 'Expert committees can help but don\'t ensure day-to-day intentionality about harm in actual operations and community relationships (they may even reproduce colonial patterns).' },
-      { text: 'Develop comprehensive ethical guidelines and standards to be followed consistently through systems of incentive and punishment.', score: -5, align: 'non', explanation: 'Standards provide minimum guidance but don\'t ensure active, ongoing attention to who is helped and harmed in each context.' },
-      { text: 'Commit to break the myth of tech neutrality, being cognizant of how tech will always be influenced by the larger socio-economic system in place requiring continuous assessment of who it helps and harms and how to improve.', score: 5, align: 'full', explanation: 'Intentionality about harm requires continuous vigilance and action, not just initial assessment or periodic reviews.' }
+      { text: 'Conduct comprehensive impact assessments before each new cooperative begins operating, making sure that all projects are following strict guidelines and adapting them to each local context.', align: 'partial', explanation: 'Impact assessments are important but don\'t ensure ongoing, active attention to who benefits and who is harmed over time.' },
+      { text: 'Provide regular training for all cooperative members on identifying and addressing potential negative impacts.', align: 'partial', explanation: 'Training raises awareness but doesn\'t ensure systematic attention to harm nor actual support throughout all development and deployment processes.' },
+      { text: 'Establish ethics committees and review boards with global experts to evaluate how the technology impacts the communities.', align: 'non', explanation: 'Expert committees can help but don\'t ensure day-to-day intentionality about harm in actual operations and community relationships (they may even reproduce colonial patterns).' },
+      { text: 'Develop comprehensive ethical guidelines and standards to be followed consistently through systems of incentive and punishment.', align: 'non', explanation: 'Standards provide minimum guidance but don\'t ensure active, ongoing attention to who is helped and harmed in each context.' },
+      { text: 'Commit to break the myth of tech neutrality, being cognizant of how tech will always be influenced by the larger socio-economic system in place requiring continuous assessment of who it helps and harms and how to improve.', align: 'full', explanation: 'Intentionality about harm requires continuous vigilance and action, not just initial assessment or periodic reviews.' }
     ]
   },
   {
@@ -555,11 +553,11 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Organize regular global assemblies where all representatives can discuss and debate network-wide decisions.', score: -5, align: 'non', explanation: 'Global assemblies are valuable but don\'t necessarily give each community real decision-making power over technology affecting them.' },
-      { text: 'Ensure that each affected community maintains actual local power to make binding decisions about technology that impacts their lives independent of suggestions from global advisory councils.', score: 5, align: 'full', explanation: 'True democratic technology requires communities to have actual authority over their technological futures, not just input opportunities.' },
-      { text: 'Create advisory councils with representatives from each cooperative to guide network-wide policy decisions.', score: -5, align: 'non', explanation: 'While debate is important, advisory structures often lack real power and can even be used to legitimize decisions made elsewhere in the network.' },
-      { text: 'Start public-private partnership models that include cooperative representatives as advisors in local governance structures.', score: -5, align: 'non', explanation: 'Advisory roles lack real decision power and public-private partnerships often prioritize efficiency and external interests over genuine community needs and self-determination.' },
-      { text: 'Invite community representatives to join a central coordinating board with decision-making authority for large global network issues.', score: 2, align: 'partial', explanation: 'Central board representation can provide some influence but doesn\'t ensure community control over local technology decisions.' }
+      { text: 'Organize regular global assemblies where all representatives can discuss and debate network-wide decisions.', align: 'non', explanation: 'Global assemblies are valuable but don\'t necessarily give each community real decision-making power over technology affecting them.' },
+      { text: 'Ensure that each affected community maintains actual local power to make binding decisions about technology that impacts their lives independent of suggestions from global advisory councils.', align: 'full', explanation: 'True democratic technology requires communities to have actual authority over their technological futures, not just input opportunities.' },
+      { text: 'Create advisory councils with representatives from each cooperative to guide network-wide policy decisions.', align: 'non', explanation: 'While debate is important, advisory structures often lack real power and can even be used to legitimize decisions made elsewhere in the network.' },
+      { text: 'Start public-private partnership models that include cooperative representatives as advisors in local governance structures.', align: 'non', explanation: 'Advisory roles lack real decision power and public-private partnerships often prioritize efficiency and external interests over genuine community needs and self-determination.' },
+      { text: 'Invite community representatives to join a central coordinating board with decision-making authority for large global network issues.', align: 'partial', explanation: 'Central board representation can provide some influence but doesn\'t ensure community control over local technology decisions.' }
     ]
   },
   {
@@ -584,14 +582,21 @@ export const SCENARIOS = [
       }
     ],
     options: [
-      { text: 'Allow cooperatives to control data with strong privacy policies and security measures protecting community information.', score: 5, align: 'full', explanation: 'Cooperative control is better than corporate control, but it only ensures community sovereignty over their own information if the community finds itself represented by the cooperative.' },
-      { text: 'Provide the data only to democratic governments to ensure data is used for legitimate public benefit and scientific research.', score: -5, align: 'non', explanation: 'While regulations and laws for data protection are important, government oversight doesn\'t ensure community self-determination over their data.' },
-      { text: 'Ensure that communities and individuals maintain complete control over their own data, being directly involved in discussions and holding the final decision about data access and use.', score: 5, align: 'full', explanation: 'Data sovereignty means communities control their own information, supporting self-determination and preventing exploitation by outside entities.' },
-      { text: 'Establish independent third-party organizations to serve as neutral custodians of all community data.', score: -5, align: 'non', explanation: 'Third-party custodians may be preferable to corporate and government control, but unless directly and majoritarily represented by community members they still don\'t give communities direct sovereignty over their information.' },
-      { text: 'Create multi-stakeholder governance bodies that include community representatives to oversee global data use decisions.', score: 2, align: 'partial', explanation: 'Multi-stakeholder approaches can include community voices but may dilute community control over their own information and lives.' }
+      { text: 'Allow cooperatives to control data with strong privacy policies and security measures protecting community information.', align: 'full', explanation: 'Cooperative control is better than corporate control, but it only ensures community sovereignty over their own information if the community finds itself represented by the cooperative.' },
+      { text: 'Provide the data only to democratic governments to ensure data is used for legitimate public benefit and scientific research.', align: 'non', explanation: 'While regulations and laws for data protection are important, government oversight doesn\'t ensure community self-determination over their data.' },
+      { text: 'Ensure that communities and individuals maintain complete control over their own data, being directly involved in discussions and holding the final decision about data access and use.', align: 'full', explanation: 'Data sovereignty means communities control their own information, supporting self-determination and preventing exploitation by outside entities.' },
+      { text: 'Establish independent third-party organizations to serve as neutral custodians of all community data.', align: 'non', explanation: 'Third-party custodians may be preferable to corporate and government control, but unless directly and majoritarily represented by community members they still don\'t give communities direct sovereignty over their information.' },
+      { text: 'Create multi-stakeholder governance bodies that include community representatives to oversee global data use decisions.', align: 'partial', explanation: 'Multi-stakeholder approaches can include community voices but may dilute community control over their own information and lives.' }
     ]
   }
 ];
+
+// Every option is scored from its alignment, so the numbers exist in exactly
+// one place. Authoring a card means choosing full/partial/non and nothing else.
+export const SCENARIOS = SCENARIO_DECK.map((scenario) => ({
+  ...scenario,
+  options: scenario.options.map((option) => ({ ...option, score: ALIGN_POINTS[option.align] })),
+}));
 
 // The closing card. It is not a scenario: nothing is scored and there are no
 // options -- the player writes their own vision instead. It is deliberately
@@ -629,8 +634,8 @@ export const VISION_CARD = {
 // non-aligned -5, partially aligned +2, fully aligned +5. Zero is the middle
 // of the range now, not the floor: a non-aligned answer costs as much as a
 // fully aligned one earns.
-export const SCORE_PER_CARD_MIN = -5;
-export const SCORE_PER_CARD_MAX = 5;
+export const SCORE_PER_CARD_MIN = ALIGN_POINTS.non;
+export const SCORE_PER_CARD_MAX = ALIGN_POINTS.full;
 export const SCORE_MIN = SCENARIOS.length * SCORE_PER_CARD_MIN;
 export const SCORE_MAX = SCENARIOS.length * SCORE_PER_CARD_MAX;
 

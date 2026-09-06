@@ -4,6 +4,7 @@ import { AdvisorCall } from './AdvisorCall.jsx';
 import { Gauge } from './Gauge.jsx';
 import { PixelStudyHamsters } from '../pixels.jsx';
 import { useTypewriter } from '../useTypewriter.js';
+import { useIsPhone } from '../useIsPhone.js';
 
 function TimesUpOverlay() {
   const { visible, done } = useTypewriter('TIMES UP!', { speed: 90 });
@@ -48,19 +49,7 @@ export function VisionScreen({
   const [timeLeft, setTimeLeft] = useState(CARD_TIME);
   const [outOfTime, setOutOfTime] = useState(false);
 
-  // Phone layout follows the scenario cards: the dial and clock move into the
-  // story panel, and the advisors and the Finish button move to a fixed footer
-  // within thumb reach.
-  const [isPhone, setIsPhone] = useState(
-    () => window.matchMedia?.('(max-width: 700px)').matches ?? false
-  );
-  useEffect(() => {
-    const mq = window.matchMedia?.('(max-width: 700px)');
-    if (!mq) return undefined;
-    const onChange = (e) => setIsPhone(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
+  const isPhone = useIsPhone();
 
   // The latest text, for the timeout handoff -- it fires from a timer that
   // would otherwise close over whatever was typed when the clock started.
@@ -144,7 +133,7 @@ export function VisionScreen({
                 {study ? (
                   <PixelStudyHamsters className="study-hamsters" />
                 ) : (
-                  <Gauge angle={gaugeAngle} needleColor="var(--black)" />
+                  <Gauge angle={gaugeAngle} needleColor={needleColor} />
                 )}
               </div>
             )}

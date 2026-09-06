@@ -1,18 +1,64 @@
 {
   "_comment": [
-    "Which scenarios feed which EJIT quadrant. The single source for this map:",
-    "the game imports it to build RADAR_AXES, and the Modal aggregation reads",
-    "the same file to average scores per quadrant, so the two cannot drift.",
+    "Which scenarios feed which EJIT quadrant, and what an answer is worth. The",
+    "single source for both: the game imports this file to build its radar axes",
+    "and to score its options, and the Modal aggregation reads the same file to",
+    "average scores per quadrant, so the two cannot drift.",
+    "",
+    "points: what each alignment scores, per card. A non-aligned answer costs as",
+    "much as a fully aligned one earns, so zero is the middle of the range rather",
+    "than its floor -- which is why the radar puts zero on its middle ring.",
     "",
     "Scenario 17 appears in two quadrants on purpose and card 20 is deliberately",
     "in none, so the four lists hold 20 slots over 19 cards. Each slot is worth",
-    "5 at most (a fully aligned answer), hence max = 5 x the list length, and",
-    "20 x 5 = 100 overall."
+    "points.full at most, hence max = points.full x the list length, and 20 x 5 =",
+    "100 overall."
   ],
+  "points": {
+    "full": 5,
+    "partial": 2,
+    "non": -5
+  },
   "quadrants": [
-    { "slug": "power_positionality",    "scenarios": [1, 3, 4, 15, 17, 18, 19] },
-    { "slug": "access_accountability",  "scenarios": [5, 9, 10, 12, 17] },
-    { "slug": "collective_flourishing", "scenarios": [2, 6, 11, 13] },
-    { "slug": "technology_nature",      "scenarios": [7, 8, 14, 16] }
+    {
+      "slug": "power_positionality",
+      "scenarios": [
+        1,
+        3,
+        4,
+        15,
+        17,
+        18,
+        19
+      ]
+    },
+    {
+      "slug": "access_accountability",
+      "scenarios": [
+        5,
+        9,
+        10,
+        12,
+        17
+      ]
+    },
+    {
+      "slug": "collective_flourishing",
+      "scenarios": [
+        2,
+        6,
+        11,
+        13
+      ]
+    },
+    {
+      "slug": "technology_nature",
+      "scenarios": [
+        7,
+        8,
+        14,
+        16
+      ]
+    }
   ]
 }

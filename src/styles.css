@@ -454,28 +454,55 @@
     background: rgba(124, 250, 107, 0.08);
   }
 
-  /* Hovering a live option inverts it: the phosphor green moves to the
-     background and the type goes dark, the way a highlighted line reads on a
-     real terminal. Scoped to :not(.locked) so it stops once an answer is in --
-     a locked row keeps its transparent background, and dark type on that
-     would disappear. (hover: hover) keeps the inversion off touch screens,
-     where :hover latches after a tap and would strand a card inverted. */
+  /* A live option inverts -- the phosphor green moves to the background and
+     the type goes dark, the way a highlighted line reads on a real terminal --
+     both while the pointer is on it and once it is the chosen answer. Hover is
+     therefore a true preview of what picking it looks like.
+     
+     The two states read from these three values rather than repeating them, so
+     they cannot drift apart. The prompt is held a step lighter than the body
+     copy, so the C:/ user_A$ label stays secondary rather than competing with
+     the answer.
+     
+     Everything here is scoped to :not(.locked): once an answer is in, the row
+     goes back to a transparent background, where dark type would vanish. */
+  .terminal {
+    --option-lit-bg: var(--green);
+    --option-lit-text: var(--black);
+    --option-lit-prompt: rgba(10, 10, 10, 0.72);
+  }
+
+  .terminal:not(.locked) .option.selected {
+    background: var(--option-lit-bg);
+  }
+
+  .terminal:not(.locked) .option.selected .text {
+    color: var(--option-lit-text);
+  }
+
+  .terminal:not(.locked) .option.selected .prompt {
+    color: var(--option-lit-prompt);
+  }
+
+  /* (hover: hover) keeps the inversion off touch screens, where :hover latches
+     after a tap and would strand a card looking chosen. Selection itself is
+     deliberately not gated -- a tap still has to show what it picked. */
   @media (hover: hover) {
     .terminal:not(.locked) .option:hover {
-      background: var(--green);
+      background: var(--option-lit-bg);
     }
 
     .terminal:not(.locked) .option:hover .text {
-      color: var(--black);
+      color: var(--option-lit-text);
     }
 
-    /* A step lighter than the body copy, so the C:/ user_A$ label stays the
-       secondary thing it is at rest rather than competing with the answer. */
     .terminal:not(.locked) .option:hover .prompt {
-      color: rgba(10, 10, 10, 0.72);
+      color: var(--option-lit-prompt);
     }
   }
 
+  /* The faint wash is what a selected option falls back to once the terminal
+     locks and the inversion above stops applying. */
   .option.selected {
     background: rgba(124, 250, 107, 0.14);
     border-left-color: var(--green);
@@ -932,14 +959,21 @@
     color: var(--red);
   }
 
+  /* The right-hand gutter that keeps the results content clear of the corner
+     action tiles. Everything stacked down the results screen reads from this
+     one value so their right edges line up: the visuals row, the study offers
+     and the vision recap. Simulation Mode and phones zero it below. */
+  .screen-complete {
+    --results-gutter: 110px;
+  }
+
   .results-visuals {
     display: flex;
     flex-wrap: wrap;
     align-items: stretch;
     justify-content: center;
     gap: 20px;
-    /* Keeps the row clear of the corner action tiles above it. */
-    padding-right: 110px;
+    padding-right: var(--results-gutter);
   }
 
   /* The ending art carries the screen; the dial is a small readout pinned in
@@ -1172,8 +1206,13 @@
      corner tiles rather than squeezing into a gutter beside them, so the row
      can run the full width of the charts underneath it. Study Mode keeps the
      gutter -- its offers row is aligned to it. */
+  /* Simulation Mode has no corner tiles overhanging the row, so its content
+     runs the full width. */
+  .screen-complete--sim {
+    --results-gutter: 0px;
+  }
+
   .screen-complete--sim .results-visuals {
-    padding-right: 0;
     margin-top: 116px;
   }
 
@@ -1186,7 +1225,7 @@
     gap: 18px;
     margin: 0 0 26px;
     /* Keeps the pair clear of the corner action tiles. */
-    padding-right: 110px;
+    padding-right: var(--results-gutter);
   }
 
   .study-offer {
@@ -1705,6 +1744,30 @@
     width: 100%;
     height: auto;
     overflow: visible;
+  }
+
+  /* The player's own total, then everyone's average in the average series'
+     own purple so the number and its ring read as the same thing. */
+  .radar-axis-score-avg {
+    fill: #A97BF0;
+  }
+
+  /* The average readout, shown while the pointer is on a purple vertex. */
+  .radar-avg-tip {
+    pointer-events: none;
+  }
+
+  .radar-avg-tip-box {
+    fill: rgba(10, 10, 10, 0.92);
+    stroke: #A97BF0;
+    stroke-width: 1;
+  }
+
+  .radar-avg-tip-text {
+    fill: #A97BF0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
   }
 
   /* The rim is the fully-aligned end of the scale, so it glows green; the
@@ -3592,9 +3655,12 @@
      lets the board grow without reflowing anything around it. */
   .study-slot {
     position: relative;
-    /* Tall enough that the longest principle in the deck still fits the
-       board once its 17px frame and padding are taken out. */
-    height: 248px;
+    /* Tall enough that the longest principle in the deck -- S.02, at 341
+       characters -- still fits the board with room to spare, once the 17px
+       frame, the padding and the Learn More corner are taken out. Measured
+       against every principle, not estimated: at 248px S.02 was clipped and
+       ran under the button. */
+    height: 272px;
   }
 
   /* The reading room, which hands over to the board on the reveal. Scoped to
@@ -3629,7 +3695,7 @@
     gap: 8px;
     /* Bottom padding reserves the corner the Learn More button sits in, so
        a long principle can never run underneath it. */
-    padding: 12px 14px 34px;
+    padding: 12px 14px 38px;
     overflow: hidden;
     background: #12161A;
     /* 17px is the scene slate's frame measured on screen: its 4-unit border
@@ -3669,7 +3735,10 @@
   .study-board-text {
     margin: 0;
     color: #E8E8E8;
-    font-size: 12px;
+    /* 11px, not 12: the longest principles overflowed the board at 12. Line
+       height stays at 1.45 -- dropping that instead would have cost more
+       readability than the point of type does. */
+    font-size: 11px;
     line-height: 1.45;
   }
 
@@ -4587,8 +4656,10 @@
     .options-deck {
       display: block !important;
       position: relative;
-      height: 268px;
-      margin: 14px 14px 22px;
+      /* Shorter than the cards used to be, and inset at the sides: the pile
+         is smaller so the fanned cards under it have somewhere to show. */
+      height: 232px;
+      margin: 16px 30px 34px;
       padding: 0;
       overflow: visible;
       perspective: 800px;
@@ -4601,10 +4672,17 @@
       min-height: 0;
       padding: 16px 16px 14px;
       background: var(--black);
-      border: 1.5px solid var(--terminal-border);
+      /* Phosphor green rather than the terminal's grey: on a phone the deck
+         is the whole interaction, so it carries the game's own colour. */
+      border: 1.5px solid var(--green);
       border-left-width: 3px;
       border-left-color: transparent;
-      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.65);
+      /* A tight dark edge so each card reads as lifting off the one under it,
+         a wide soft drop, and a green bloom around the whole pile. */
+      box-shadow:
+        0 2px 0 rgba(0, 0, 0, 0.9),
+        0 14px 30px rgba(0, 0, 0, 0.7),
+        0 0 16px rgba(124, 250, 107, 0.28);
       text-align: left;
       display: flex;
       flex-direction: column;
@@ -4615,8 +4693,58 @@
       user-select: none;
     }
 
+    /* The card in hand sits proudest of the pile, and picks up a phosphor
+       edge so it is obvious which one a swipe will move. */
+    /* The card in hand glows hardest, so it is obvious which one a swipe
+       will move. */
     .options-deck .option.is-top {
       cursor: grab;
+      box-shadow:
+        0 2px 0 rgba(0, 0, 0, 0.9),
+        0 18px 38px rgba(0, 0, 0, 0.75),
+        0 0 26px rgba(124, 250, 107, 0.45);
+    }
+
+    /* Where the deck is dealt from: the invitation sits in the slot the cards
+       will occupy, so nothing above it shifts when they arrive. */
+    .deal-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      /* Matches .options-deck exactly, so the cards land where the button was. */
+      height: 232px;
+      margin: 16px 30px 34px;
+    }
+
+    .deal-btn {
+      padding: 15px 28px;
+      background: transparent;
+      border: 1.5px solid var(--green);
+      border-radius: 3px;
+      color: var(--green);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(124, 250, 107, 0.18);
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .deal-btn:active {
+      background: var(--green);
+      color: var(--black);
+    }
+
+    .deal-hint {
+      margin: 0;
+      color: #9A9A9A;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
     }
 
     .options-deck .option.selected {
@@ -4871,6 +4999,10 @@
        space -- but the corner tiles are absolutely positioned and still hang
        down over the top of the scene, so the row drops clear of them
        instead. */
+    .screen-complete {
+      --results-gutter: 0px;
+    }
+
     .results-visuals {
       padding-right: 0;
       margin-top: 36px;
@@ -5540,10 +5672,11 @@
   }
 
   /* ---- The vision, played back on the results screen -------------------- */
-  /* Full width of the results card, like the panels above and below it --
-     it used to be a centred 680px column, which left it floating. */
+  /* Same width as the panels stacked above it: it carries the results
+     screen's right gutter so its right edge lines up with theirs, rather than
+     running past them into the corner tiles' column. */
   .vision-recap {
-    margin: 22px 0 0;
+    margin: 22px var(--results-gutter) 0 0;
     padding: 16px 20px;
     border: 1px solid var(--blue);
     border-radius: 3px;

@@ -560,8 +560,25 @@ export function SippingHamster({ className }) {
       <rect x="10" y="12" width="24" height="14" fill={FUR} />
       <rect x="12" y="26" width="22" height="2" fill={FUR} />
 
-      {/* sunglasses across the eye line, glint on the outer lens */}
-      <rect x="12" y="16" width="20" height="4" fill="#0A0A0A" />
+      {/* Sunglasses: two rounded lenses over a bridge, rather than one bar
+          across the eye line. Rounding is done the way everything else here
+          is -- the top and bottom rows of each lens are inset by one 2px
+          block, so the corners come off on the grid instead of with a curve
+          the crisp-edges rendering would throw away. */}
+      {/* lens tops, and the bridge over the nose between them */}
+      <rect x="14" y="14" width="4" height="2" fill="#0A0A0A" />
+      <rect x="20" y="14" width="4" height="2" fill="#0A0A0A" />
+      <rect x="26" y="14" width="4" height="2" fill="#0A0A0A" />
+      {/* the wide middle of each lens */}
+      <rect x="12" y="16" width="8" height="2" fill="#0A0A0A" />
+      <rect x="24" y="16" width="8" height="2" fill="#0A0A0A" />
+      {/* lens bottoms, inset again to round them off */}
+      <rect x="14" y="18" width="4" height="2" fill="#0A0A0A" />
+      <rect x="26" y="18" width="4" height="2" fill="#0A0A0A" />
+      {/* temple arms running back towards the ears */}
+      <rect x="10" y="16" width="2" height="2" fill={FUR_DARK} />
+      <rect x="32" y="16" width="2" height="2" fill={FUR_DARK} />
+      {/* glint on the outer lens */}
       <rect x="28" y="16" width="2" height="2" fill="#E8E8E8" />
 
       {/* muzzle, pushed out to the right so it can meet the straw */}
@@ -708,37 +725,6 @@ export function PixelMoney({ className }) {
   );
 }
 
-// 8-bit PDF sheet: a page with its corner folded and a download arrow across
-// the lower half. Same 2px grid and currentColor fill as PixelReload.
-export function PixelPdf({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-      shapeRendering="crispEdges"
-      aria-hidden="true"
-    >
-      <g fill="currentColor">
-        {/* page outline, with the top-right corner cut away for the fold */}
-        <rect x="4" y="0" width="10" height="2" />
-        <rect x="14" y="2" width="2" height="2" />
-        <rect x="16" y="4" width="2" height="2" />
-        <rect x="18" y="6" width="2" height="16" />
-        <rect x="4" y="22" width="14" height="2" />
-        <rect x="2" y="2" width="2" height="20" />
-        {/* the folded corner itself */}
-        <rect x="14" y="4" width="2" height="2" />
-        <rect x="14" y="6" width="4" height="2" />
-        {/* download arrow: shaft, head, then the baseline it lands on */}
-        <rect x="10" y="10" width="2" height="6" />
-        <rect x="8" y="14" width="2" height="2" />
-        <rect x="12" y="14" width="2" height="2" />
-        <rect x="6" y="18" width="10" height="2" />
-      </g>
-    </svg>
-  );
-}
 
 export function DialArc() {
   return (

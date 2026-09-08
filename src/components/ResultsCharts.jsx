@@ -316,8 +316,9 @@ function scenarioFor(n) {
 }
 
 // What one scenario chip opens, in reading order: what they answered, why the
-// aligned answer is the aligned one, the EJIT principle behind it, and the
-// scenario itself last for anyone who wants to reread the card. Replaces
+// aligned answer is the aligned one, that answer itself where they did not pick
+// it, the EJIT principle behind it, and the scenario last for anyone who wants
+// to reread the card. Replaces
 // the suggestion block rather than sitting under it, so the card stays one
 // screenful.
 function ScenarioDetail({ n, answers }) {
@@ -364,6 +365,13 @@ function ScenarioDetail({ n, answers }) {
         <p className="scenario-detail-note">You did not play this scenario.</p>
       )}
 
+      <h5 className="scenario-detail-label">Why</h5>
+      {aligned.map((o) => (
+        <p key={o.text} className="scenario-detail-why">
+          {o.explanation}
+        </p>
+      ))}
+
       {/* Only worth showing when it is not the one they already picked. */}
       {!pickedWasAligned && aligned.length > 0 && (
         <>
@@ -375,13 +383,6 @@ function ScenarioDetail({ n, answers }) {
           ))}
         </>
       )}
-
-      <h5 className="scenario-detail-label">Why</h5>
-      {aligned.map((o) => (
-        <p key={o.text} className="scenario-detail-why">
-          {o.explanation}
-        </p>
-      ))}
 
       {scenario.principle && (
         <>

@@ -3127,16 +3127,19 @@
     left: 0;
   }
 
+  /* The tail points at whichever phone was called. --advisor-tail-x is its
+     centre, set on the bubble when it opens; the fallback is the first phone,
+     which is where it sat before the offset was measured. */
   .screen-options .advisor-bubble::before {
     top: 100%;
-    left: 16px;
+    left: calc(var(--advisor-tail-x, 23px) - 7px);
     border-top-color: var(--green);
     margin-top: 1px;
   }
 
   .screen-options .advisor-bubble::after {
     top: 100%;
-    left: 16px;
+    left: calc(var(--advisor-tail-x, 23px) - 7px);
     border-top-color: var(--black);
   }
 
@@ -4370,6 +4373,18 @@
     border-right-color: transparent;
     animation: none;
     cursor: default;
+  }
+
+  /* The terminal does not lock until the swing has finished, so the dark text
+     that was inverted against the green band above is still in force after the
+     band itself is gone -- black on a black panel. Put both colours back: this
+     is the one answer the player is meant to be reading here. */
+  .screen-options.revealing .options-row .option.selected .text {
+    color: var(--green);
+  }
+
+  .screen-options.revealing .options-row .option.selected .prompt {
+    color: #C9C9C9;
   }
 
   /* Ran out of time with nothing picked: the story card has nothing left to

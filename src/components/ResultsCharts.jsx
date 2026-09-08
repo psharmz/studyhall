@@ -34,17 +34,14 @@ const RADAR_AXES_BASE = [
     title: ['Designing with Power and Positionality in Mind'],
     suggestions: [
       {
-        max: 11,
         label: 'Learning with others',
         text: 'Look around you. What technologies do people around you use daily and which ones are not accessible to them? Who made these technologies? Do you know how they serve your community and how they serve those that built it? Whose interests are really at the center of the development and usage of these tools? Here you can also map assumptions, observations and understandings about race, colonialism, and power as they relate to the history of the people that use and build the tools.',
       },
       {
-        max: 23,
         label: 'Mapping the systems',
         text: 'Have you ever considered applying your knowledge to build a table comparing community-owned/open source and mainstream/commercial alternatives to the tech used by you and those in your community? How do they compare beyond available features and aesthetics? For example, are there power asymmetries that can further reinforce the position of those with already a lot of power? How do these asymmetries are embedded in the tech lifecycle from early development to usage, and disposal or composting? How these asymmetries are reinforced or hindered by the interaction between the different technologies in your community?',
       },
       {
-        max: 35,
         label: 'Helping others',
         text: 'Your critical perspective is valuable! Have you ever considered using your knowledge to draft a public policy proposal or design process that can support power distribution and how technical decisions can be rejected by communities in cases of disagreement? Think about how you can use that to guide all stakeholders, but specially the most vulnerable ones, to move beyond consultation and into actual decision-making power for acceptance, development, modification, and stoppage.',
       },
@@ -55,17 +52,14 @@ const RADAR_AXES_BASE = [
     title: ['Embedding Access, Accountability,', 'and Reparative Practice'],
     suggestions: [
       {
-        max: 8,
         label: 'Learning with others',
         text: 'Look around you. What technologies do people around you use daily and which ones are not accessible to them? Talk to people and ask if they understand the trade offs of the technologies that are accessible to them - for example, do free tools require collection of personal information? Start a simple map with the information you gather from others and try to understand how their life story relates to how they use, understand, talk about technology.',
       },
       {
-        max: 16,
         label: 'Mapping the systems',
         text: 'Have you ever considered using the knowledge you have to a create comparative table of relevant technologies to your community? You can help moving towards a more just future with technology by comparing aspects such as documentations access, repairability, modification rights, who benefits, who might be harmed (humans and non-humans) and how harms can be handle if they happen. You can also take a step further and look at such aspects of comparison within the lifecycle of the technology to understand more about the impact of its creation (e.g., resource extraction), usage (including in its interaction with other technologies), and disposal.',
       },
       {
-        max: 25,
         label: 'Helping others',
         text: 'You seem to have some strong understanding on the topic! Have you ever considered using your knowledge to draft a public policy proposal or a designing a process to measure and enable equitable accessibility, accountability (including reparation from harms), and safety (preventive and reactive)? Finally, how can you draft these documents through a participatory process with others from your community?',
       },
@@ -76,17 +70,14 @@ const RADAR_AXES_BASE = [
     title: ['Restructuring Innovation for', 'Collective Flourishing'],
     suggestions: [
       {
-        max: 6,
         label: 'Learning with others',
         text: 'Have you taken some time to notice the examples of innovation around you? Which ones often appear in the news, workplaces, and other environments that are part of your reality and that of your community? What makes those technologies innovative? Who defines what is innovative? What types of knowledge are centered and which ones are ignored in these technologies? What is their main impact and purpose - speed, novelty, capital and wealth? Historically, have they enable collective flourishing or individual competition?',
       },
       {
-        max: 13,
         label: 'Mapping the systems',
         text: 'Have you consider using your knowledge to compare venture-capital/market-driven innovations with community-led/mutual aid innovation? What forms of legal structures are present in each? What incentives and barriers facilitate or difficult their development? Which of them has historically shown a relative higher rate of harms and unintended consequences? How do market-driven innovations interact within themselves? What about community-led innovations? Finally, how do market-driven and community-led innovations interact with each other - do they collaborate or compete? Who often loses? Why?',
       },
       {
-        max: 20,
         label: 'Helping others',
         text: 'Your critical perspective can help others! Have you ever considered using your knowledge to draft a public policy proposal or innovation process centered in collective well-being instead of speed and individual wealth accumulation? What methods and criteria can be used as indicators of shared benefit, distributed decision-making power, plurality of knowledge and participation? What criteria can be used to build a systems of incentive that reinforce this collective well-being? How can community reviews, participatory budgeting, harm prevention plan, reparation plans, and public and transparent document of harms and learnings can lead to a more just innovation process?',
       },
@@ -97,17 +88,14 @@ const RADAR_AXES_BASE = [
     title: ['Reorienting the Relationship Between Technology and Nature'],
     suggestions: [
       {
-        max: 6,
         label: 'Learning with others',
         text: 'Take some time to notice the type of technology most used in your community. What materials are used in this technology? Where do these materials come from? What type of energy (e.g., hydro, coal, gas, solar, wind...) supplies these technologies and your community? How is the infrastructure that supports these technologies exploit versus care about nature? How do people in your community talk about and relate to non-human life? What practices do they have that show alignment or dealignment with the technologies used? How has technology historically influenced the changes in these practices of relationship with nature in your community?',
       },
       {
-        max: 13,
         label: 'Mapping the systems',
         text: 'Have you consider using your knowledge to compare the extractive technologies with regenerative alternatives? How do they relate and learn from nature? How do they support people\'s relationship with other forms of life and their supporting environment? What forms of energy they use? What are their ecosystem impacts, who bears the harms, and how restoration responds to the harms cause by each of them? Finally, can you map these aspects in each stage of the technology lifecycle and in their interactions with other technologies that are involved in the creation, usage, and disposal of restorative versus regenerative tech?',
       },
       {
-        max: 20,
         label: 'Helping others',
         text: 'Your knowledge can support a more just future! Consider writing a public policy draft or a design process that supports technologies that restore instead of exploit life on Earth. How should work relationship be set in such a restorative perspective? What is the value of life beyond its transformation into products and materials? What indicators of regeneration, local ecological limits, and harm should be considered? How can the participation of peoples with different forms of knowledge, such as indigenous peoples and traditional communities, be essential in such a transformation? How may historical harms be taken into account, linking technology development to restoration and reconciliation funds and actions? Embed lessons into the document to model scientific, ecological, and political humility and accountability.',
       },
@@ -115,13 +103,28 @@ const RADAR_AXES_BASE = [
   },
 ];
 
+// Where a quadrant's three suggestion bands split, as inclusive upper bounds,
+// from the printed scoring guide. The first band swallows the whole negative
+// half and stops at +1 -- anything from rock bottom to just above zero is still
+// "learning with others" -- and the positive half is split evenly between the
+// other two. A 35-point quadrant therefore reads -35..+1, +2..+17, +18..+35,
+// and a 20-point one -20..+1, +2..+10, +11..+20.
+function bandMaxes(max) {
+  return [1, Math.floor(max / 2), max];
+}
+
 export const RADAR_AXES = RADAR_AXES_BASE.map((axis) => {
   const scenarios = SCENARIOS_BY_SLUG[axis.slug];
+  const max = scenarios.length * ALIGN_POINTS.full;
+  // Derived from the quadrant's own ceiling rather than written per band, so a
+  // quadrant gaining or losing a card cannot leave the thresholds behind.
+  const cuts = bandMaxes(max);
   return {
     ...axis,
     scenarios,
-    max: scenarios.length * ALIGN_POINTS.full,
+    max,
     min: scenarios.length * ALIGN_POINTS.non,
+    suggestions: axis.suggestions.map((band, i) => ({ ...band, max: cuts[i] })),
   };
 });
 
@@ -139,13 +142,17 @@ const RADAR_SERIES = [
   },
 ];
 
+// Keyed by series so a chip can be filled with exactly the colour its ring and
+// its legend swatch already use.
+const RADAR_SERIES_BY_KEY = Object.fromEntries(RADAR_SERIES.map((s) => [s.key, s]));
+
 const CLOUD_W = 400;
 const CLOUD_H = 300;
 // A diamond, with all four quadrants named around it and their scores beneath.
 // The canvas is mostly margin: the web itself is small relative to the room the
 // four headers need above, below and either side of it.
 const RADAR_W = 760;
-const RADAR_H = 560;
+const RADAR_H = 600;
 const RADAR_CX = 380;
 const RADAR_CY = 280;
 const RADAR_R = 148;
@@ -162,6 +169,13 @@ const LABEL_GAP = 18;
 const LABEL_SIZE = 15;
 const LABEL_LINE = 18;
 const LABEL_WRAP = 20;
+// The score chips under each quadrant's name, stacked one per series. Stacking
+// buys the numbers a readable size that two chips on a single line could not.
+const CHIP_H = 20;
+const CHIP_PAD_X = 7;
+const CHIP_V_GAP = 4;
+const CHIP_TOP_GAP = 7;
+const CHIP_SIZE = 13;
 const MONO = "'JetBrains Mono', monospace";
 
 
@@ -301,8 +315,9 @@ function scenarioFor(n) {
   return scenarioByCode[`S.${String(n).padStart(2, '0')}`] ?? null;
 }
 
-// What one scenario chip opens: what they answered, what the aligned answer
-// was, the scenario itself, and why that answer is the aligned one. Replaces
+// What one scenario chip opens, in reading order: what they answered, why the
+// aligned answer is the aligned one, the EJIT principle behind it, and the
+// scenario itself last for anyone who wants to reread the card. Replaces
 // the suggestion block rather than sitting under it, so the card stays one
 // screenful.
 function ScenarioDetail({ n, answers }) {
@@ -321,6 +336,8 @@ function ScenarioDetail({ n, answers }) {
   const picked = answers?.[scenario.code] ?? null;
   // Some cards have more than one fully aligned answer.
   const aligned = scenario.options.filter((o) => o.align === 'full');
+  // A timed-out card is scored as a non-aligned answer, so the aligned one is
+  // still worth showing -- they never saw it.
   const pickedWasAligned = picked?.align === 'full';
 
   return (
@@ -338,7 +355,9 @@ function ScenarioDetail({ n, answers }) {
       <h5 className="scenario-detail-label">Your answer</h5>
       {picked ? (
         <p className="scenario-detail-answer" data-align={picked.align}>
-          {picked.text}
+          {/* Nothing was picked when the clock ran out, so there is no option
+              to quote -- only what it was scored as. */}
+          {picked.timedOut ? 'You ran out of time without choosing.' : picked.text}
           <span className="scenario-detail-align">{ALIGN_LABELS[picked.align]}</span>
         </p>
       ) : (
@@ -357,17 +376,24 @@ function ScenarioDetail({ n, answers }) {
         </>
       )}
 
-      <h5 className="scenario-detail-label">The scenario</h5>
-      {scenario.paragraphs.map((para) => (
-        <p key={para.slice(0, 40)} className="scenario-detail-prompt">
-          {para}
-        </p>
-      ))}
-
       <h5 className="scenario-detail-label">Why</h5>
       {aligned.map((o) => (
         <p key={o.text} className="scenario-detail-why">
           {o.explanation}
+        </p>
+      ))}
+
+      {scenario.principle && (
+        <>
+          <h5 className="scenario-detail-label">EJIT principle</h5>
+          <p className="scenario-detail-principle">{scenario.principle}</p>
+        </>
+      )}
+
+      <h5 className="scenario-detail-label">The scenario</h5>
+      {scenario.paragraphs.map((para) => (
+        <p key={para.slice(0, 40)} className="scenario-detail-prompt">
+          {para}
         </p>
       ))}
     </div>
@@ -384,8 +410,11 @@ function RadarChart({ answers: realAnswers }) {
   const answers =
     DEV_MODE && !Object.keys(realAnswers ?? {}).length ? DEV_STUB_ANSWERS : realAnswers;
 
-  // Which scenario chip is open, if any. Null shows the suggestions instead.
-  const [openScenario, setOpenScenario] = useState(null);
+  // Which scenario chip is open, if any. The quadrant's first card is open on
+  // arrival rather than nothing, so the detail below the tabs is never an empty
+  // space waiting to be discovered; clicking the open chip still closes it.
+  // Picking a different quadrant opens that quadrant's first card in turn.
+  const [openScenario, setOpenScenario] = useState(RADAR_AXES[0].scenarios[0]);
 
   // Cross-player averages, or null while loading / when unavailable. The
   // comparison series is simply not drawn in that case rather than shown
@@ -622,8 +651,9 @@ function RadarChart({ answers: realAnswers }) {
       .style('cursor', 'pointer')
       // The header is a second way in, alongside the dot itself.
       .on('click', (_, d) => {
-        setActive(axes.indexOf(d));
-        setOpenScenario(null);
+        const next = axes.indexOf(d);
+        setActive(next);
+        setOpenScenario(axes[next].scenarios[0]);
       });
 
     marks.current.labels.each(function (d, i) {
@@ -632,11 +662,27 @@ function RadarChart({ answers: realAnswers }) {
       const lines = wrapLabel(d.title.join(' '), LABEL_WRAP);
       // Top and bottom read centred over their point; the sides read outward.
       const anchor = i === 0 || i === 2 ? 'middle' : i === 1 ? 'start' : 'end';
-      // The block hangs above the top vertex, below the bottom one, and is
-      // centred on the two at the sides. +1 line for the score underneath.
-      const total = lines.length + 1;
+      // One chip per series, stacked under the title. The average is absent
+      // until Modal answers, so the block is a line shorter until then.
+      const chips = [
+        { key: 'you', label: 'YOU', text: `${d.you}/${d.max}` },
+        ...(d.avg === null || d.avg === undefined
+          ? []
+          : [{ key: 'avg', label: 'AVG', text: `${d.avg}/${d.max}` }]),
+      ];
+
+      // How much room the stack needs below the last line of the title.
+      const chipsH = CHIP_TOP_GAP + chips.length * CHIP_H + (chips.length - 1) * CHIP_V_GAP;
+      // Title baselines, then the stack under them. The whole block hangs
+      // above the top vertex, below the bottom one, and is centred on the two
+      // at the sides.
+      const titleH = (lines.length - 1) * LABEL_LINE;
       const firstY =
-        i === 0 ? y - (total - 1) * LABEL_LINE : i === 2 ? y + LABEL_LINE : y - ((total - 1) * LABEL_LINE) / 2;
+        i === 0
+          ? y - chipsH - titleH
+          : i === 2
+            ? y + LABEL_LINE
+            : y - (titleH + chipsH) / 2;
 
       lines.forEach((line, n) => {
         group
@@ -650,30 +696,40 @@ function RadarChart({ answers: realAnswers }) {
           .text(line);
       });
 
-      // Scores sit under the quadrant's name rather than in the card: the
-      // player's own, then everyone's average beside it in the average
-      // series' own purple, so the number and the ring it belongs to are
-      // obviously the same thing. The average is absent until Modal answers.
-      const score = group
-        .append('text')
-        .attr('class', 'radar-axis-score')
-        .attr('x', x)
-        .attr('y', firstY + lines.length * LABEL_LINE)
-        .attr('text-anchor', anchor)
-        .attr('font-size', LABEL_SIZE)
-        .attr('font-weight', 700);
+      // The scores sit under the quadrant's name rather than in the card, as
+      // one chip per series carrying that series' own colour -- so a chip and
+      // the ring it belongs to are obviously the same thing, and the legend
+      // below the chart reads as the key to both. Stacked rather than side by
+      // side: two chips on one line only fit at a size the numbers get lost at.
+      const stack = group
+        .append('g')
+        .attr('class', 'radar-score-chips')
+        .attr('transform', `translate(${x},${firstY + titleH + CHIP_TOP_GAP})`);
 
-      score
-        .append('tspan')
-        .attr('class', 'radar-axis-score-you')
-        .text(`${d.you}/${d.max}`);
-
-      if (d.avg !== null && d.avg !== undefined) {
-        score
-          .append('tspan')
-          .attr('class', 'radar-axis-score-avg')
-          .text(`  avg ${d.avg}`);
-      }
+      chips.forEach((chip, n) => {
+        const g2 = stack
+          .append('g')
+          .attr('class', 'radar-score-chip')
+          .attr('data-series', chip.key);
+        const rect = g2.append('rect').attr('rx', 2);
+        const label = g2
+          .append('text')
+          .attr('class', 'radar-score-chip-text')
+          .attr('x', CHIP_PAD_X)
+          .attr('y', CHIP_H / 2)
+          .attr('dominant-baseline', 'middle')
+          .attr('font-size', CHIP_SIZE)
+          .attr('font-weight', 700)
+          .text(`${chip.label} ${chip.text}`);
+        // Each chip is only as wide as its own contents, so the stack is
+        // shifted per chip rather than as a block -- otherwise the shorter of
+        // the two would not line up with the title above it.
+        const width = label.node().getComputedTextLength() + CHIP_PAD_X * 2;
+        rect.attr('x', 0).attr('y', 0).attr('width', width).attr('height', CHIP_H)
+          .attr('fill', RADAR_SERIES_BY_KEY[chip.key].stroke);
+        const shift = anchor === 'middle' ? -width / 2 : anchor === 'end' ? -width : 0;
+        g2.attr('transform', `translate(${shift},${n * (CHIP_H + CHIP_V_GAP)})`);
+      });
     });
 
     // Generous invisible hit targets on each vertex drive the detail card.
@@ -689,8 +745,9 @@ function RadarChart({ answers: realAnswers }) {
       .on('mouseenter', (_, d) => setHovered(axes.indexOf(d)))
       .on('mouseleave', () => setHovered(null))
       .on('click', (_, d) => {
-        setActive(axes.indexOf(d));
-        setOpenScenario(null);
+        const next = axes.indexOf(d);
+        setActive(next);
+        setOpenScenario(axes[next].scenarios[0]);
       });
 
     return () => {

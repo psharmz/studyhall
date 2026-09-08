@@ -152,8 +152,10 @@ def _hogql(query: str):
 # -5/+2/+5) and every generation of rows is still in the warehouse, so
 # points_applied is not comparable across those changes. Alignment has always
 # meant the same thing, so re-scoring from it puts every run on today's scale.
-# A timeout has no alignment and counts as 0 -- not as a non-aligned answer --
-# which is the one case where this and the player's own total differ.
+# Running the clock out is scored as a non-aligned answer, the same as the game
+# scores it. Rows written before that rule carry no alignment at all, so the
+# timeout flag is checked first and they are re-scored here rather than counting
+# as a 0 that never happened.
 #
 # Averaging happens in Python because a quadrant's average has to account for
 # partial decks -- see _quadrant_averages.
@@ -169,6 +171,7 @@ def _points_query():
   SELECT properties.run_id AS run,
          properties.scenario_code AS code,
          avg(multiIf(
+           toString(properties.is_timeout) = 'true', {points['non']},
 {scored}
            0
          )) AS pts
@@ -232,10 +235,13 @@ def _quadrant_averages(point_rows):
     averages = {}
     for slug, size in size_for.items():
         # One number per run: what that run averaged per card in this quadrant.
+        # `pts`, not `points`: an assignment expression in a comprehension binds
+        # in the enclosing scope, so reusing the name here would overwrite the
+        # alignment table the max and min below are read from.
         per_card = [
-            sum(points) / len(points)
+            sum(pts) / len(pts)
             for run in per_run.values()
-            if (points := run.get(slug))
+            if (pts := run.get(slug))
         ]
         if not per_card:
             continue

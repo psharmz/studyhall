@@ -591,12 +591,32 @@ const SCENARIO_DECK = [
   }
 ];
 
+// How many quadrants a card feeds, keyed by scenario number. Every graded card
+// sits in one, except scenario 17, which sits in two -- so it counts twice
+// towards the dial, exactly as it already counts towards both of its quadrants
+// on the radar.
+const QUADRANT_WEIGHTS = quadrantMap.quadrants
+  .flatMap((quadrant) => quadrant.scenarios)
+  .reduce((weights, n) => ({ ...weights, [n]: (weights[n] ?? 0) + 1 }), {});
+
 // Every option is scored from its alignment, so the numbers exist in exactly
 // one place. Authoring a card means choosing full/partial/non and nothing else.
+// `weight` is how many times the card's points land on the dial, which is what
+// makes the dial total the sum of the four quadrant scores rather than a fifth
+// number that happens to be close to them.
 export const SCENARIOS = SCENARIO_DECK.map((scenario) => ({
   ...scenario,
+  weight: QUADRANT_WEIGHTS[Number(scenario.code.slice(2))] ?? 0,
   options: scenario.options.map((option) => ({ ...option, score: ALIGN_POINTS[option.align] })),
 }));
+
+// What a deck can earn at best and at worst: every card's points, counted as
+// many times as the card is counted. Exported so the dial's ends and Dev Mode's
+// shorter deck are measured the same way.
+export function scoreRangeFor(deck) {
+  const slots = deck.reduce((n, scenario) => n + scenario.weight, 0);
+  return { min: slots * ALIGN_POINTS.non, max: slots * ALIGN_POINTS.full };
+}
 
 // The closing card. It is not a scenario: nothing is scored and there are no
 // options -- the player writes their own vision instead. It is deliberately
@@ -634,10 +654,14 @@ export const VISION_CARD = {
 // non-aligned -5, partially aligned +2, fully aligned +5. Zero is the middle
 // of the range now, not the floor: a non-aligned answer costs as much as a
 // fully aligned one earns.
-export const SCORE_PER_CARD_MIN = ALIGN_POINTS.non;
-export const SCORE_PER_CARD_MAX = ALIGN_POINTS.full;
-export const SCORE_MIN = SCENARIOS.length * SCORE_PER_CARD_MIN;
-export const SCORE_MAX = SCENARIOS.length * SCORE_PER_CARD_MAX;
+//
+// The dial runs -100..+100. That is the twenty quadrant slots over nineteen
+// cards, not the nineteen cards: scenario 17 feeds two quadrants and so scores
+// twice, which is what quadrants.json means by "20 x 5 = 100 overall". It also
+// puts the arc's four colour bands on the printed round numbers -- red to -50,
+// orange to 0, yellow to +50, green beyond -- instead of the +/-47.5 a
+// nineteen-card ceiling would put them on.
+export const { min: SCORE_MIN, max: SCORE_MAX } = scoreRangeFor(SCENARIOS);
 
 // Dev Mode's deck: four cards, one per quadrant of the results spider chart,
 // so a whole run reaches the results screen in a couple of minutes instead of

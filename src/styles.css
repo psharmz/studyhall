@@ -1746,10 +1746,13 @@
     overflow: visible;
   }
 
-  /* The player's own total, then everyone's average in the average series'
-     own purple so the number and its ring read as the same thing. */
-  .radar-axis-score-avg {
-    fill: #A97BF0;
+  /* One chip per series under each quadrant's name, filled with that series'
+     own colour so a chip, its ring and its legend swatch read as one thing.
+     The fill is set on the mark; the text on it is dark so it stays legible
+     against either colour. */
+  .radar-score-chip-text {
+    fill: #0B0B0B;
+    letter-spacing: 0.06em;
   }
 
   /* The average readout, shown while the pointer is on a purple vertex. */
@@ -1842,13 +1845,8 @@
     fill: var(--green);
   }
 
-  .radar-axis-score {
-    fill: #E8E8E8;
-  }
-
-  .radar-axis-label.is-selected .radar-axis-score {
-    fill: var(--red);
-  }
+  /* The chips carry their own colour, so the selected quadrant is picked out
+     by the label's opacity alone rather than by recolouring the score. */
 
   /* ---- The web, and the detail card for the selected point ---- */
   .radar-wrap {
@@ -2126,6 +2124,7 @@
 
   .scenario-detail-prompt,
   .scenario-detail-why,
+  .scenario-detail-principle,
   .scenario-detail-note {
     margin: 0 0 8px;
     font-size: 11.5px;
@@ -2135,6 +2134,14 @@
 
   .scenario-detail-note {
     color: #9A9A9A;
+    font-style: italic;
+  }
+
+  /* Quoted from the EJIT sheets, so it reads as a source rather than as ours. */
+  .scenario-detail-principle {
+    padding-left: 11px;
+    border-left: 3px solid rgba(255, 255, 255, 0.16);
+    color: #B4B4B4;
     font-style: italic;
   }
 

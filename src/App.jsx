@@ -17,8 +17,8 @@ import {
   DEV_DECK,
   SCORE_MIN,
   SCORE_MAX,
-  SCORE_PER_CARD_MIN,
-  SCORE_PER_CARD_MAX,
+  scoreRangeFor,
+  ALIGN_POINTS,
   LETTERS,
   ADVISOR_PROFILES,
 } from './scenarios.js';
@@ -45,13 +45,6 @@ const NEEDLE_COLOR = 'var(--blue)';
 // Needle sweeps +75deg (pointing right, into the red zone) at SCORE_MIN
 // down to -75deg (pointing left, into the green zone) at SCORE_MAX.
 const NEEDLE_SWEEP = 75;
-
-// Letting the clock run out with no answer picked swings the needle an
-// eighth of the dial's full travel towards non-aligned. An eighth of *this
-// deck's* travel, so the penalty stays proportionate on Dev Mode's short one.
-function timeoutPenaltyFor(scoreMin, scoreMax) {
-  return (scoreMax - scoreMin) / 8;
-}
 
 // Shortcut menu on the results button: each band parks the needle in the
 // middle of that stretch of the dial. Fractions run 0 = non-aligned (red,
@@ -140,9 +133,8 @@ export default function App() {
   // on that scale, so Dev Mode -- and only Dev Mode -- is scored against what
   // its own deck can actually earn, which is what makes the shortcut useful
   // for looking at endings.
-  const scoreMin = DEV_MODE ? deck.length * SCORE_PER_CARD_MIN : SCORE_MIN;
-  const scoreMax = DEV_MODE ? deck.length * SCORE_PER_CARD_MAX : SCORE_MAX;
-  const timeoutPenalty = timeoutPenaltyFor(scoreMin, scoreMax);
+  const scoreMin = DEV_MODE ? scoreRangeFor(deck).min : SCORE_MIN;
+  const scoreMax = DEV_MODE ? scoreRangeFor(deck).max : SCORE_MAX;
 
   // One screen_exited row per screen visit, emitted on the way out with how
   // long it was open. Comparing against the ref rather than using an effect
@@ -240,6 +232,9 @@ export default function App() {
   // still on screen; advancing is a separate, later step.
   function handleReveal(option, optionIndex) {
     answeredCountRef.current += 1;
+    // A card lands on the dial once per quadrant it feeds, so scenario 17 --
+    // the one card in two -- moves the needle twice as far as the rest.
+    const pointsApplied = option.score * scenario.weight;
     captureQuestionAnswered({
       scenarioCode: scenario.code,
       questionNumber,
@@ -248,36 +243,51 @@ export default function App() {
       optionAlignment: option.align,
       optionScore: option.score,
       isTimeout: false,
-      pointsApplied: option.score,
+      pointsApplied,
       timeToAnswerMs: Math.round(performance.now() - questionStartRef.current),
-      totalScoreAfter: totalScore + option.score,
+      totalScoreAfter: totalScore + pointsApplied,
       advisorCallCount: questionCallsRef.current.length,
       advisorRoles: questionCallsRef.current.map((call) => call.role),
     });
     questionCallsRef.current = [];
-    setTotalScore((t) => t + option.score);
+    setTotalScore((t) => t + pointsApplied);
     setAnswers((a) => ({ ...a, [scenario.code]: option }));
   }
 
-  // Out of time with nothing picked -- no answer to score, just the penalty.
+  // Out of time with nothing picked. Scored as the worst answer on the card
+  // rather than as a penalty of its own: not deciding is a decision, and it is
+  // the non-aligned one. Scoring it that way also keeps the run on one scale --
+  // every card is worth between non and full points, so the total can no longer
+  // fall below the dial's own floor, and the quadrant totals still add up to it.
+  //
+  // It is recorded as an answer too, so the card shows on the radar as the
+  // non-aligned play it was rather than as one never dealt. `timedOut` is what
+  // the results screen reads to say so instead of quoting an option they never
+  // picked.
   function handleTimeoutPenalty() {
     timeoutCountRef.current += 1;
+    const answer = { align: 'non', score: ALIGN_POINTS.non, text: null, timedOut: true };
+    const pointsApplied = answer.score * scenario.weight;
     captureQuestionAnswered({
       scenarioCode: scenario.code,
       questionNumber,
       optionLetter: null,
       optionIndex: null,
-      optionAlignment: null,
-      optionScore: null,
+      // Alignment, not the letter: no option was picked, but the answer is
+      // scored as a non-aligned one and the aggregation reads alignment.
+      // `is_timeout` is what still tells the two apart in the warehouse.
+      optionAlignment: answer.align,
+      optionScore: answer.score,
       isTimeout: true,
-      pointsApplied: -timeoutPenalty,
+      pointsApplied,
       timeToAnswerMs: Math.round(performance.now() - questionStartRef.current),
-      totalScoreAfter: totalScore - timeoutPenalty,
+      totalScoreAfter: totalScore + pointsApplied,
       advisorCallCount: questionCallsRef.current.length,
       advisorRoles: questionCallsRef.current.map((call) => call.role),
     });
     questionCallsRef.current = [];
-    setTotalScore((t) => t - timeoutPenalty);
+    setTotalScore((t) => t + pointsApplied);
+    setAnswers((a) => ({ ...a, [scenario.code]: answer }));
   }
 
   function handleNext() {

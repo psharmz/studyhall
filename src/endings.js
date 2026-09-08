@@ -1,9 +1,15 @@
 // Which quarter of the dial the needle landed in. It sweeps -75deg (fully
-// aligned) to +75deg (non-aligned) in four equal bands.
+// aligned) to +75deg (non-aligned) in four equal bands, and on the -100..+100
+// scale those quarters fall on the scoring card's round numbers: green +50 to
+// +100, yellow +1 to +49, orange 0 to -49, red -50 to -100.
+//
+// Each band takes its own edge and gives up the other: zero sits at 0deg and
+// reads orange, and -50 sits at +37.5deg and reads red, which is why the middle
+// two comparisons are strict where the first is not.
 export function endingFor(gaugeAngle) {
   if (gaugeAngle <= -37.5) return 'aligned';
-  if (gaugeAngle <= 0) return 'partial';
-  if (gaugeAngle <= 37.5) return 'sipping';
+  if (gaugeAngle < 0) return 'partial';
+  if (gaugeAngle < 37.5) return 'sipping';
   return 'trapped';
 }
 

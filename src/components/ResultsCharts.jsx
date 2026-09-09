@@ -4,6 +4,7 @@ import cloud from 'd3-cloud';
 import { fetchWordCloud, fetchQuadrantAverages } from '../aggregates.js';
 import quadrantMap from '../../quadrants.json';
 import { SCENARIOS, ALIGN_LABELS, ALIGN_POINTS } from '../scenarios.js';
+import { MiniHamster, ThoughtBubble, WheelHamster } from '../pixels.jsx';
 import { DEV_MODE } from '../env.js';
 import { DEV_STUB_ANSWERS, DEV_STUB_AVERAGES } from '../devStub.js';
 
@@ -401,10 +402,85 @@ function ScenarioDetail({ n, answers }) {
   );
 }
 
+// Study Mode's answer to the scenario tabs. Simulation Mode shows the one
+// suggestion the player's own score earned; here the whole ladder is on show
+// at once, each rung labelled with the range it answers to. Nobody is being
+// marked in Study Mode -- the suggestions are the material, not a verdict.
+//
+// The art is the game's own shorthand for the three bands, the same pieces the
+// endings use: still on the wheel, off it and thinking, out and dancing.
+function bandArt(i) {
+  if (i === 0) {
+    return (
+      <div className="rat-wheel">
+        <WheelHamster />
+      </div>
+    );
+  }
+  if (i === 1) {
+    return (
+      <div className="thought-hamster">
+        <ThoughtBubble className="thought-bubble" aria-hidden="true" />
+        <MiniHamster className="mini-hamster-big" />
+      </div>
+    );
+  }
+  return <MiniHamster className="mini-hamster-big" />;
+}
+
+// "+18", "-35", "0" -- signed, because the bands run either side of zero and a
+// bare "18" beside a "-35" reads as a different kind of number.
+function signed(n) {
+  return n > 0 ? `+${n}` : `${n}`;
+}
+
+// What each band is called, and the alignment colour it borrows for its chip.
+// The three read as the game's own red/yellow/green rather than as a fourth
+// palette: they are the same idea the option chips carry on every card.
+const BAND_NAMES = [
+  { name: 'Low score', align: 'non' },
+  { name: 'Medium score', align: 'partial' },
+  { name: 'High score', align: 'full' },
+];
+
+function SuggestionBands({ axis }) {
+  return (
+    <div className="suggestion-bands">
+      <h4 className="radar-detail-suggest">Suggestions for Taking Action</h4>
+      {/* The three bands read across rather than down: they are one ladder, and
+          side by side the ranges can be compared at a glance. */}
+      <div className="suggestion-band-row">
+      {axis.suggestions.map((band, i) => {
+        // Each band picks up where the one below it stopped; the first starts
+        // at the quadrant's floor.
+        const from = i === 0 ? axis.min : axis.suggestions[i - 1].max + 1;
+        return (
+          <section className="suggestion-band" key={band.label}>
+            <div className="suggestion-art" data-band={i} aria-hidden="true">
+              {bandArt(i)}
+            </div>
+            <div className="suggestion-band-body">
+              <h5 className="suggestion-band-label">{band.label}</h5>
+              <span
+                className="suggestion-band-range chip"
+                data-align={BAND_NAMES[i].align}
+              >
+                {BAND_NAMES[i].name} {signed(from)} to {signed(band.max)}
+              </span>
+              <p className="suggestion-band-text">{band.text}</p>
+            </div>
+          </section>
+        );
+      })}
+      </div>
+    </div>
+  );
+}
+
 // The web on its own -- no titles, no chips, no callout. Everything about the
 // selected vertex is read off the card beside it instead, which is why the
 // box is only as wide as the chart now.
-function RadarChart({ answers: realAnswers }) {
+function RadarChart({ answers: realAnswers, study = false }) {
   // A dev build with nothing played falls back to stub answers, so the chart,
   // the chips and the per-scenario detail can all be looked at without playing
   // nineteen cards first. Never in a production build.
@@ -457,10 +533,15 @@ function RadarChart({ answers: realAnswers }) {
     [answers, averages]
   );
 
-  // Drawn series: the average one only once its data is in.
+  // Drawn series: the average one only once its data is in, and in Study Mode
+  // the player's own is left off altogether -- there is no score on show there,
+  // so a shape drawn from one would be the only place it appeared.
   const series = useMemo(
-    () => (averages ? RADAR_SERIES : RADAR_SERIES.filter((s) => s.key !== 'avg')),
-    [averages]
+    () =>
+      RADAR_SERIES.filter(
+        (s) => (s.key !== 'avg' || averages) && (s.key !== 'you' || !study)
+      ),
+    [averages, study]
   );
 
   useEffect(() => {
@@ -663,10 +744,12 @@ function RadarChart({ answers: realAnswers }) {
       const lines = wrapLabel(d.title.join(' '), LABEL_WRAP);
       // Top and bottom read centred over their point; the sides read outward.
       const anchor = i === 0 || i === 2 ? 'middle' : i === 1 ? 'start' : 'end';
-      // One chip per series, stacked under the title. The average is absent
-      // until Modal answers, so the block is a line shorter until then.
+      // One chip per series, stacked under the title. Study Mode drops the
+      // player's own number -- it is not a graded run, and the card beside the
+      // chart lists every band rather than the one a score fell in. The average
+      // is absent until Modal answers, so the block can be a line shorter still.
       const chips = [
-        { key: 'you', label: 'YOU', text: `${d.you}/${d.max}` },
+        ...(study ? [] : [{ key: 'you', label: 'YOU', text: `${d.you}/${d.max}` }]),
         ...(d.avg === null || d.avg === undefined
           ? []
           : [{ key: 'avg', label: 'AVG', text: `${d.avg}/${d.max}` }]),
@@ -733,13 +816,16 @@ function RadarChart({ answers: realAnswers }) {
       });
     });
 
-    // Generous invisible hit targets on each vertex drive the detail card.
+    // Generous invisible hit targets on each vertex drive the detail card. They
+    // ride whichever shape is actually drawn: the player's own where there is
+    // one, the average in Study Mode where there is not.
+    const hitAt = (d) => (study ? (d.avg ?? d.you) : d.you);
     g.append('g')
       .selectAll('circle')
       .data(axes)
       .join('circle')
-      .attr('cx', (d, i) => px(r(d.you, i), i))
-      .attr('cy', (d, i) => py(r(d.you, i), i))
+      .attr('cx', (d, i) => px(r(hitAt(d), i), i))
+      .attr('cy', (d, i) => py(r(hitAt(d), i), i))
       .attr('r', 20)
       .attr('fill', 'transparent')
       .style('cursor', 'pointer')
@@ -755,7 +841,7 @@ function RadarChart({ answers: realAnswers }) {
       svg.selectAll('*').remove();
       marks.current = { aura: null, sel: null, dot: null, labels: null, avgDot: null, avgTip: null };
     };
-  }, [axes, series]);
+  }, [axes, series, study]);
 
   // The average readout: positioned and filled here rather than in the draw
   // effect, so hovering never redraws the chart out from under the pointer.
@@ -818,7 +904,7 @@ function RadarChart({ answers: realAnswers }) {
 
 
   return (
-    <div className="radar-wrap">
+    <div className={'radar-wrap' + (study ? ' radar-wrap--study' : '')}>
       <div className="radar-media">
         <div className="radar-scroll" ref={scrollRef}>
           <svg
@@ -837,19 +923,21 @@ function RadarChart({ answers: realAnswers }) {
               {s.name}
             </span>
           ))}
-          {/* Only when it is a real sample -- the dev stub reports zero runs. */}
-          {averages?.[axis.slug]?.runs > 0 && (
-            <span className="radar-legend-n">from {averages[axis.slug].runs} players</span>
-          )}
         </div>
       </div>
         {/* Stacked under the chart, inside the same frame: the two together
-            fill the column beside the suggestions. */}
-        <WordCloudPanel />
+            fill the column beside the suggestions. Simulation Mode only --
+            Study Mode's column is the suggestions ladder, and the cloud is a
+            cross-player aggregate that has nothing to say next to it. */}
+        {!study && <WordCloudPanel />}
       </div>
       {/* Only the selected point's detail, beside the chart. The quadrant is
           named on the chart itself now, against its own vertex. */}
       <div className="radar-detail">
+        {study ? (
+          <SuggestionBands axis={axis} />
+        ) : (
+          <>
         {/* The score lives on the chart now, under its own quadrant's name. */}
         <h4 className="radar-detail-suggest">
           Suggestions for Taking Action
@@ -881,6 +969,8 @@ function RadarChart({ answers: realAnswers }) {
         </div>
 
         {openScenario && <ScenarioDetail n={openScenario} answers={answers} />}
+          </>
+        )}
       </div>
     </div>
   );
@@ -890,10 +980,10 @@ function RadarChart({ answers: realAnswers }) {
 // The score breakdown, lifted out of the charts stack so the results screen
 // can open it under the Scoring Details button instead of scrolling the
 // player down to it.
-export function ScoreBreakdown({ answers }) {
+export function ScoreBreakdown({ answers, study = false }) {
   return (
     <div className="score-breakdown" id="score-breakdown">
-      <RadarChart answers={answers} />
+      <RadarChart answers={answers} study={study} />
     </div>
   );
 }

@@ -24,6 +24,7 @@ import {
 } from './scenarios.js';
 import { DEV_MODE } from './env.js';
 import { loadVision, saveVision } from './vision.js';
+import { loadSimulationCompleted, saveSimulationCompleted } from './progress.js';
 import { useIsPhone } from './useIsPhone.js';
 import { SetupScreen } from './components/SetupScreen.jsx';
 import { RulesScreen } from './components/RulesScreen.jsx';
@@ -85,6 +86,10 @@ export default function App() {
   const [answers, setAnswers] = useState({});
   // Track which answers were chosen in simulation mode, to tag them in study mode
   const [simulationAnswers, setSimulationAnswers] = useState({});
+  // Whether this browser has finished a Simulation run before, which is what
+  // opens Study Mode on the setup screen. Read once on mount; set again when a
+  // run finishes, so the setup screen behind a restart is already up to date.
+  const [simulationCompleted, setSimulationCompleted] = useState(loadSimulationCompleted);
   // The closing free-text card. Seeded from sessionStorage so a Study Mode run
   // started right after the simulation opens on what was written then.
   const [vision, setVision] = useState(() => loadVision());
@@ -225,6 +230,14 @@ export default function App() {
       scoreMax,
       isPlaceholder: RADAR_SCORES_ARE_PLACEHOLDER,
     });
+    // Finishing a Simulation run is what unlocks Study Mode on the setup
+    // screen. Recorded here rather than on the results screen so that only a
+    // run played to the end counts -- the dev jump straight to results does
+    // not come through this function.
+    if (settings?.mode !== 'study') {
+      saveSimulationCompleted();
+      setSimulationCompleted(true);
+    }
     setPhase('complete');
   }
 
@@ -372,7 +385,14 @@ export default function App() {
 
   let screen;
   if (phase === 'setup') {
-    screen = <SetupScreen onStart={handleStart} initial={settings} dev={DEV_MODE} />;
+    screen = (
+      <SetupScreen
+        onStart={handleStart}
+        initial={settings}
+        dev={DEV_MODE}
+        studyUnlocked={simulationCompleted}
+      />
+    );
   } else if (phase === 'rules') {
     screen = <RulesScreen onBack={() => setPhase('setup')} onNext={() => setPhase('goals')} />;
   } else if (phase === 'goals') {

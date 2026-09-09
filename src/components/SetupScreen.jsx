@@ -2,14 +2,22 @@ import { useState } from 'react';
 import { DEV_DECK } from '../scenarios.js';
 import { TitleBar } from './TitleBar.jsx';
 
-function SetupBtn({ selected, onClick, children }) {
+// `note` marks a choice that cannot be taken yet: the button is disabled and
+// says why in its top corner, rather than being left clickable or removed
+// altogether -- what is coming, or what would unlock it, is worth advertising.
+// The note is taken out of the flow so the button's own label stays centred
+// whether or not there is one; a label that shifts when a note appears makes
+// the row of buttons look mismatched.
+function SetupBtn({ selected, onClick, children, disabled = false, note = null }) {
   return (
     <button
       type="button"
-      className={'setup-btn' + (selected ? ' selected' : '')}
+      className={'setup-btn' + (selected ? ' selected' : '') + (disabled ? ' is-disabled' : '')}
       onClick={onClick}
+      disabled={disabled}
     >
       {children}
+      {note && <span className="setup-btn-note">{note}</span>}
     </button>
   );
 }
@@ -22,6 +30,7 @@ const STRINGS = {
     languageLabel: 'CHOOSE YOUR LANGUAGE',
     english: 'English',
     spanish: 'Español',
+    comingSoon: 'Coming soon!',
     translators: 'Translated by Mariana González-Cepeda and Jose Alberto Nevarez (UABC - Mexico)',
     modeLabel: 'MODE',
     simulation: 'Simulation Mode',
@@ -42,6 +51,7 @@ const STRINGS = {
     // stays "English" here rather than becoming "Inglés".
     english: 'English',
     spanish: 'Español',
+    comingSoon: '¡Próximamente!',
     translators: 'Traducido por Mariana González-Cepeda y Jose Alberto Nevarez (UABC - México)',
     modeLabel: 'MODO',
     simulation: 'Modo Simulación',
@@ -62,8 +72,16 @@ const STRINGS = {
 // `dev` is Dev Mode: the deck is fixed at four cards there, so the only count
 // on offer is that one, already chosen -- there is nothing to decide, and it
 // keeps the run from starting on a promise of ten cards it will not deal.
-export function SetupScreen({ onStart, initial, dev = false }) {
+// `studyUnlocked` is set once this browser has played a Simulation run to the
+// end. Study Mode debriefs that run, so until there is one it is shown and
+// held rather than hidden. Dev Mode ignores the gate -- it exists to reach
+// every screen without playing through first.
+export function SetupScreen({ onStart, initial, dev = false, studyUnlocked = false }) {
+  // Ten cards is not dealt yet; twenty is the whole deck. Dev Mode plays its
+  // own short deck instead.
   const cardChoices = dev ? [DEV_DECK.length] : [10, 20];
+  const lockedCards = dev ? [] : [10];
+  const studyLocked = !dev && !studyUnlocked;
   const [language, setLanguage] = useState(initial?.language ?? null);
   const [mode, setMode] = useState(initial?.mode ?? null);
   const [cards, setCards] = useState(initial?.cards ?? (dev ? DEV_DECK.length : null));
@@ -87,7 +105,9 @@ export function SetupScreen({ onStart, initial, dev = false }) {
                   {t.english}
                 </SetupBtn>
                 <div className="setup-lang-col">
-                  <SetupBtn selected={language === 'spanish'} onClick={() => setLanguage('spanish')}>
+                  {/* The translation is done but not wired through the game
+                      yet, so the choice is shown and held rather than hidden. */}
+                  <SetupBtn selected={false} disabled note={t.comingSoon}>
                     {t.spanish}
                   </SetupBtn>
                   <div className="setup-lang-caption">
@@ -107,7 +127,11 @@ export function SetupScreen({ onStart, initial, dev = false }) {
                   <div className="setup-lang-caption">{t.simulationCaption}</div>
                 </div>
                 <div className="setup-lang-col">
-                  <SetupBtn selected={mode === 'study'} onClick={() => setMode('study')}>
+                  <SetupBtn
+                    selected={mode === 'study'}
+                    onClick={() => setMode('study')}
+                    disabled={studyLocked}
+                  >
                     <span className="setup-btn-icon">🔒</span>{t.study}
                   </SetupBtn>
                   <div className="setup-lang-caption">{t.studyCaption}</div>
@@ -130,11 +154,20 @@ export function SetupScreen({ onStart, initial, dev = false }) {
             <div className="setup-question">
               <div className="setup-label">{t.cardsLabel}</div>
               <div className="setup-choices">
-                {cardChoices.map((n) => (
-                  <SetupBtn key={n} selected={cards === n} onClick={() => setCards(n)}>
-                    {n}
-                  </SetupBtn>
-                ))}
+                {cardChoices.map((n) => {
+                  const locked = lockedCards.includes(n);
+                  return (
+                    <SetupBtn
+                      key={n}
+                      selected={cards === n}
+                      onClick={() => setCards(n)}
+                      disabled={locked}
+                      note={locked ? t.comingSoon : null}
+                    >
+                      {n}
+                    </SetupBtn>
+                  );
+                })}
               </div>
             </div>
 

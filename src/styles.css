@@ -961,8 +961,9 @@
 
   /* The right-hand gutter that keeps the results content clear of the corner
      action tiles. Everything stacked down the results screen reads from this
-     one value so their right edges line up: the visuals row, the study offers
-     and the vision recap. Simulation Mode and phones zero it below. */
+     one value so their right edges line up: the visuals row, the study offers,
+     the vision recap and the score breakdown. Simulation Mode and phones zero
+     it below. */
   .screen-complete {
     --results-gutter: 110px;
   }
@@ -1089,6 +1090,31 @@
     color: var(--black);
   }
 
+  /* The support note is a sentence and an address, not a card, so its panel is
+     narrower than the share sheet it borrows the shell from. */
+  .share-sheet--support {
+    width: 340px;
+  }
+
+  .support-copy {
+    margin: 0;
+    color: #C9C9C9;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+
+  .support-email {
+    color: var(--green);
+    /* Long enough to break the panel on a narrow screen if it cannot wrap. */
+    word-break: break-word;
+  }
+
+  .support-email:hover {
+    background: var(--green);
+    color: var(--black);
+  }
+
   /* The card itself -- same scene colours as the ending it came from. */
   .share-preview {
     display: flex;
@@ -1198,6 +1224,10 @@
   .score-breakdown {
     margin-top: 18px;
     padding-top: 18px;
+    /* The same gutter the scene above it sits in, so the two boxes share a
+       right edge. Zero in Simulation Mode and on phones, where nothing else
+       is inset either. */
+    padding-right: var(--results-gutter);
     border-top: 1.5px solid rgba(255, 255, 255, 0.12);
     animation: fadeUp 0.22s ease both;
   }
@@ -1534,6 +1564,121 @@
     margin-bottom: calc(-6px * var(--art));
   }
 
+  /* ---- Study Mode: every suggestion, banded ----
+     The web is the same in both modes; only the card beside it differs. Here
+     it is the whole ladder rather than the rung a score landed on, so each
+     band carries its own range and its own piece of the game's art. */
+  .suggestion-bands {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Three across, equal width. minmax(0, 1fr) rather than 1fr: without it a
+     long unbroken word sets the column's floor and the three stop matching. */
+  .suggestion-band-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .suggestion-band {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* A fixed column so the three pieces of art, which have quite different
+     footprints, still line their text up with each other. */
+  .suggestion-art {
+    /* Every size below is the original multiplied by --art, the same way the
+       ending strip shrinks the full-size pieces. Scaled per band rather than
+       once for the row: the wheel is drawn at 210px and the hamster at 80, so
+       one shared factor would leave the wheel towering over the other two. */
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 84px;
+  }
+
+  .suggestion-art[data-band='0'] { --art: 0.3; }
+  .suggestion-art[data-band='1'] { --art: 0.5; }
+  .suggestion-art[data-band='2'] { --art: 0.68; }
+
+  .suggestion-art .rat-wheel {
+    width: calc(210px * var(--art));
+    height: calc(210px * var(--art));
+    margin: 0;
+  }
+
+  .suggestion-art .mini-hamster-big {
+    width: calc(80px * var(--art));
+    height: calc(73px * var(--art));
+  }
+
+  .suggestion-art .thought-bubble {
+    width: calc(100px * var(--art));
+    height: calc(84px * var(--art));
+    margin-bottom: calc(-6px * var(--art));
+  }
+
+  .suggestion-band-body {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .suggestion-band-label {
+    margin: 0 0 7px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--green);
+  }
+
+  /* The range the band answers to, on an alignment chip: red at the bottom,
+     yellow in the middle, green at the top. It borrows `.chip` for the shape
+     and the colours, and overrides the two things that rule sets for its usual
+     home on an option card -- hidden until revealed, and pushed to the right. */
+  /* Two classes deep on purpose: `.chip` hides itself until a card is revealed
+     and is defined further down this file, so a single-class rule here would
+     lose on source order and the chip would never show. */
+  .suggestion-band .suggestion-band-range {
+    visibility: visible;
+    margin-top: 0;
+    margin-bottom: 9px;
+    margin-left: 0;
+    letter-spacing: 0.08em;
+  }
+
+  .suggestion-band-text {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: #C8C8C8;
+  }
+
+  /* Three columns of prose need the width. Below it they stack, and the art
+     goes back beside the text so each band stays one compact block. */
+  @media (max-width: 900px) {
+    .suggestion-band-row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .suggestion-band {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .suggestion-art {
+      flex: 0 0 84px;
+    }
+  }
+
   /* ---- Results screen: secondary actions + facilitator box ---- */
   .results-links {
     justify-content: center;
@@ -1863,6 +2008,36 @@
     background: rgba(0, 0, 0, 0.42);
     border: 1.5px solid var(--red);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Study Mode reads top to bottom: the web, then the whole suggestion ladder
+     under it across the full width. Beside the chart the three bands would be
+     three narrow columns of long prose. Must come after the rule above -- same
+     specificity, so source order decides. */
+  .radar-wrap--study {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 22px;
+  }
+
+  /* The chart keeps its own width and centres; only the ladder below it runs
+     the full width of the panel. */
+  .radar-wrap--study .radar-media {
+    align-self: center;
+  }
+
+  /* Study Mode's panel is meant to read in one screen: the web across the top
+     half, the suggestions across the bottom. The web is width-driven (760:600
+     viewBox), so its height is set by capping the width -- 53vh of width is
+     about 42vh of chart, leaving the rest to the ladder. Never wider than the
+     560px it was drawn for.
+
+     Only where the three bands actually sit side by side; below that the panel
+     scrolls and the chart wants all the width it can get. */
+  @media (min-width: 901px) {
+    .radar-wrap--study .radar-media {
+      width: min(560px, 53vh);
+    }
   }
 
   /* Left column: the chart, and the word cloud stacked under it. Together they
@@ -2228,13 +2403,6 @@
     color: #9A9A9A;
   }
 
-  /* How many runs the comparison average is drawn from -- a small number is
-     worth knowing when reading it against your own score. */
-  .radar-legend-n {
-    color: #7A7A7A;
-    font-style: italic;
-  }
-
   .results-chart-legend span {
     display: inline-flex;
     align-items: center;
@@ -2479,6 +2647,41 @@
     background: var(--green);
     border-color: var(--green);
     color: var(--black);
+  }
+
+  /* Not available yet: dimmed and inert, but still legible -- it is showing
+     what is coming, not just refusing a click. Hover has nothing to say here,
+     so both hover rules are held off it. */
+  .setup-btn.is-disabled,
+  .setup-btn.is-disabled:hover {
+    position: relative;
+    border-color: #3A3A3A;
+    color: #6A6A6A;
+    background: transparent;
+    cursor: not-allowed;
+  }
+
+  /* Why the button is shut, in its top corner. Absolutely positioned on
+     purpose: out of the flow, the button's own label stays centred in the full
+     height whether or not there is a note, so a disabled button lines up with
+     the live ones beside it. */
+  .setup-btn-note {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    max-width: calc(100% - 16px);
+    background: none;
+    color: var(--blue);
+    /* Explicit, so the note is sized by its own 8px text rather than by the
+       button's larger inherited line box. */
+    line-height: 1;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .setup-lang-choices,

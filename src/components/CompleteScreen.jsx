@@ -19,7 +19,8 @@ import { ScoreBreakdown } from './ResultsCharts.jsx';
 import { EndingArt } from './EndingArt.jsx';
 import { ENDING_ALIGN, ENDING_CAPTIONS, endingFor } from '../endings.js';
 import { ShareSheet } from './ShareSheet.jsx';
-import { ALIGN_LABELS, FACILITATOR_FORM_URL, SUPPORT_URL } from '../scenarios.js';
+import { SupportSheet } from './SupportSheet.jsx';
+import { ALIGN_LABELS, FACILITATOR_FORM_URL } from '../scenarios.js';
 
 export function CompleteScreen({
   gaugeAngle,
@@ -40,6 +41,7 @@ export function CompleteScreen({
   // a fraction, so round before it is shown or shared.
   const shownScore = Math.round(totalScore);
   const [shareOpen, setShareOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   // Share opens a preview rather than firing straight into a share sheet:
   // the result is the thing being sent, so it is worth seeing first. Opening
@@ -197,10 +199,12 @@ export function CompleteScreen({
               capped at the scene's column width.
 
               Always open -- it used to sit behind a See/Hide toggle, but the
-              breakdown is the substance of the results, not an extra. Still
-              Simulation Mode only: Study Mode has no score to break down and
-              ends on the scene alone. */}
-          {simulation && <ScoreBreakdown answers={answers} />}
+              breakdown is the substance of the results, not an extra.
+
+              Both modes now. Study Mode gets the same web, but the card beside
+              it lists every suggestion for the quadrant rather than the one a
+              score earned -- there is no verdict to deliver there. */}
+          <ScoreBreakdown answers={answers} study={!simulation} />
 
           {shareOpen && (
             <ShareSheet
@@ -212,6 +216,8 @@ export function CompleteScreen({
             />
           )}
 
+          {supportOpen && <SupportSheet onClose={() => setSupportOpen(false)} />}
+
           {/* Restarting and supporting both step back into the corner as a
               stacked pair of square tiles, clear of the ending art. */}
           <div className="corner-actions">
@@ -219,22 +225,10 @@ export function CompleteScreen({
               <PixelReload className="corner-btn-icon" />
               <span>Play Again</span>
             </button>
-            {SUPPORT_URL ? (
-              <a
-                className="corner-btn"
-                href={SUPPORT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <PixelMoney className="corner-btn-icon" />
-                <span>Support</span>
-              </a>
-            ) : (
-              <button type="button" className="corner-btn">
-                <PixelMoney className="corner-btn-icon" />
-                <span>Support</span>
-              </button>
-            )}
+            <button type="button" className="corner-btn" onClick={() => setSupportOpen(true)}>
+              <PixelMoney className="corner-btn-icon" />
+              <span>Support</span>
+            </button>
           </div>
 
         </div>

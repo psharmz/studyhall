@@ -8,8 +8,8 @@ import { TitleBar } from './TitleBar.jsx';
 // The note is taken out of the flow so the button's own label stays centred
 // whether or not there is one; a label that shifts when a note appears makes
 // the row of buttons look mismatched.
-function SetupBtn({ selected, onClick, children, disabled = false, note = null }) {
-  return (
+function SetupBtn({ selected, onClick, children, disabled = false, note = null, tooltip = null }) {
+  const button = (
     <button
       type="button"
       className={'setup-btn' + (selected ? ' selected' : '') + (disabled ? ' is-disabled' : '')}
@@ -19,6 +19,20 @@ function SetupBtn({ selected, onClick, children, disabled = false, note = null }
       {children}
       {note && <span className="setup-btn-note">{note}</span>}
     </button>
+  );
+  if (!tooltip) return button;
+  // The hover has to be caught by a wrapper rather than the button: a disabled
+  // button fires no pointer events and never matches :hover, so a tooltip hung
+  // off the button itself would never appear -- which is exactly the case that
+  // needs explaining. Only wrapped when there is a tooltip, so the buttons
+  // without one keep their place in their parent's layout.
+  return (
+    <span className="setup-btn-wrap">
+      {button}
+      <span className="setup-btn-tooltip" role="tooltip">
+        {tooltip}
+      </span>
+    </span>
   );
 }
 
@@ -31,6 +45,7 @@ const STRINGS = {
     english: 'English',
     spanish: 'Español',
     comingSoon: 'Coming soon!',
+    studyLockedTip: 'Unlock study mode by playing simulation mode first',
     translators: 'Translated by Mariana González-Cepeda and Jose Alberto Nevarez (UABC - Mexico)',
     modeLabel: 'MODE',
     simulation: 'Simulation Mode',
@@ -52,6 +67,7 @@ const STRINGS = {
     english: 'English',
     spanish: 'Español',
     comingSoon: '¡Próximamente!',
+    studyLockedTip: 'Desbloquea el modo estudio jugando primero el modo simulación',
     translators: 'Traducido por Mariana González-Cepeda y Jose Alberto Nevarez (UABC - México)',
     modeLabel: 'MODO',
     simulation: 'Modo Simulación',
@@ -131,6 +147,7 @@ export function SetupScreen({ onStart, initial, dev = false, studyUnlocked = fal
                     selected={mode === 'study'}
                     onClick={() => setMode('study')}
                     disabled={studyLocked}
+                    tooltip={studyLocked ? t.studyLockedTip : null}
                   >
                     <span className="setup-btn-icon">🔒</span>{t.study}
                   </SetupBtn>

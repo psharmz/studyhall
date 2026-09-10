@@ -2684,6 +2684,58 @@
     text-overflow: ellipsis;
   }
 
+  /* Only wraps a button that has a tooltip. Block-level and full width so the
+     button inside still fills its column exactly as an unwrapped one does. */
+  .setup-btn-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+  }
+
+  /* Reads as the advisor phones' tooltip, which is the one the game already
+     has: black plate, phosphor text, sitting above whatever it explains.
+     Wraps rather than running off the side -- this one is a sentence, not a
+     two-word label. */
+  .setup-btn-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    width: max-content;
+    max-width: 220px;
+    padding: 7px 10px;
+    background: var(--black);
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.5;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s ease;
+  }
+
+  .setup-btn-wrap:hover .setup-btn-tooltip {
+    opacity: 1;
+  }
+
+  /* Centred on the button, the plate is wider than the column it sits in and
+     runs off a narrow screen. Anchored to the button's right edge instead, it
+     opens inwards over the card. */
+  @media (max-width: 700px) {
+    .setup-btn-tooltip {
+      left: auto;
+      right: 0;
+      transform: none;
+      max-width: calc(100vw - 40px);
+    }
+  }
+
   .setup-lang-choices,
   .setup-mode-choices {
     align-items: flex-start;

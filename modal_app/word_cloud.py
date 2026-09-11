@@ -113,17 +113,49 @@ COUNTRY_QUERY = f"""
 """
 
 
+# PostHog's edge sometimes drops a query connection outright -- a 503 "upstream
+# connect error or disconnect/reset before headers", or a 502/504 -- and the same
+# query a few seconds later goes through. Those, rate limits, and connections that
+# fail or time out are retried with a growing pause; anything else, a 4xx above
+# all, is a real problem with the key or the query and fails straight away.
+RETRY_STATUSES = {429, 500, 502, 503, 504}
+RETRY_DELAYS = (5, 15, 45)  # seconds to wait before the 2nd, 3rd and 4th attempt
+
+
 def _hogql(query: str):
+    import time
+
     import requests
 
     key = os.environ["POSTHOG_PERSONAL_API_KEY"]
 
-    res = requests.post(
-        f"{API_HOST}/api/projects/{PROJECT_ID}/query/",
-        headers={"Authorization": f"Bearer {key}"},
-        json={"query": {"kind": "HogQLQuery", "query": query}},
-        timeout=60,
-    )
+    # One more attempt than there are delays: the last try has nothing after it.
+    for attempt, delay in enumerate((*RETRY_DELAYS, None), start=1):
+        try:
+            res = requests.post(
+                f"{API_HOST}/api/projects/{PROJECT_ID}/query/",
+                headers={"Authorization": f"Bearer {key}"},
+                json={"query": {"kind": "HogQLQuery", "query": query}},
+                timeout=60,
+            )
+        except (requests.ConnectionError, requests.Timeout) as err:
+            if delay is None:
+                # `from None`, not a chained raise: the requests exception would
+                # ride along as __cause__, and Modal cannot rebuild requests'
+                # types locally -- see the note below.
+                raise RuntimeError(
+                    f"PostHog query failed after {attempt} attempts: "
+                    f"{err.__class__.__name__}: {err}"
+                ) from None
+            print(f"PostHog attempt {attempt} failed ({err.__class__.__name__}); retrying in {delay}s")
+            time.sleep(delay)
+            continue
+
+        if res.status_code in RETRY_STATUSES and delay is not None:
+            print(f"PostHog attempt {attempt} returned {res.status_code}; retrying in {delay}s")
+            time.sleep(delay)
+            continue
+        break
 
     # Raised as a plain RuntimeError rather than requests' own HTTPError: Modal
     # sends exceptions back to the caller, and it can only rebuild types the
@@ -277,7 +309,15 @@ def _build_document(all_rows, country_rows):
 # Every six hours, on the hour, in UTC: 00:00, 06:00, 12:00, 18:00. The window
 # between refreshes is what decides how stale a player's comparison average can
 # be -- the endpoint only ever serves what this last wrote.
-@app.function(image=image, secrets=[posthog], schedule=modal.Cron("0 0,6,12,18 * * *"))
+# Twenty minutes rather than Modal's default five: refresh makes three queries,
+# and with the retries in _hogql one query alone can take up to about five
+# minutes (four 60s attempts plus the pauses) before it gives up.
+@app.function(
+    image=image,
+    secrets=[posthog],
+    schedule=modal.Cron("0 0,6,12,18 * * *"),
+    timeout=20 * 60,
+)
 def refresh():
     """Query PostHog and cache the result. The only function with the key."""
     doc = _build_document(_hogql(ALL_QUERY), _hogql(COUNTRY_QUERY))
